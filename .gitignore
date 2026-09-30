@@ -1,0 +1,22 @@
+# Ambiente virtual
+venv/
+
+# Variáveis de ambiente (chaves de API)
+.env
+
+# Dados sensíveis do FitLife
+data/
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Cache do pytest
+.pytest_cache/
+
+# Cache do HuggingFace/LlamaIndex
+*.cache
+
+# VS Code
+.vscode/

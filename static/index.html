@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitLife Coaching - Painel do Coach</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      /* Paleta Harmônica Extraída da Logo FitLife */
+      --header-bg: #1e293b;        /* Grafite escuro elegante */
+      --fit-white: #ffffff;        /* Branco puro para o "FIT" */
+      --life-blue: #00a8e8;        /* Azul elétrico/ciano para o "LIFE" */
+      --coaching-gray: #94a3b8;    /* Cinza suave para o "COACHING" */
+      --health-green: #84cc16;     /* Verde para saúde e anamneses */
+      --accent-orange: #f97316;    /* Laranja de alta performance para o copiloto IA */
+      
+      --bg-page: #f8fafc;          /* Cinza/azulado ultra leve para fundo */
+      --card-bg: #ffffff;
+      --text-dark: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Topbar / Header Profissional */
+    .topbar {
+      background-color: var(--header-bg);
+      color: white;
+      padding: 14px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo-img {
+      height: 42px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.35rem;
+      letter-spacing: -0.02em;
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .brand-title .fit { color: var(--fit-white); }
+    .brand-title .life { color: var(--life-blue); }
+    .brand-title .coaching { 
+      color: var(--coaching-gray); 
+      font-weight: 500; 
+      font-size: 0.95rem; 
+      margin-left: 4px;
+      letter-spacing: 0.05em;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.95rem;
+      color: #e2e8f0;
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--life-blue);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(0, 168, 232, 0.4);
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      background: white;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 16px 28px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--life-blue);
+    }
+
+    .tab-btn.active {
+      color: var(--life-blue);
+      border-bottom-color: var(--life-blue);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1100px;
+      width: 100%;
+      margin: 28px auto;
+      padding: 0 20px;
+      flex: 1;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Welcome Banner */
+    .welcome-banner {
+      margin-bottom: 24px;
+    }
+
+    .welcome-banner h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-dark);
+    }
+
+    .welcome-banner p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Dashboard Grid & Cards */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 22px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+
+    .card-metric {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .metric-value {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin-top: 6px;
+    }
+
+    .metric-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .metric-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .metric-icon.blue { background: #e0f2fe; color: var(--life-blue); }
+    .metric-icon.green { background: #f7fee7; color: var(--health-green); }
+    .metric-icon.orange { background: #fff7ed; color: var(--accent-orange); }
+
+    /* Section Titles */
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text-dark);
+    }
+
+    /* Quick Action Blocks */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .action-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .action-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+    }
+
+    .action-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: var(--life-blue);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    /* Tables */
+    .table-container {
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: #f8fafc;
+      padding: 14px 20px;
+      font-weight: 600;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    td {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .badge-plan {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    /* Floating Chat Drawer */
+    .floating-chat-toggle {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--accent-orange);
+      color: white;
+      border: none;
+      padding: 14px 22px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 99;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+
+    .floating-chat-toggle:hover {
+      transform: scale(1.05);
+      background: #ea580c;
+    }
+
+    .chat-drawer {
+      position: fixed;
+      bottom: 96px;
+      right: 28px;
+      width: 380px;
+      height: 520px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.18);
+      border: 1px solid var(--border-color);
+      display: none;
+      flex-direction: column;
+      z-index: 100;
+      overflow: hidden;
+    }
+
+    .chat-drawer.open {
+      display: flex;
+    }
+
+    .chat-drawer-header {
+      background: var(--header-bg);
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+    }
+
+    .close-chat-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .close-chat-btn:hover { color: white; }
+
+    .drawer-body {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #f8fafc;
+    }
+
+    .chat-msg {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .chat-msg.user {
+      align-self: flex-end;
+      background: var(--life-blue);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-msg.bot {
+      align-self: flex-start;
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-dark);
+      border-bottom-left-radius: 4px;
+    }
+
+    .drawer-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 8px;
+      background: white;
+    }
+
+    .drawer-input {
+      flex: 1;
+      padding: 10px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      outline: none;
+      font-size: 0.88rem;
+    }
+
+    .drawer-input:focus { border-color: var(--life-blue); }
+
+    .drawer-send-btn {
+      background: var(--accent-orange);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 24px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .drawer-send-btn:hover { background: #ea580c; }
+  </style>
+</head>
+<body>
+
+  <!-- Topbar com a Logo Real e Marca -->
+  <header class="topbar">
+    <div class="brand">
+      <img src="/static/logo.png" alt="FitLife Coaching Logo" class="brand-logo-img" />
+      <div class="brand-title">
+        <span class="fit">FIT</span><span class="life">LIFE</span><span class="coaching">COACHING</span>
+      </div>
+    </div>
+    <div class="user-profile">
+      <span>Olá, <strong>Coach João</strong></span>
+      <div class="avatar">J</div>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('inicio', event)">🏠 Início</button>
+    <button class="tab-btn" onclick="switchTab('alunos', event)">👥 Alunos & Anamneses</button>
+    <button class="tab-btn" onclick="switchTab('historico', event)">💬 Histórico IA</button>
+  </nav>
+
+  <!-- Content Container -->
+  <main class="container">
+
+    <!-- ABA 1: INÍCIO (DASHBOARD) -->
+    <section id="tab-inicio" class="tab-content active">
+      
+      <!-- Welcome Banner -->
+      <div class="welcome-banner">
+        <h1>Visão Geral do Consultório</h1>
+        <p>Acompanhe seus alunos cadastrados, anamneses e interações com a IA.</p>
+      </div>
+
+      <!-- Metrics Row -->
+      <div class="metrics-grid">
+        <div class="card">
+          <div class="card-metric">
+            <div>
+              <div class="metric-label">Alunos Ativos</div>
+              <div class="metric-value">3</div>
+            </div>
+            <div class="metric-icon blue">👥</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-metric">
+            <div>
+              <div class="metric-label">Anamneses</div>
+              <div class="metric-value">3</div>
+            </div>
+            <div class="metric-icon green">📋</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-metric">
+            <div>
+              <div class="metric-label">Consultas IA (Mês)</div>
+              <div class="metric-value">12</div>
+            </div>
+            <div class="metric-icon orange">🤖</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <h2 class="section-title">Gestão Rápida</h2>
+      <div class="actions-grid">
+        <div class="action-card" onclick="document.querySelectorAll('.tab-btn')[1].click()">
+          <div class="action-icon">➕</div>
+          <div>
+            <strong>Adicionar Novo Aluno</strong>
+            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">Cadastrar dados no PostgreSQL</div>
+          </div>
+        </div>
+
+        <div class="action-card" onclick="toggleChat()">
+          <div class="action-icon" style="background: var(--health-green);">🤖</div>
+          <div>
+            <strong>Consultar Copiloto IA</strong>
+            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">Tirar dúvidas sobre protocolos de alunos</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Students Summary -->
+      <h2 class="section-title">Alunos Recentes</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Telefone</th>
+              <th>Plano</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>João Silva</strong></td>
+              <td>joao@email.com</td>
+              <td>(27) 99999-0001</td>
+              <td><span class="badge badge-plan">Plano Mensal</span></td>
+            </tr>
+            <tr>
+              <td><strong>Maria Souza</strong></td>
+              <td>maria@email.com</td>
+              <td>(27) 99999-0002</td>
+              <td><span class="badge badge-plan">Plano Semestral</span></td>
+            </tr>
+            <tr>
+              <td><strong>Carlos Eduardo</strong></td>
+              <td>carlos@email.com</td>
+              <td>(27) 99999-0003</td>
+              <td><span class="badge badge-plan">Plano Trimestral</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <!-- ABA 2: ALUNOS & ANAMNESES -->
+    <section id="tab-alunos" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+          <h2 class="section-title" style="margin-bottom: 4px;">Alunos Cadastrados</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted);">Gerencie as anamneses e fichas dos alunos.</p>
+        </div>
+        <button style="background: var(--life-blue); color: white; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer;">
+          + Cadastrar Aluno
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Telefone</th>
+              <th>Plano</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>#1</td>
+              <td><strong>João Silva</strong></td>
+              <td>joao@email.com</td>
+              <td>(27) 99999-0001</td>
+              <td><span class="badge badge-plan">Plano Mensal</span></td>
+              <td><button style="border: 1px solid var(--border-color); background: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--life-blue);">Ver Anamnese</button></td>
+            </tr>
+            <tr>
+              <td>#2</td>
+              <td><strong>Maria Souza</strong></td>
+              <td>maria@email.com</td>
+              <td>(27) 99999-0002</td>
+              <td><span class="badge badge-plan">Plano Semestral</span></td>
+              <td><button style="border: 1px solid var(--border-color); background: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--life-blue);">Ver Anamnese</button></td>
+            </tr>
+            <tr>
+              <td>#3</td>
+              <td><strong>Carlos Eduardo</strong></td>
+              <td>carlos@email.com</td>
+              <td>(27) 99999-0003</td>
+              <td><span class="badge badge-plan">Plano Trimestral</span></td>
+              <td><button style="border: 1px solid var(--border-color); background: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--life-blue);">Ver Anamnese</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ABA 3: HISTÓRICO IA -->
+    <section id="tab-historico" class="tab-content">
+      <div style="margin-bottom: 20px;">
+        <h2 class="section-title" style="margin-bottom: 4px;">Histórico de Consultas da IA</h2>
+        <p style="font-size: 0.88rem; color: var(--text-muted);">Registro das perguntas enviadas e respostas geradas pelo RAG.</p>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Data/Hora</th>
+              <th>Pergunta</th>
+              <th>Resposta Gerada</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="white-space: nowrap; color: var(--text-muted);">30/09/2026 - 11:40</td>
+              <td><strong>O que é uma ficha de anamnese?</strong></td>
+              <td>É o formulário de avaliação inicial que o profissional de personal training utiliza...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Floating Chat Assistant Widget -->
+  <button class="floating-chat-toggle" onclick="toggleChat()">
+    <span>🤖 FitLife AI</span>
+  </button>
+
+  <div class="chat-drawer" id="chatDrawer">
+    <div class="chat-drawer-header">
+      <span>FitLife Copilot IA</span>
+      <button class="close-chat-btn" onclick="toggleChat()">✕</button>
+    </div>
+    <div class="drawer-body" id="drawerBody">
+      <div class="chat-msg bot">
+        Olá Coach João! Como posso te ajudar com dúvidas sobre protocolos ou alunos hoje?
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <input type="text" id="drawerInput" class="drawer-input" placeholder="Digite sua dúvida..." onkeydown="if(event.key === 'Enter') sendDrawerMsg()" />
+      <button class="drawer-send-btn" onclick="sendDrawerMsg()">Enviar</button>
+    </div>
+  </div>
+
+  <script>
+    // Gerenciamento de Abas
+    function switchTab(tabName, evt) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+      if (evt && evt.target) {
+        evt.target.classList.add('active');
+      }
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+    }
+
+    // Toggle do Chat Flutuante
+    function toggleChat() {
+      const drawer = document.getElementById('chatDrawer');
+      drawer.classList.toggle('open');
+    }
+
+    // Envio do Chat Flutuante
+    async function sendDrawerMsg() {
+      const input = document.getElementById('drawerInput');
+      const body = document.getElementById('drawerBody');
+      const text = input.value.trim();
+
+      if (!text) return;
+
+      const userMsg = document.createElement('div');
+      userMsg.classList.add('chat-msg', 'user');
+      userMsg.innerText = text;
+      body.appendChild(userMsg);
+      input.value = '';
+      body.scrollTop = body.scrollHeight;
+
+      try {
+        const response = await fetch('/perguntar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pergunta: text })
+        });
+        const data = await response.json();
+
+        const botMsg = document.createElement('div');
+        botMsg.classList.add('chat-msg', 'bot');
+        botMsg.innerHTML = data.resposta ? data.resposta.replace(/\n/g, '<br>') : 'Erro na resposta.';
+        body.appendChild(botMsg);
+        body.scrollTop = body.scrollHeight;
+      } catch (err) {
+        const botMsg = document.createElement('div');
+        botMsg.classList.add('chat-msg', 'bot');
+        botMsg.innerText = 'Erro ao conectar ao servidor.';
+        body.appendChild(botMsg);
+      }
+    }
+  </script>
+</body>
+</html>
