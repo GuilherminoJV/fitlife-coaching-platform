@@ -44,9 +44,32 @@ A **FitLife Coaching Platform** é um ecossistema completo para gestão de perso
 
 ---
 
+## 📅 Histórico de Atualizações
+
+### v0.2.0 — Integração com Banco de Dados
+- Integração completa com **PostgreSQL** via SQLAlchemy + pg8000
+- Tabelas criadas: `planos`, `alunos`, `anamneses`, `historico_chat`
+- Histórico do chat salvo automaticamente no banco a cada consulta
+- Novas rotas na API: `GET /alunos` e `GET /alunos/{id}`
+- Variáveis de ambiente protegidas via `.env`
+
+### v0.1.0 — Lançamento Inicial
+- Assistente RAG com LlamaIndex + Groq API
+- Interface web com identidade visual FitLife Coaching
+- API REST com FastAPI e documentação Swagger automática
+- Projeto publicado no GitHub com `.gitignore` configurado
+
+---
+
 ## 🚀 Como Executar o Projeto Localmente
 
-### 1. Clonar o repositório
 ```bash
-git clone [https://github.com/GuilherminoJV/plataforma-de-coaching-fitlife.git](https://github.com/GuilherminoJV/plataforma-de-coaching-fitlife.git)
-cd plataforma-de-coaching-fitlife
+git clone https://github.com/GuilherminoJV/fitlife-coaching-platform.git
+cd fitlife-coaching-platform
+```
+
+> ⚠️ **Nota:** Este projeto é de uso estritamente pessoal e vinculado à marca **FitLife Coaching**.
+> Por isso, arquivos sensíveis como a base de conhecimento (`data/`), variáveis de ambiente (`.env`)
+> e dados reais de alunos **não estão disponíveis neste repositório**.
+> O código aqui presente representa apenas a estrutura técnica da plataforma,
+> disponibilizado para fins de portfólio e demonstração de habilidades.
