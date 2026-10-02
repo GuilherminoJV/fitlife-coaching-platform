@@ -3,6 +3,7 @@
 # ================================
 
 import os
+
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
@@ -11,6 +12,7 @@ from pydantic import BaseModel
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from groq import Groq
+from src.database import salvar_historico, listar_alunos, buscar_aluno
 
 # --- CARREGA VARIÁVEIS DE AMBIENTE ---
 load_dotenv()
@@ -70,7 +72,38 @@ def perguntar(body: Pergunta):
         ]
     )
 
+    salvar_historico(body.pergunta, resposta.choices[0].message.content)
+
     return {
         "pergunta": body.pergunta,
         "resposta": resposta.choices[0].message.content
+    }
+
+@app.get("/alunos")
+def get_alunos():
+    alunos = listar_alunos()
+    return [
+        {
+            "id": a[0],
+            "nome": a[1],
+            "email": a[2],
+            "telefone": a[3],
+            "plano": a[4],
+            "data_cadastro": str(a[5])
+        }
+        for a in alunos
+    ]
+
+@app.get("/alunos/{aluno_id}")
+def get_aluno(aluno_id: int):
+    aluno = buscar_aluno(aluno_id)
+    if not aluno:
+        return {"erro": "Aluno não encontrado"}
+    return {
+        "id": aluno[0],
+        "nome": aluno[1],
+        "email": aluno[2],
+        "telefone": aluno[3],
+        "plano": aluno[4],
+        "data_cadastro": str(aluno[5])
     }
