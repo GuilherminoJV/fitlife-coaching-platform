@@ -1,51 +1,27 @@
-/* ==========================================================================
-   FITLIFE COACHING — app.js
+/*
+  1. Configuração
+  2. Dados
+  3. DOM
+  4. Tema / hero
+  5. Navegação
+  6. Treino / alunos
+  7. Exercícios / filtros / modal
+  8. FitLife IA
+  9. Ações / eventos
+  10. Inicialização
+*/
 
-   INDEX
-   1. Configuration
-   2. Data (hero profiles, students)
-   3. DOM references
-   4. Theme and hero
-   5. Main navigation (areas)
-   6. Training area (workspaces, student profile)
-   7. Search filters
-   8. AI chat (FitLife Copilot)
-   9. Actions and event wiring
-   10. Initialization
-
-   Conventions
-   - Identifiers are in English; area keys (geral, treino, nutricao...) are
-     Portuguese because they match the ids in index.html (#tab-treino).
-   - The HTML declares behavior with data-attributes:
-       data-tab="treino"           -> show area #tab-treino
-       data-workspace="alunos"     -> show panel #workspace-alunos
-       data-student-id="1"         -> open that student's profile
-       data-action="toggle-chat"   -> run a registered action (section 9)
-       data-field="name"           -> text slot filled by fillFields()
-   ========================================================================== */
-
-
-/* ==========================================================================
-   1. CONFIGURATION
-   ========================================================================== */
+/* 1. CONFIGURAÇÃO */
 
 const DEFAULT_TAB = 'geral';
 const DEFAULT_THEME = 'general';
 const DEFAULT_WORKSPACE = 'alunos';
 const CHAT_ENDPOINT = '/perguntar';
 const STUDENTS_PER_PAGE = 6;
+const EXERCISES_PER_PAGE = 10;
 
+/* 2. DADOS */
 
-/* ==========================================================================
-   2. DATA
-   Static for now. Later these can come from the API (same shape).
-   ========================================================================== */
-
-/**
- * Hero column content per area.
- * theme -> value of <body data-theme> (see "Area themes" in styles.css).
- * To add an area: add an entry here + a sidebar button + a #tab-{key} section.
- */
 const heroProfiles = {
   geral: {
     tag: 'Equipe Multidisciplinar',
@@ -96,7 +72,6 @@ const heroProfiles = {
   }
 };
 
-/** Students, keyed by the id used in data-student-id. */
 const students = {
   1: {
     initials: 'JS',
@@ -123,16 +98,11 @@ const students = {
   }
 };
 
-/** Extra steps to run when an area is opened. */
 const tabEnterHooks = {
   treino: () => showWorkspace(DEFAULT_WORKSPACE)
 };
 
-
-/* ==========================================================================
-   3. DOM REFERENCES
-   (script is loaded with `defer`, so the DOM is already available)
-   ========================================================================== */
+/* 3. DOM */
 
 const dom = {
   heroImg: document.getElementById('heroImg'),
@@ -149,42 +119,45 @@ const dom = {
   studentPager: document.getElementById('studentPager'),
   studentPagerLabel: document.getElementById('studentPagerLabel'),
   studentForm: document.getElementById('presencialStudentForm'),
-  newStudentModal: document.getElementById('modalNovoAluno')
+  newStudentModal: document.getElementById('modalNovoAluno'),
+
+  exerciseTableBody: document.getElementById('exerciseTableBody'),
+  exercisePager: document.getElementById('exercicioPager'),
+
+  exerciseModal: document.getElementById('modalExercicio'),
+  exerciseModalMedia: document.getElementById('exerciseModalMedia')
 };
 
 let studentPage = 0;
+let exerciciosData = [];
+let exercicioPage = 0;
+let exercicioCategoria = '';
 
+/* 4. TEMA / HERO */
 
-/* ==========================================================================
-   4. THEME AND HERO
-   ========================================================================== */
-
-/** Sets the color theme (CSS reads it from <body data-theme>). */
 function applyTheme(theme = DEFAULT_THEME) {
   document.body.dataset.theme = theme;
 }
 
-/**
- * Swaps the hero photo with a fade.
- * Fade state is controlled by CSS classes (.is-loading / .is-error).
- */
 function updateHeroImage(imageUrl) {
   const { heroImg } = dom;
 
   if (!heroImg || !imageUrl) return;
 
-  // Same photo (e.g. Home -> Training): nothing to reload
   if (heroImg.getAttribute('src') === imageUrl) return;
 
   heroImg.classList.remove('is-error');
   heroImg.classList.add('is-loading');
 
   heroImg.onload = () => {
-    requestAnimationFrame(() => heroImg.classList.remove('is-loading'));
+    requestAnimationFrame(() => {
+      heroImg.classList.remove('is-loading');
+    });
   };
 
   heroImg.onerror = () => {
     console.warn(`Não foi possível carregar: ${imageUrl}`);
+
     heroImg.classList.remove('is-loading');
     heroImg.classList.add('is-error');
   };
@@ -192,177 +165,222 @@ function updateHeroImage(imageUrl) {
   heroImg.src = imageUrl;
 }
 
-/** Applies a hero profile: theme, photo and texts. */
 function updateHero(profile) {
   if (!profile) return;
 
   applyTheme(profile.theme);
   updateHeroImage(profile.img);
 
-  if (dom.heroTag) dom.heroTag.textContent = profile.tag;
-  if (dom.heroName) dom.heroName.textContent = profile.name;
-  if (dom.heroRole) dom.heroRole.textContent = profile.role;
+  if (dom.heroTag) {
+    dom.heroTag.textContent = profile.tag;
+  }
+
+  if (dom.heroName) {
+    dom.heroName.textContent = profile.name;
+  }
+
+  if (dom.heroRole) {
+    dom.heroRole.textContent = profile.role;
+  }
 }
 
+/* 5. NAVEGAÇÃO */
 
-/* ==========================================================================
-   5. MAIN NAVIGATION (areas)
-   ========================================================================== */
-
-/** Shows the area #tab-{tabName}, highlights its sidebar button and updates the hero. */
 function switchTab(tabName) {
   const targetTab = document.getElementById(`tab-${tabName}`);
 
   if (!targetTab) return;
 
-  // Sidebar buttons only (quick-action cards also carry data-tab but are not nav items)
-  document.querySelectorAll('.ghost-btn[data-tab]').forEach(button => {
-    const isActive = button.dataset.tab === tabName;
+  document
+    .querySelectorAll('.ghost-btn[data-tab]')
+    .forEach(button => {
+      const isActive = button.dataset.tab === tabName;
 
-    button.classList.toggle('active', isActive);
+      button.classList.toggle('active', isActive);
 
-    if (isActive) {
-      button.setAttribute('aria-current', 'page');
-    } else {
-      button.removeAttribute('aria-current');
-    }
-  });
+      if (isActive) {
+        button.setAttribute('aria-current', 'page');
+      } else {
+        button.removeAttribute('aria-current');
+      }
+    });
 
-  document.querySelectorAll('.tab-content').forEach(tab => {
-    tab.classList.toggle('active', tab === targetTab);
-  });
+  document
+    .querySelectorAll('.tab-content')
+    .forEach(tab => {
+      tab.classList.toggle(
+        'active',
+        tab === targetTab
+      );
+    });
 
-  updateHero(heroProfiles[tabName] ?? heroProfiles[DEFAULT_TAB]);
+  updateHero(
+    heroProfiles[tabName] ??
+    heroProfiles[DEFAULT_TAB]
+  );
 
   tabEnterHooks[tabName]?.();
 }
 
+/* 6. TREINO / ALUNOS */
 
-/* ==========================================================================
-   6. TRAINING AREA
-   ========================================================================== */
-
-/** Shows the workspace panel #workspace-{name} (students, exercises, student profile). */
 function showWorkspace(workspaceName) {
-  document.querySelectorAll('.workspace-btn').forEach(button => {
-    button.classList.toggle(
-      'active',
-      button.dataset.workspace === workspaceName
-    );
-  });
+  document
+    .querySelectorAll('.workspace-btn')
+    .forEach(button => {
+      button.classList.toggle(
+        'active',
+        button.dataset.workspace === workspaceName
+      );
+    });
 
-  document.querySelectorAll('.workspace-panel').forEach(panel => {
-    const isTarget = panel.id === `workspace-${workspaceName}`;
+  document
+    .querySelectorAll('.workspace-panel')
+    .forEach(panel => {
+      const isTarget =
+        panel.id === `workspace-${workspaceName}`;
 
-    panel.classList.toggle('active', isTarget);
-    panel.hidden = !isTarget;
-  });
+      panel.classList.toggle(
+        'active',
+        isTarget
+      );
+
+      panel.hidden = !isTarget;
+    });
+
+  if (workspaceName === 'alunos') {
+    studentPage = 0;
+    updateStudentPager();
+  }
 }
 
-/** Fills every [data-field="key"] inside `container` with values[key]. */
 function fillFields(container, values) {
-  container.querySelectorAll('[data-field]').forEach(element => {
-    const value = values[element.dataset.field];
+  container
+    .querySelectorAll('[data-field]')
+    .forEach(element => {
+      const value =
+        values[element.dataset.field];
 
-    if (value !== undefined) {
-      element.textContent = value;
-    }
-  });
+      if (value !== undefined) {
+        element.textContent = value;
+      }
+    });
 }
 
-/** Opens the profile screen for one student. */
 function openStudentProfile(studentId) {
   const student = students[studentId];
-  const profilePanel = document.getElementById('workspace-aluno-perfil');
+
+  const profilePanel =
+    document.getElementById(
+      'workspace-aluno-perfil'
+    );
 
   if (!student || !profilePanel) return;
 
   fillFields(profilePanel, {
     ...student,
-    summary: `${student.goal} • ${student.plan}`
+    summary:
+      `${student.goal} • ${student.plan}`
   });
 
   showWorkspace('aluno-perfil');
 }
 
-
-/* ==========================================================================
-   7. SEARCH FILTERS
-   ========================================================================== */
-
 function renderStudentCards() {
   if (!dom.studentGrid) return;
 
-  dom.studentGrid.innerHTML = Object.entries(students)
-    .map(([id, student]) => `
-      <article class="student-card">
-        <div class="student-avatar" aria-hidden="true">
-          ${student.initials}
-        </div>
+  dom.studentGrid.innerHTML =
+    Object.entries(students)
+      .map(([id, student]) => `
+        <article class="student-card">
+          <div
+            class="student-avatar"
+            aria-hidden="true"
+          >
+            ${escapeHtml(student.initials)}
+          </div>
 
-        <div class="student-info">
-          <h3>${student.name}</h3>
-          <span>${student.goal} • ${student.plan}</span>
-        </div>
+          <div class="student-info">
+            <h3>
+              ${escapeHtml(student.name)}
+            </h3>
 
-        <span
-          class="status-dot active"
-          role="img"
-          aria-label="Aluno ativo">
-        </span>
+            <span>
+              ${escapeHtml(student.goal)}
+              •
+              ${escapeHtml(student.plan)}
+            </span>
+          </div>
 
-        <button
-          type="button"
-          class="secondary-btn"
-          data-student-id="${id}">
-          Ver perfil
-        </button>
-      </article>
-    `)
-    .join('');
+          <span
+            class="status-dot active"
+            role="img"
+            aria-label="Aluno ativo"
+          ></span>
+
+          <button
+            type="button"
+            class="secondary-btn"
+            data-student-id="${escapeHtml(id)}"
+          >
+            Ver perfil
+          </button>
+        </article>
+      `)
+      .join('');
 }
 
 function updateStudentPager() {
-  const input = document.querySelector(
-    '#workspace-alunos input[type="search"]'
-  );
+  if (!dom.studentGrid) return;
+
+  const input =
+    document.querySelector(
+      '#workspace-alunos input[type="search"]'
+    );
 
   const query =
-    input?.value.toLowerCase().trim() ?? '';
+    input?.value
+      .toLowerCase()
+      .trim() ?? '';
 
-  const allCards = Array.from(
-    document.querySelectorAll(
-      '#workspace-alunos .student-card'
-    )
-  );
+  const cards =
+    Array.from(
+      dom.studentGrid.querySelectorAll(
+        '.student-card'
+      )
+    );
 
-  const matchingCards = allCards.filter(card =>
-    card.textContent.toLowerCase().includes(query)
-  );
+  const matchingCards =
+    cards.filter(card =>
+      card.textContent
+        .toLowerCase()
+        .includes(query)
+    );
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(
-      matchingCards.length / STUDENTS_PER_PAGE
-    )
-  );
+  const totalPages =
+    Math.max(
+      1,
+      Math.ceil(
+        matchingCards.length /
+        STUDENTS_PER_PAGE
+      )
+    );
 
-  studentPage = Math.min(
-    studentPage,
-    totalPages - 1
-  );
+  studentPage =
+    Math.min(
+      studentPage,
+      totalPages - 1
+    );
 
-  allCards.forEach(card => {
+  cards.forEach(card => {
     card.hidden = true;
   });
 
-  const pageStart =
-    studentPage * STUDENTS_PER_PAGE;
-
   matchingCards
     .slice(
-      pageStart,
-      pageStart + STUDENTS_PER_PAGE
+      studentPage * STUDENTS_PER_PAGE,
+      (studentPage + 1) *
+      STUDENTS_PER_PAGE
     )
     .forEach(card => {
       card.hidden = false;
@@ -370,7 +388,8 @@ function updateStudentPager() {
 
   if (dom.studentPager) {
     dom.studentPager.hidden =
-      matchingCards.length <= STUDENTS_PER_PAGE;
+      matchingCards.length <=
+      STUDENTS_PER_PAGE;
   }
 
   if (dom.studentPagerLabel) {
@@ -380,63 +399,603 @@ function updateStudentPager() {
 }
 
 function bindStudentSearch() {
-  const input = document.querySelector(
-    '#workspace-alunos input[type="search"]'
-  );
+  const input =
+    document.querySelector(
+      '#workspace-alunos input[type="search"]'
+    );
 
   if (!input) return;
 
-  input.addEventListener('input', () => {
-    studentPage = 0;
-    updateStudentPager();
-  });
+  input.addEventListener(
+    'input',
+    () => {
+      studentPage = 0;
+      updateStudentPager();
+    }
+  );
 }
 
 function changeStudentPage(direction) {
-  const input = document.querySelector(
-    '#workspace-alunos input[type="search"]'
-  );
+  const input =
+    document.querySelector(
+      '#workspace-alunos input[type="search"]'
+    );
 
   const query =
-    input?.value.toLowerCase().trim() ?? '';
+    input?.value
+      .toLowerCase()
+      .trim() ?? '';
 
-  const totalMatches = Array.from(
-    document.querySelectorAll(
-      '#workspace-alunos .student-card'
-    )
-  ).filter(card =>
-    card.textContent.toLowerCase().includes(query)
-  ).length;
+  const matches =
+    Array.from(
+      dom.studentGrid
+        ?.querySelectorAll(
+          '.student-card'
+        ) ?? []
+    ).filter(card =>
+      card.textContent
+        .toLowerCase()
+        .includes(query)
+    ).length;
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(
-      totalMatches / STUDENTS_PER_PAGE
-    )
-  );
+  const totalPages =
+    Math.max(
+      1,
+      Math.ceil(
+        matches /
+        STUDENTS_PER_PAGE
+      )
+    );
 
-  studentPage = Math.max(
-    0,
-    Math.min(
-      studentPage + direction,
-      totalPages - 1
-    )
-  );
+  studentPage =
+    Math.max(
+      0,
+      Math.min(
+        studentPage + direction,
+        totalPages - 1
+      )
+    );
 
   updateStudentPager();
 }
 
-function bindExerciseSearch() {
-  const input = document.querySelector(
-    '#workspace-exercicios input[type="search"]'
+/* 7. EXERCÍCIOS / FILTROS / MODAL */
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function getExerciseValue(
+  exercise,
+  keys,
+  fallback = '—'
+) {
+  for (const key of keys) {
+    const value = exercise?.[key];
+
+    if (
+      value !== undefined &&
+      value !== null &&
+      String(value).trim() !== ''
+    ) {
+      return String(value).trim();
+    }
+  }
+
+  return fallback;
+}
+
+async function loadExercicios(
+  categoria = exercicioCategoria
+) {
+  exercicioCategoria =
+    categoria || '';
+
+  const url =
+    exercicioCategoria
+      ? `/exercicios/categoria/${encodeURIComponent(
+          exercicioCategoria
+        )}`
+      : '/exercicios';
+
+  try {
+    const response =
+      await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(
+        `HTTP ${response.status}`
+      );
+    }
+
+    const data =
+      await response.json();
+
+    exerciciosData =
+      Array.isArray(data)
+        ? data
+        : [];
+
+    exercicioPage = 0;
+
+    renderExercicios();
+
+  } catch (error) {
+    console.error(
+      'Erro ao carregar exercícios:',
+      error
+    );
+
+    exerciciosData = [];
+
+    renderExercicios();
+  }
+}
+
+function getExerciseSearchValue() {
+  const input =
+    document.querySelector(
+      '#workspace-exercicios input[type="search"]'
+    );
+
+  return (
+    input?.value
+      .toLowerCase()
+      .trim() ?? ''
   );
+}
+
+function getFilteredExercises() {
+  const filtro =
+    getExerciseSearchValue();
+
+  if (!filtro) {
+    return exerciciosData;
+  }
+
+  return exerciciosData.filter(
+    exercise => {
+      const text = [
+        exercise.nome,
+        exercise.musculo_alvo,
+        exercise.categoria,
+        exercise.nivel,
+        exercise.equipamento,
+        exercise.tipo_articular
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+      return text.includes(filtro);
+    }
+  );
+}
+
+function renderExercicios() {
+  const tbody =
+    dom.exerciseTableBody;
+
+  if (!tbody) return;
+
+  const filtrados =
+    getFilteredExercises();
+
+  const totalPages =
+    Math.max(
+      1,
+      Math.ceil(
+        filtrados.length /
+        EXERCISES_PER_PAGE
+      )
+    );
+
+  exercicioPage =
+    Math.min(
+      exercicioPage,
+      totalPages - 1
+    );
+
+  const inicio =
+    exercicioPage *
+    EXERCISES_PER_PAGE;
+
+  const pagina =
+    filtrados.slice(
+      inicio,
+      inicio + EXERCISES_PER_PAGE
+    );
+
+  tbody.innerHTML =
+    pagina
+      .map(exercise => `
+        <tr>
+          <th scope="row">
+            ${escapeHtml(
+              exercise.nome
+            )}
+          </th>
+
+          <td>
+            ${escapeHtml(
+              exercise.musculo_alvo
+            )}
+          </td>
+
+          <td>
+            ${escapeHtml(
+              getExerciseValue(
+                exercise,
+                ['tipo_articular']
+              )
+            )}
+          </td>
+
+          <td>
+            <button
+              type="button"
+              class="table-btn"
+              data-exercise-id="${escapeHtml(
+                exercise.id
+              )}"
+            >
+              Ver
+            </button>
+          </td>
+        </tr>
+      `)
+      .join('');
+
+  renderExercisePager(
+    totalPages,
+    filtrados.length
+  );
+}
+
+function renderExercisePager(
+  totalPages,
+  totalItems
+) {
+  const pager =
+    dom.exercisePager;
+
+  if (!pager) return;
+
+  const buttons =
+    Array.from(
+      { length: totalPages },
+      (_, index) => `
+        <button
+          type="button"
+          class="page-btn ${
+            index === exercicioPage
+              ? 'active'
+              : ''
+          }"
+          data-exercise-page="${index}"
+          aria-label="Página ${
+            index + 1
+          }"
+        >
+          ${index + 1}
+        </button>
+      `
+    )
+    .join('');
+
+  pager.innerHTML = `
+    <button
+      type="button"
+      class="page-btn"
+      data-exercise-page="prev"
+      aria-label="Exercícios anteriores"
+      ${exercicioPage === 0 ? 'disabled' : ''}
+    >
+      &lsaquo;
+    </button>
+
+    ${buttons}
+
+    <button
+      type="button"
+      class="page-btn"
+      data-exercise-page="next"
+      aria-label="Próximos exercícios"
+      ${
+        exercicioPage ===
+        totalPages - 1
+          ? 'disabled'
+          : ''
+      }
+    >
+      &rsaquo;
+    </button>
+  `;
+
+  pager.hidden =
+    totalItems <=
+    EXERCISES_PER_PAGE;
+}
+
+function goToExercicioPage(page) {
+  const totalPages =
+    Math.max(
+      1,
+      Math.ceil(
+        getFilteredExercises().length /
+        EXERCISES_PER_PAGE
+      )
+    );
+
+  exercicioPage =
+    Math.max(
+      0,
+      Math.min(
+        Number(page),
+        totalPages - 1
+      )
+    );
+
+  renderExercicios();
+}
+
+function renderExerciseMedia(
+  exercise
+) {
+  if (!dom.exerciseModalMedia) {
+    return;
+  }
+
+  const name =
+    getExerciseValue(
+      exercise,
+      ['nome'],
+      'Exercício'
+    );
+
+  const mediaUrl =
+    getExerciseValue(
+      exercise,
+      [
+        'video_url',
+        'gif_url',
+        'midia_url',
+        'media_url'
+      ],
+      ''
+    );
+
+  if (!mediaUrl) {
+    dom.exerciseModalMedia.innerHTML = `
+      <div class="exercise-media-placeholder">
+
+        <div
+          class="exercise-media-icon"
+          aria-hidden="true"
+        >
+          ▶
+        </div>
+
+        <strong>
+          GIF ou vídeo demonstrativo
+        </strong>
+
+        <span>
+          Mídia de aproximadamente
+          10 segundos
+        </span>
+
+      </div>
+    `;
+
+    return;
+  }
+
+  const isVideo =
+    /\.(mp4|webm|ogg)(\?|#|$)/i.test(
+      mediaUrl
+    );
+
+  if (isVideo) {
+    const video =
+      document.createElement(
+        'video'
+      );
+
+    video.src = mediaUrl;
+    video.autoplay = true;
+    video.loop = true;
+    video.muted = true;
+    video.playsInline = true;
+    video.controls = true;
+
+    video.setAttribute(
+      'aria-label',
+      `Demonstração de ${name}`
+    );
+
+    dom.exerciseModalMedia.replaceChildren(
+      video
+    );
+
+    return;
+  }
+
+  const image =
+    document.createElement(
+      'img'
+    );
+
+  image.src = mediaUrl;
+
+  image.alt =
+    `Demonstração de ${name}`;
+
+  dom.exerciseModalMedia.replaceChildren(
+    image
+  );
+}
+
+function openExerciseModal(
+  exerciseId
+) {
+  const exercise =
+    exerciciosData.find(
+      item =>
+        String(item.id) ===
+        String(exerciseId)
+    );
+
+  if (
+    !exercise ||
+    !dom.exerciseModal
+  ) {
+    return;
+  }
+
+  const fields = {
+    name: getExerciseValue(
+      exercise,
+      ['nome']
+    ),
+
+    muscle: getExerciseValue(
+      exercise,
+      ['musculo_alvo'],
+      ''
+    ),
+
+    equipment: getExerciseValue(
+      exercise,
+      ['equipamento'],
+      ''
+    ),
+
+    type: getExerciseValue(
+      exercise,
+      ['tipo_articular'],
+      ''
+    )
+  };
+
+  dom.exerciseModal
+    .querySelectorAll(
+      '[data-exercise-field]'
+    )
+    .forEach(element => {
+      const field =
+        element.dataset
+          .exerciseField;
+
+      if (!(field in fields)) {
+        return;
+      }
+
+      element.textContent =
+        fields[field] || '—';
+    });
+
+  renderExerciseMedia(
+    exercise
+  );
+
+  dom.exerciseModal.hidden =
+    false;
+
+  dom.exerciseModal.classList.add(
+    'open'
+  );
+
+  document.body.classList.add(
+    'modal-open'
+  );
+
+  dom.exerciseModal
+    .querySelector(
+      '.modal-close-btn'
+    )
+    ?.focus();
+}
+
+function closeExerciseModal() {
+  if (!dom.exerciseModal) {
+    return;
+  }
+
+  dom.exerciseModal.classList.remove(
+    'open'
+  );
+
+  dom.exerciseModal.hidden =
+    true;
+
+  document.body.classList.remove(
+    'modal-open'
+  );
+
+  if (dom.exerciseModalMedia) {
+    dom.exerciseModalMedia.innerHTML = `
+      <div class="exercise-media-placeholder">
+
+        <div
+          class="exercise-media-icon"
+          aria-hidden="true"
+        >
+          ▶
+        </div>
+
+        <strong>
+          GIF ou vídeo demonstrativo
+        </strong>
+
+        <span>
+          Mídia de aproximadamente
+          10 segundos
+        </span>
+
+      </div>
+    `;
+  }
+}
+
+function bindExerciseSearch() {
+  const input =
+    document.querySelector(
+      '#workspace-exercicios input[type="search"]'
+    );
 
   if (!input) return;
 
-  input.addEventListener('input', () => {
-    exercicioPage = 0;
-    renderExercicios(input.value.trim());
-  });
+  input.addEventListener(
+    'input',
+    () => {
+      exercicioPage = 0;
+      renderExercicios();
+    }
+  );
+}
+
+function bindExerciseCategoryFilter() {
+  const select =
+    document.querySelector(
+      '#workspace-exercicios select'
+    );
+
+  if (!select) return;
+
+  select.addEventListener(
+    'change',
+    () => {
+      loadExercicios(
+        select.value
+      );
+    }
+  );
 }
 
 function bindFinancialFilters() {
@@ -445,129 +1004,52 @@ function bindFinancialFilters() {
       '.finance-filter[data-fin-role]'
     )
     .forEach(button => {
-      button.addEventListener('click', () => {
-        const role =
-          button.dataset.finRole;
+      button.addEventListener(
+        'click',
+        () => {
+          const role =
+            button.dataset.finRole;
 
-        document
-          .querySelectorAll('.finance-filter')
-          .forEach(filter => {
-            filter.classList.toggle(
-              'active',
-              filter === button
-            );
-          });
+          document
+            .querySelectorAll(
+              '.finance-filter'
+            )
+            .forEach(filter => {
+              filter.classList.toggle(
+                'active',
+                filter === button
+              );
+            });
 
-        document
-          .querySelectorAll(
-            '#financeTable tbody tr'
-          )
-          .forEach(row => {
-            row.hidden =
-              role !== 'todos' &&
-              row.dataset.finRole !== role;
-          });
-      });
+          document
+            .querySelectorAll(
+              '#financeTable tbody tr'
+            )
+            .forEach(row => {
+              row.hidden =
+                role !== 'todos' &&
+                row.dataset.finRole !==
+                  role;
+            });
+        }
+      );
     });
 }
 
-// --- EXERCÍCIOS DA API ---
-const EXERCISES_PER_PAGE = 10;
-let exerciciosData = [];
-let exercicioPage = 0;
-
-async function loadExercicios(categoria = null) {
-  const url = categoria
-    ? `/exercicios/categoria/${encodeURIComponent(categoria)}`
-    : '/exercicios';
-
-  try {
-    const response = await fetch(url);
-    exerciciosData = await response.json();
-    exercicioPage = 0;
-    renderExercicios();
-  } catch (error) {
-    console.error('Erro ao carregar exercícios:', error);
-  }
-}
-
-function renderExercicios(filtro = '') {
-  const tbody = document.querySelector('#workspace-exercicios tbody');
-  const pager = document.getElementById('exercicioPager');
-
-  if (!tbody) return;
-
-  // Filtra pelo nome se houver busca
-  const filtrados = exerciciosData.filter(e =>
-    e.nome.toLowerCase().includes(filtro.toLowerCase()) ||
-    e.musculo_alvo.toLowerCase().includes(filtro.toLowerCase())
-  );
-
-  const totalPages = Math.max(1, Math.ceil(filtrados.length / EXERCISES_PER_PAGE));
-  exercicioPage = Math.min(exercicioPage, totalPages - 1);
-
-  const inicio = exercicioPage * EXERCISES_PER_PAGE;
-  const pagina = filtrados.slice(inicio, inicio + EXERCISES_PER_PAGE);
-
-  // Renderiza as linhas
-  tbody.innerHTML = pagina.map(e => `
-    <tr>
-      <td><strong>${e.nome}</strong></td>
-      <td>${e.musculo_alvo}</td>
-      <td>${e.categoria}</td>
-      <td>
-        <button class="secondary-btn" onclick="verExercicio(${e.id})">
-          Ver
-        </button>
-      </td>
-    </tr>
-  `).join('');
-
-  // Renderiza os botões de página
-  if (pager) {
-    const botoes = Array.from({ length: totalPages }, (_, i) => `
-      <button
-        class="page-btn ${i === exercicioPage ? 'active' : ''}"
-        onclick="goToExercicioPage(${i})">
-        ${i + 1}
-      </button>
-    `).join('');
-
-    pager.innerHTML = `
-      <button class="page-btn" onclick="goToExercicioPage(${exercicioPage - 1})" ${exercicioPage === 0 ? 'disabled' : ''}>&lsaquo;</button>
-      ${botoes}
-      <button class="page-btn" onclick="goToExercicioPage(${exercicioPage + 1})" ${exercicioPage === totalPages - 1 ? 'disabled' : ''}>&rsaquo;</button>
-    `;
-
-    pager.hidden = filtrados.length <= EXERCISES_PER_PAGE;
-  }
-}
-
-function goToExercicioPage(page) {
-  const input = document.querySelector('#workspace-exercicios input[type="search"]');
-  const filtro = input?.value.trim() ?? '';
-  const totalPages = Math.max(1, Math.ceil(exerciciosData.length / EXERCISES_PER_PAGE));
-
-  exercicioPage = Math.max(0, Math.min(page, totalPages - 1));
-  renderExercicios(filtro);
-}
-
-function verExercicio(id) {
-  console.log('TODO: abrir detalhe do exercício', id);
-}
-
-/* ==========================================================================
-   8. AI CHAT (FitLife Copilot)
-   ========================================================================== */
+/* 8. FITLIFE IA */
 
 function toggleChat() {
   if (!dom.chatDrawer) return;
 
   const isOpen =
-    dom.chatDrawer.classList.toggle('open');
+    dom.chatDrawer.classList.toggle(
+      'open'
+    );
 
   document
-    .querySelector('.floating-chat-toggle')
+    .querySelector(
+      '.floating-chat-toggle'
+    )
     ?.setAttribute(
       'aria-expanded',
       String(isOpen)
@@ -581,53 +1063,67 @@ function scrollChatToBottom() {
   }
 }
 
-/** Adds a message bubble. role: 'user' | 'bot'. Returns the element. */
-function appendChatMessage(role, text) {
+function appendChatMessage(
+  role,
+  text
+) {
   const message =
-    document.createElement('div');
+    document.createElement(
+      'div'
+    );
 
   message.classList.add(
     'chat-msg',
     role
   );
 
-  message.textContent = text;
+  message.textContent =
+    text;
 
-  dom.chatBody.appendChild(message);
+  dom.chatBody.appendChild(
+    message
+  );
 
   scrollChatToBottom();
 
   return message;
 }
 
-/** Renders the AI answer as Markdown (falls back to plain text if marked.js is missing). */
 function renderBotAnswer(
   messageElement,
   markdown
 ) {
-  if (typeof marked !== 'undefined') {
+  if (
+    typeof marked !==
+    'undefined'
+  ) {
     messageElement.innerHTML =
-      marked.parse(markdown);
+      marked.parse(
+        markdown
+      );
   } else {
     messageElement.textContent =
       markdown;
   }
 }
 
-/** Sends the question to the backend and returns the answer text (may be undefined). */
-async function fetchAnswer(question) {
-  const response = await fetch(
-    CHAT_ENDPOINT,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        pergunta: question
-      })
-    }
-  );
+async function fetchAnswer(
+  question
+) {
+  const response =
+    await fetch(
+      CHAT_ENDPOINT,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type':
+            'application/json'
+        },
+        body: JSON.stringify({
+          pergunta: question
+        })
+      }
+    );
 
   if (!response.ok) {
     throw new Error(
@@ -641,12 +1137,14 @@ async function fetchAnswer(question) {
   return data.resposta;
 }
 
-/** Handles the chat form submit: shows the question, waits for the answer, shows it. */
-async function sendChatMessage(event) {
+async function sendChatMessage(
+  event
+) {
   event.preventDefault();
 
   const text =
-    dom.chatInput.value.trim();
+    dom.chatInput.value
+      .trim();
 
   if (!text) return;
 
@@ -689,21 +1187,17 @@ async function sendChatMessage(event) {
   scrollChatToBottom();
 }
 
-
-/* ==========================================================================
-   9. ACTIONS AND EVENT WIRING
-   ========================================================================== */
-
-/**
- * Registry for data-action="...". To add an action, add a line here.
- * The three "new-*" entries are placeholders until their forms exist.
- */
+/* 9. AÇÕES / EVENTOS */
 
 function openPresencialModal() {
   if (!dom.newStudentModal) return;
 
-  dom.newStudentModal.hidden = false;
-  dom.newStudentModal.classList.add('open');
+  dom.newStudentModal.hidden =
+    false;
+
+  dom.newStudentModal.classList.add(
+    'open'
+  );
 
   dom.newStudentModal
     .querySelector('input')
@@ -713,7 +1207,10 @@ function openPresencialModal() {
 function closePresencialModal() {
   if (!dom.newStudentModal) return;
 
-  dom.newStudentModal.classList.remove('open');
+  dom.newStudentModal.classList.remove(
+    'open'
+  );
+
   dom.newStudentModal.hidden = true;
 }
 
@@ -722,7 +1219,9 @@ async function copySelfRegistrationLink() {
     `${window.location.origin}/cadastro`;
 
   try {
-    await navigator.clipboard.writeText(link);
+    await navigator.clipboard.writeText(
+      link
+    );
 
     console.info(
       `Link de cadastro copiado: ${link}`
@@ -736,10 +1235,14 @@ async function copySelfRegistrationLink() {
 }
 
 const actionHandlers = {
-  'toggle-chat': toggleChat,
+  'toggle-chat':
+    toggleChat,
 
-  'back-to-students': () =>
-    showWorkspace(DEFAULT_WORKSPACE),
+  'back-to-students':
+    () =>
+      showWorkspace(
+        DEFAULT_WORKSPACE
+      ),
 
   'open-modal-presencial':
     openPresencialModal,
@@ -751,10 +1254,15 @@ const actionHandlers = {
     copySelfRegistrationLink,
 
   'student-page-prev':
-    () => changeStudentPage(-1),
+    () =>
+      changeStudentPage(-1),
 
   'student-page-next':
-    () => changeStudentPage(1),
+    () =>
+      changeStudentPage(1),
+
+  'close-modal-exercicio':
+    closeExerciseModal,
 
   'new-assessment':
     () =>
@@ -775,19 +1283,26 @@ const actionHandlers = {
       )
 };
 
-/**
- * One delegated click listener for the whole page.
- * Also works for elements that are rendered later (lists coming from the API).
- */
 function handleDocumentClick(event) {
-  if (event.target === dom.newStudentModal) {
+  if (
+    event.target ===
+    dom.newStudentModal
+  ) {
     closePresencialModal();
+    return;
+  }
+
+  if (
+    event.target ===
+    dom.exerciseModal
+  ) {
+    closeExerciseModal();
     return;
   }
 
   const trigger =
     event.target.closest(
-      '[data-tab], [data-workspace], [data-student-id], [data-action], [data-student-page]'
+      '[data-tab], [data-workspace], [data-student-id], [data-exercise-id], [data-action], [data-student-page], [data-exercise-page]'
     );
 
   if (!trigger) return;
@@ -796,8 +1311,10 @@ function handleDocumentClick(event) {
     tab,
     workspace,
     studentId,
+    exerciseId,
     action,
-    studentPage: pageAction
+    studentPage: studentPageAction,
+    exercisePage
   } = trigger.dataset;
 
   if (tab) {
@@ -807,26 +1324,91 @@ function handleDocumentClick(event) {
     showWorkspace(workspace);
 
   } else if (studentId) {
-    openStudentProfile(studentId);
+    openStudentProfile(
+      studentId
+    );
+
+  } else if (exerciseId) {
+    openExerciseModal(
+      exerciseId
+    );
 
   } else if (action) {
     actionHandlers[action]?.();
 
-  } else if (pageAction) {
+  } else if (studentPageAction) {
     actionHandlers[
-      `student-page-${pageAction}`
+      `student-page-${studentPageAction}`
     ]?.();
+
+  } else if (
+    exercisePage === 'prev'
+  ) {
+    goToExercicioPage(
+      exercicioPage - 1
+    );
+
+  } else if (
+    exercisePage === 'next'
+  ) {
+    goToExercicioPage(
+      exercicioPage + 1
+    );
+
+  } else if (
+    exercisePage !== undefined
+  ) {
+    goToExercicioPage(
+      Number(exercisePage)
+    );
   }
 }
 
+function handleDocumentKeydown(
+  event
+) {
+  if (event.key !== 'Escape') {
+    return;
+  }
 
-/* ==========================================================================
-   10. INITIALIZATION
-   ========================================================================== */
+  if (
+    dom.exerciseModal &&
+    !dom.exerciseModal.hidden
+  ) {
+    closeExerciseModal();
+  }
+
+  if (
+    dom.newStudentModal &&
+    !dom.newStudentModal.hidden
+  ) {
+    closePresencialModal();
+  }
+}
+
+/* 10. INICIALIZAÇÃO */
 
 function init() {
-  applyTheme(DEFAULT_THEME);
-  showWorkspace(DEFAULT_WORKSPACE);
+  applyTheme(
+    DEFAULT_THEME
+  );
+
+  showWorkspace(
+    DEFAULT_WORKSPACE
+  );
+
+  renderStudentCards();
+
+  bindStudentSearch();
+
+  bindExerciseSearch();
+
+  bindExerciseCategoryFilter();
+
+  bindFinancialFilters();
+
+  updateStudentPager();
+
   loadExercicios();
 
   document.addEventListener(
@@ -834,16 +1416,15 @@ function init() {
     handleDocumentClick
   );
 
+  document.addEventListener(
+    'keydown',
+    handleDocumentKeydown
+  );
+
   dom.chatForm?.addEventListener(
     'submit',
     sendChatMessage
   );
-
-  renderStudentCards();
-  bindStudentSearch();
-  bindExerciseSearch();
-  bindFinancialFilters();
-  updateStudentPager();
 
   dom.studentForm?.addEventListener(
     'submit',
@@ -851,7 +1432,9 @@ function init() {
       event.preventDefault();
 
       const formData =
-        new FormData(dom.studentForm);
+        new FormData(
+          dom.studentForm
+        );
 
       const name =
         String(
@@ -868,7 +1451,13 @@ function init() {
           formData.get('plan') ?? ''
         ).trim();
 
-      if (!name || !goal || !plan) return;
+      if (
+        !name ||
+        !goal ||
+        !plan
+      ) {
+        return;
+      }
 
       const nextId =
         Math.max(
@@ -884,7 +1473,8 @@ function init() {
           .slice(0, 2)
           .map(
             part =>
-              part[0].toUpperCase()
+              part[0]
+                .toUpperCase()
           )
           .join('');
 
@@ -902,11 +1492,16 @@ function init() {
 
       studentPage =
         Math.floor(
-          (Object.keys(students).length - 1) /
+          (
+            Object.keys(
+              students
+            ).length - 1
+          ) /
           STUDENTS_PER_PAGE
         );
 
       renderStudentCards();
+
       updateStudentPager();
     }
   );

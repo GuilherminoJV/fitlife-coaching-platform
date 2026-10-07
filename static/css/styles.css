@@ -1,3 +1,22 @@
+/*
+  1. Design tokens
+  2. Temas
+  3. Base / reset
+  4. Layout principal
+  5. Componentes compartilhados
+  6. Topbar
+  7. Navegação lateral
+  8. Home / dashboard
+  9. Treino
+  10. Modais
+  11. Placeholders
+  12. Feed
+  13. Hero
+  14. FitLife IA
+  15. Responsivo
+  16. Reduced motion
+*/
+
 /* 1. DESIGN TOKENS */
 
 :root {
@@ -21,7 +40,6 @@
   --on-dark-muted: rgb(255 255 255 / 0.62);
   --on-dark-faint: rgb(255 255 255 / 0.52);
 
-  /* --- Glass surface (cards, tables, nav buttons) --- */
   --glass-bg: rgb(255 255 255 / 0.075);
   --glass-bg-hover: rgb(255 255 255 / 0.105);
   --glass-border: rgb(255 255 255 / 0.09);
@@ -29,19 +47,17 @@
   --glass-blur: blur(12px);
   --divider: rgb(255 255 255 / 0.08);
 
-  /* --- Light surface (chat) --- */
   --text-dark: #0f172a;
   --border-color: #e2e8f0;
 
-  /* --- Shape and motion --- */
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 16px;
   --radius-pill: 24px;
+
   --transition-fast: 0.2s ease;
   --transition-base: 0.25s ease;
 
-  /* --- Layout sizes --- */
   --topbar-height: 66px;
   --sidebar-width: 250px;
   --hero-width: 320px;
@@ -49,7 +65,6 @@
 
   --font-base: "Inter", sans-serif;
 
-  /* --- Default theme (Home / general) --- */
   --theme-dark: #202124;
   --theme-mid: #303236;
   --theme-light: #414348;
@@ -62,16 +77,16 @@ body {
   --profile-border: rgb(var(--profile-rgb) / 0.35);
   --profile-glow: rgb(var(--profile-rgb) / 0.4);
 
-  --theme-gradient: linear-gradient(
-    90deg,
-    var(--theme-dark) 0%,
-    var(--theme-mid) 48%,
-    var(--theme-light) 100%
-  );
+  --theme-gradient:
+    linear-gradient(
+      90deg,
+      var(--theme-dark) 0%,
+      var(--theme-mid) 48%,
+      var(--theme-light) 100%
+    );
 }
 
-
-/* 2. AREA THEMES */
+/* 2. TEMAS */
 
 [data-theme="fitness"] {
   --theme-dark: #071521;
@@ -108,7 +123,6 @@ body {
   --profile-rgb: var(--gold-rgb);
 }
 
-
 /* 3. BASE / RESET */
 
 *,
@@ -133,6 +147,10 @@ body {
   font-family: var(--font-base);
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
 button,
 input,
 select {
@@ -144,15 +162,17 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-
-/* 4. APP LAYOUT  (sidebar | content | hero) */
+/* 4. LAYOUT PRINCIPAL */
 
 .app-layout {
   flex: 1;
   min-height: calc(100vh - var(--topbar-height));
 
   display: grid;
-  grid-template-columns: var(--sidebar-width) 1fr var(--hero-width);
+  grid-template-columns:
+    var(--sidebar-width)
+    1fr
+    var(--hero-width);
 
   background: var(--theme-gradient);
 }
@@ -182,20 +202,18 @@ button:focus-visible {
 
 .welcome-banner p {
   margin-top: 4px;
-
   color: var(--on-dark-muted);
   font-size: 0.9rem;
 }
 
 .section-title {
   margin-bottom: 16px;
-
   font-size: 1.05rem;
   font-weight: 700;
 }
 
+/* 5. COMPONENTES COMPARTILHADOS */
 
-/* 5. SHARED COMPONENTS */
 .card,
 .table-container,
 .feed-card,
@@ -245,7 +263,6 @@ button:focus-visible {
 .action-card small,
 .workspace-btn small {
   margin-top: 3px;
-
   color: var(--on-dark-faint);
   font-size: 0.8rem;
 }
@@ -265,7 +282,9 @@ button:focus-visible {
 .primary-btn,
 .secondary-btn,
 .table-btn,
-.back-btn {
+.back-btn,
+.page-btn,
+.pager-btn {
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -276,8 +295,8 @@ button:focus-visible {
 
   background: var(--profile-primary);
   border: 1px solid var(--profile-primary);
-  color: #fff;
 
+  color: #fff;
   font-size: 0.82rem;
   font-weight: 700;
 }
@@ -294,8 +313,8 @@ button:focus-visible {
 
   background: rgb(255 255 255 / 0.05);
   border: 1px solid rgb(255 255 255 / 0.12);
-  color: var(--profile-primary);
 
+  color: var(--profile-primary);
   font-size: 0.78rem;
   font-weight: 700;
 }
@@ -311,8 +330,8 @@ button:focus-visible {
 
   background: rgb(255 255 255 / 0.08);
   border: 1px solid rgb(255 255 255 / 0.12);
-  color: #fff;
 
+  color: #fff;
   font-size: 0.8rem;
 }
 
@@ -354,6 +373,7 @@ button:focus-visible {
 
   border-collapse: collapse;
   text-align: left;
+
   font-size: 0.88rem;
 }
 
@@ -362,8 +382,8 @@ button:focus-visible {
 
   background: rgb(255 255 255 / 0.045);
   border-bottom: 1px solid var(--divider);
-  color: var(--on-dark-muted);
 
+  color: var(--on-dark-muted);
   font-weight: 600;
 }
 
@@ -386,6 +406,7 @@ button:focus-visible {
 }
 
 .empty-state {
+  min-height: 100px;
   padding: 28px 16px;
 
   display: flex;
@@ -395,8 +416,8 @@ button:focus-visible {
   background: rgb(255 255 255 / 0.04);
   border: 1px dashed rgb(255 255 255 / 0.14);
   border-radius: 12px;
-  color: var(--on-dark-faint);
 
+  color: var(--on-dark-faint);
   font-size: 0.82rem;
   text-align: center;
 }
@@ -416,16 +437,15 @@ button:focus-visible {
 
 .card-heading p {
   margin-top: 3px;
-
   color: var(--on-dark-faint);
   font-size: 0.76rem;
 }
-
 
 /* 6. TOPBAR */
 
 .topbar {
   z-index: 10;
+
   padding: 14px 28px;
 
   display: flex;
@@ -470,7 +490,6 @@ button:focus-visible {
   margin-left: 4px;
 
   color: var(--brand-gray);
-
   font-size: 0.88rem;
   font-weight: 500;
   letter-spacing: 0.05em;
@@ -497,8 +516,8 @@ button:focus-visible {
 
   background: var(--profile-primary);
   box-shadow: 0 0 14px var(--profile-glow);
-  color: #fff;
 
+  color: #fff;
   font-weight: 700;
 
   transition:
@@ -506,8 +525,7 @@ button:focus-visible {
     box-shadow 0.4s ease;
 }
 
-
-/* 7. SIDEBAR */
+/* 7. NAVEGAÇÃO LATERAL */
 
 .sidebar {
   padding: 26px 14px 30px;
@@ -516,7 +534,12 @@ button:focus-visible {
   flex-direction: column;
   gap: 8px;
 
-  background: linear-gradient(180deg, rgb(0 0 0 / 0.2), rgb(0 0 0 / 0.04));
+  background:
+    linear-gradient(
+      180deg,
+      rgb(0 0 0 / 0.2),
+      rgb(0 0 0 / 0.04)
+    );
 }
 
 .sidebar-title {
@@ -526,6 +549,7 @@ button:focus-visible {
 
   font-size: 0.68rem;
   font-weight: 700;
+
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -550,6 +574,7 @@ button:focus-visible {
   background: rgb(255 255 255 / 0.035);
   border: 1px solid rgb(255 255 255 / 0.055);
   border-radius: var(--radius-md);
+
   color: rgb(255 255 255 / 0.7);
 
   text-align: left;
@@ -569,7 +594,9 @@ button:focus-visible {
 .ghost-btn.active {
   background: var(--profile-soft);
   border-color: var(--profile-border);
+
   box-shadow: 0 5px 18px var(--profile-glow);
+
   color: var(--profile-primary);
 }
 
@@ -598,7 +625,6 @@ button:focus-visible {
 
 .btn-content strong {
   color: inherit;
-
   font-size: 0.86rem;
   font-weight: 700;
   line-height: 1.1;
@@ -606,7 +632,6 @@ button:focus-visible {
 
 .btn-content small {
   color: rgb(255 255 255 / 0.48);
-
   font-size: 0.68rem;
   line-height: 1.15;
 }
@@ -615,12 +640,15 @@ button:focus-visible {
   color: var(--on-dark-muted);
 }
 
-
 /* 8. HOME / DASHBOARD */
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(200px, 1fr)
+    );
 
   gap: 16px;
   margin-bottom: 28px;
@@ -637,6 +665,7 @@ button:focus-visible {
 
   font-size: 0.8rem;
   font-weight: 600;
+
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -677,7 +706,12 @@ button:focus-visible {
 
 .actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(220px, 1fr)
+    );
 
   gap: 14px;
   margin-bottom: 28px;
@@ -718,8 +752,7 @@ button:focus-visible {
   background: var(--accent-orange);
 }
 
-
-/* 9. TRAINING AREA */
+/* 9. TREINO */
 
 .workspace-header {
   margin-bottom: 24px;
@@ -742,13 +775,20 @@ button:focus-visible {
 .workspace-nav {
   display: grid;
   grid-template-columns: 1fr;
+
   gap: 12px;
   margin-bottom: 12px;
 }
 
 .workspace-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
   gap: 12px;
   margin-bottom: 24px;
 }
@@ -773,6 +813,7 @@ button:focus-visible {
 .workspace-btn.active {
   background: var(--profile-soft);
   border-color: var(--profile-border);
+
   box-shadow: 0 6px 20px var(--profile-glow);
 }
 
@@ -800,6 +841,7 @@ button:focus-visible {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
+
   flex-wrap: wrap;
 
   gap: 16px;
@@ -826,10 +868,13 @@ button:focus-visible {
   padding: 11px 14px;
 
   background: rgb(255 255 255 / 0.075);
+
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
+
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
+
   color: #fff;
   outline: none;
 
@@ -854,24 +899,45 @@ button:focus-visible {
 .exercise-toolbar input:focus,
 .exercise-toolbar select:focus {
   border-color: var(--profile-primary);
-  box-shadow: 0 0 0 3px var(--profile-soft);
+
+  box-shadow:
+    0 0 0 3px var(--profile-soft);
 }
 
 .student-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: repeat(2, minmax(0, auto));
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+
+  grid-template-rows:
+    repeat(
+      2,
+      minmax(0, auto)
+    );
+
   gap: 14px;
 }
 
 .student-card {
   position: relative;
+
   min-width: 0;
   min-height: 112px;
 
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  grid-template-rows: auto auto;
+
+  grid-template-columns:
+    auto
+    minmax(0, 1fr);
+
+  grid-template-rows:
+    auto
+    auto;
+
   align-items: center;
 
   gap: 10px 12px;
@@ -957,6 +1023,7 @@ button:focus-visible {
 
   font-size: 0.72rem;
   font-weight: 700;
+
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
@@ -975,7 +1042,10 @@ button:focus-visible {
 
 .profile-grid {
   display: grid;
-  grid-template-columns: minmax(220px, 0.75fr) minmax(320px, 1.25fr);
+
+  grid-template-columns:
+    minmax(220px, 0.75fr)
+    minmax(320px, 1.25fr);
 
   gap: 16px;
   margin-bottom: 16px;
@@ -983,7 +1053,6 @@ button:focus-visible {
 
 .profile-card > h3 {
   margin-bottom: 16px;
-
   font-size: 0.95rem;
 }
 
@@ -1024,7 +1093,8 @@ button:focus-visible {
   margin-top: 8px;
 }
 
-/* --- Exercise library --- */
+/* Biblioteca de exercícios */
+
 .exercise-toolbar {
   margin-bottom: 16px;
 }
@@ -1037,19 +1107,23 @@ button:focus-visible {
   min-width: 180px;
 }
 
+/* Paginação dos exercícios */
 
-/* --- Student pagination --- */
+.pager,
 .student-pager {
-  margin-top: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+
+  gap: 8px;
+  margin-top: 14px;
+  padding: 4px 0;
 
   color: var(--on-dark-muted);
   font-size: 0.78rem;
 }
 
+.page-btn,
 .pager-btn {
   width: 36px;
   height: 36px;
@@ -1059,22 +1133,54 @@ button:focus-visible {
 
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
-  border-radius: 50%;
+
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
-  color: #fff;
+
+  border-radius: 50%;
+
+  color: var(--on-dark-soft);
+
   cursor: pointer;
 
   transition: all var(--transition-fast);
 }
 
+.page-btn:hover:not(:disabled),
 .pager-btn:hover {
   background: var(--profile-soft);
   border-color: var(--profile-border);
+
   color: var(--profile-primary);
+
+  transform: translateY(-1px);
 }
 
-/* --- Finance --- */
+.page-btn.active {
+  background: var(--profile-soft);
+  border-color: var(--profile-border);
+
+  box-shadow: 0 4px 14px var(--profile-glow);
+
+  color: var(--profile-primary);
+  font-weight: 800;
+}
+
+.page-btn:disabled,
+.pager-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+#studentPagerLabel {
+  min-width: 46px;
+  text-align: center;
+}
+
+/* Financeiro */
+
 .finance-toolbar {
   margin-bottom: 16px;
 }
@@ -1087,14 +1193,19 @@ button:focus-visible {
 
 .finance-filter {
   padding: 9px 13px;
+
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-pill);
+
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
+
   color: var(--on-dark-soft);
+
   font-size: 0.78rem;
   font-weight: 700;
+
   cursor: pointer;
 
   transition: all var(--transition-fast);
@@ -1111,17 +1222,22 @@ button:focus-visible {
   margin-bottom: 20px;
 }
 
-/* --- Presential registration modal --- */
+/* 10. MODAIS */
+
+/* Cadastro presencial */
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 200;
+
   padding: 24px;
 
   display: grid;
   place-items: center;
 
   background: rgb(0 0 0 / 0.58);
+
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
@@ -1132,18 +1248,28 @@ button:focus-visible {
 
 .modal-card {
   width: min(520px, 100%);
+
   padding: 22px;
 
-  background: linear-gradient(180deg, var(--theme-mid), var(--theme-dark));
+  background:
+    linear-gradient(
+      180deg,
+      var(--theme-mid),
+      var(--theme-dark)
+    );
+
   border: 1px solid var(--glass-border);
   border-radius: 20px;
-  box-shadow: 0 20px 50px rgb(0 0 0 / 0.34);
+
+  box-shadow:
+    0 20px 50px rgb(0 0 0 / 0.34);
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+
   gap: 16px;
   margin-bottom: 18px;
 }
@@ -1163,6 +1289,7 @@ button:focus-visible {
   gap: 6px;
 
   color: var(--on-dark-muted);
+
   font-size: 0.78rem;
   font-weight: 600;
 }
@@ -1172,8 +1299,10 @@ button:focus-visible {
   padding: 11px 14px;
 
   background: rgb(255 255 255 / 0.075);
+
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
+
   color: #fff;
   outline: none;
 }
@@ -1184,18 +1313,291 @@ button:focus-visible {
 
 .modal-form input:focus {
   border-color: var(--profile-primary);
-  box-shadow: 0 0 0 3px var(--profile-soft);
+
+  box-shadow:
+    0 0 0 3px var(--profile-soft);
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
+
   gap: 10px;
   margin-top: 4px;
 }
 
 
-/* 10. PLACEHOLDERS (future Nutrition / Psychology modules) */
+/* Modal de exercício */
+
+.exercise-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+
+  padding: 24px;
+
+  display: grid;
+  place-items: center;
+
+  background: rgb(0 0 0 / 0.66);
+
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.exercise-modal-backdrop[hidden] {
+  display: none !important;
+}
+
+.exercise-modal {
+  width: min(620px, 100%);
+  max-height: calc(100vh - 48px);
+
+  overflow-y: auto;
+
+  padding: 24px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgb(11 48 69 / 0.97),
+      rgb(7 21 33 / 0.99)
+    );
+
+  border: 1px solid var(--profile-border);
+  border-radius: 22px;
+
+  box-shadow:
+    0 24px 60px rgb(0 0 0 / 0.44),
+    0 0 28px var(--profile-glow);
+
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+
+  animation:
+    exercise-modal-in 0.22s ease;
+}
+
+@keyframes exercise-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.exercise-modal-header {
+  position: relative;
+
+  min-height: 42px;
+  margin-bottom: 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exercise-modal-title {
+  max-width: calc(100% - 54px);
+
+  color: #fff;
+
+  font-size: 1.45rem;
+  font-weight: 800;
+
+  line-height: 1.2;
+  text-align: center;
+  letter-spacing: -0.02em;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 50%;
+  right: 0;
+
+  width: 36px;
+  height: 36px;
+
+  display: grid;
+  place-items: center;
+
+  transform: translateY(-50%);
+
+  background: rgb(255 255 255 / 0.055);
+
+  border: 1px solid rgb(255 255 255 / 0.09);
+  border-radius: 50%;
+
+  color: var(--on-dark-muted);
+
+  cursor: pointer;
+
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.modal-close-btn:hover {
+  background: var(--profile-soft);
+  border-color: var(--profile-border);
+  color: #fff;
+
+  transform:
+    translateY(-50%)
+    scale(1.04);
+}
+
+
+/* Área de GIF / vídeo */
+
+.exercise-modal-media {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgb(255 255 255 / 0.06),
+      rgb(255 255 255 / 0.025)
+    );
+
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 16px;
+
+  box-shadow:
+    inset 0 0 28px rgb(0 0 0 / 0.14);
+}
+
+.exercise-modal-media img,
+.exercise-modal-media video {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+.exercise-modal-media video {
+  background: #000;
+}
+
+
+/* Placeholder da mídia */
+
+.exercise-media-placeholder {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  color: var(--on-dark-faint);
+
+  text-align: center;
+}
+
+.exercise-media-placeholder strong {
+  color: var(--on-dark-soft);
+
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.exercise-media-placeholder span:last-child {
+  color: var(--on-dark-faint);
+
+  font-size: 0.74rem;
+}
+
+.exercise-media-icon {
+  width: 48px;
+  height: 48px;
+
+  margin-bottom: 4px;
+
+  display: grid;
+  place-items: center;
+
+  background: var(--profile-soft);
+
+  border: 1px solid var(--profile-border);
+  border-radius: 50%;
+
+  box-shadow:
+    0 0 18px var(--profile-glow);
+
+  color: var(--profile-primary);
+
+  font-size: 0.9rem;
+}
+
+
+/* Bolhas de informações */
+
+.exercise-modal-meta {
+  margin-top: 16px;
+
+  display: flex;
+  flex-wrap: wrap;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+}
+
+.exercise-meta-bubble {
+  padding: 8px 13px;
+
+  background: var(--glass-bg);
+
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+
+  color: var(--on-dark-soft);
+
+  font-size: 0.76rem;
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.exercise-meta-bubble:hover {
+  background: var(--profile-soft);
+  border-color: var(--profile-border);
+
+  color: var(--profile-primary);
+
+  transform: translateY(-1px);
+}
+
+/* 11. PLACEHOLDERS */
 
 .module-placeholder {
   max-width: 700px;
@@ -1214,8 +1616,7 @@ button:focus-visible {
   line-height: 1.5;
 }
 
-
-/* 11. FEED */
+/* 12. FEED */
 
 .feed-container {
   display: flex;
@@ -1286,14 +1687,14 @@ button:focus-visible {
   background: rgb(255 255 255 / 0.04);
   border: 1px dashed rgb(255 255 255 / 0.14);
   border-radius: 12px;
+
   color: var(--on-dark-faint);
 
   font-size: 0.85rem;
   text-align: center;
 }
 
-
-/* 12. HERO COLUMN */
+/* 13. HERO */
 
 .hero-column {
   position: relative;
@@ -1310,12 +1711,17 @@ button:focus-visible {
       rgb(0 0 0 / 0.05) 38%,
       transparent 68%
     ),
-    linear-gradient(180deg, var(--theme-mid) 0%, var(--theme-light) 100%);
+    linear-gradient(
+      180deg,
+      var(--theme-mid) 0%,
+      var(--theme-light) 100%
+    );
 }
 
 .hero-bg-img {
   position: absolute;
   z-index: 1;
+
   left: 50%;
   bottom: 0;
 
@@ -1325,7 +1731,11 @@ button:focus-visible {
   object-fit: contain;
   object-position: center bottom;
 
-  filter: drop-shadow(0 0 18px var(--profile-glow));
+  filter:
+    drop-shadow(
+      0 0 18px var(--profile-glow)
+    );
+
   transform: translateX(-50%);
 
   transition:
@@ -1333,8 +1743,14 @@ button:focus-visible {
     filter 0.5s ease,
     transform 0.5s ease;
 }
-.hero-bg-img.is-loading { opacity: 0; }
-.hero-bg-img.is-error   { opacity: 0.85; }
+
+.hero-bg-img.is-loading {
+  opacity: 0;
+}
+
+.hero-bg-img.is-error {
+  opacity: 0.85;
+}
 
 .hero-smoke-overlay {
   position: absolute;
@@ -1343,12 +1759,13 @@ button:focus-visible {
 
   pointer-events: none;
 
-  background: linear-gradient(
-    180deg,
-    transparent 45%,
-    rgb(0 0 0 / 0.18) 65%,
-    rgb(0 0 0 / 0.72) 100%
-  );
+  background:
+    linear-gradient(
+      180deg,
+      transparent 45%,
+      rgb(0 0 0 / 0.18) 65%,
+      rgb(0 0 0 / 0.72) 100%
+    );
 }
 
 .hero-info {
@@ -1367,10 +1784,12 @@ button:focus-visible {
   background: var(--profile-soft);
   border: 1px solid var(--profile-border);
   border-radius: 20px;
+
   color: var(--profile-primary);
 
   font-size: 0.72rem;
   font-weight: 700;
+
   text-transform: uppercase;
   letter-spacing: 0.05em;
 
@@ -1391,13 +1810,12 @@ button:focus-visible {
   line-height: 1.4;
 }
 
-
-/* 13. AI CHAT (FitLife Copilot) */
-
+/* 14. FITLIFE IA */
 
 .floating-chat-toggle {
   position: fixed;
   z-index: 99;
+
   right: var(--chat-offset);
   bottom: 28px;
 
@@ -1409,15 +1827,22 @@ button:focus-visible {
   gap: 8px;
 
   background: rgb(var(--orange-rgb) / 0.14);
+
   border: 1px solid rgb(var(--orange-rgb) / 0.34);
   border-radius: 24px;
+
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
-  box-shadow: 0 8px 24px rgb(var(--orange-rgb) / 0.16);
+
+  box-shadow:
+    0 8px 24px
+    rgb(var(--orange-rgb) / 0.16);
+
   color: #fed7aa;
 
   font-size: 0.88rem;
   font-weight: 800;
+
   cursor: pointer;
 
   transition:
@@ -1433,14 +1858,18 @@ button:focus-visible {
 
 .floating-chat-toggle:hover {
   background: rgb(var(--orange-rgb) / 0.2);
-  box-shadow: 0 10px 26px rgb(var(--orange-rgb) / 0.22);
+
+  box-shadow:
+    0 10px 26px
+    rgb(var(--orange-rgb) / 0.22);
+
   transform: translateY(-1px);
 }
 
-/* --- Drawer (hidden until app.js adds .open) --- */
 .chat-drawer {
   position: fixed;
   z-index: 100;
+
   right: var(--chat-offset);
   bottom: 96px;
 
@@ -1450,12 +1879,17 @@ button:focus-visible {
 
   display: none;
   flex-direction: column;
+
   overflow: hidden;
 
   background: #fff;
+
   border: 1px solid var(--border-color);
   border-radius: 20px;
-  box-shadow: 0 12px 36px rgb(0 0 0 / 0.18);
+
+  box-shadow:
+    0 12px 36px
+    rgb(0 0 0 / 0.18);
 }
 
 .chat-drawer.open {
@@ -1480,6 +1914,7 @@ button:focus-visible {
 .close-chat-btn {
   background: none;
   border: none;
+
   color: var(--brand-gray);
 
   font-size: 20px;
@@ -1490,9 +1925,9 @@ button:focus-visible {
   color: #fff;
 }
 
-/* --- Messages --- */
 .drawer-body {
   flex: 1;
+
   padding: 16px;
 
   display: flex;
@@ -1500,11 +1935,13 @@ button:focus-visible {
   gap: 12px;
 
   overflow-y: auto;
+
   background: #f8fafc;
 }
 
 .chat-msg {
   max-width: 90%;
+
   padding: 12px 16px;
 
   border-radius: var(--radius-lg);
@@ -1517,7 +1954,9 @@ button:focus-visible {
   align-self: flex-end;
 
   background: var(--profile-primary);
+
   border-bottom-right-radius: 4px;
+
   color: #fff;
 }
 
@@ -1525,12 +1964,13 @@ button:focus-visible {
   align-self: flex-start;
 
   background: #fff;
+
   border: 1px solid var(--border-color);
   border-bottom-left-radius: 4px;
+
   color: var(--text-dark);
 }
 
-/* Markdown rendered by marked.js inside bot messages */
 .chat-msg.bot p {
   margin-bottom: 8px;
 }
@@ -1546,6 +1986,7 @@ button:focus-visible {
 
 .chat-msg.bot table {
   width: 100%;
+
   margin: 10px 0;
 
   border-collapse: collapse;
@@ -1559,6 +2000,7 @@ button:focus-visible {
   padding: 8px 10px;
 
   border: 1px solid var(--border-color);
+
   text-align: left;
 }
 
@@ -1577,7 +2019,6 @@ button:focus-visible {
   font-size: 0.82rem;
 }
 
-/* --- Input row --- */
 .drawer-footer {
   padding: 12px 16px;
 
@@ -1590,10 +2031,12 @@ button:focus-visible {
 
 .drawer-input {
   flex: 1;
+
   padding: 10px 16px;
 
   border: 1px solid var(--border-color);
   border-radius: var(--radius-pill);
+
   outline: none;
 
   font-size: 0.88rem;
@@ -1601,38 +2044,44 @@ button:focus-visible {
 
 .drawer-input:focus {
   border-color: var(--profile-primary);
-  box-shadow: 0 0 0 3px var(--profile-soft);
+
+  box-shadow:
+    0 0 0 3px var(--profile-soft);
 }
 
 .drawer-send-btn {
   padding: 10px 18px;
 
   background: var(--accent-orange);
+
   border: none;
   border-radius: var(--radius-pill);
+
   color: #fff;
 
   font-weight: 600;
+
   cursor: pointer;
 
-  transition: background var(--transition-fast);
+  transition:
+    background var(--transition-fast);
 }
 
 .drawer-send-btn:hover {
   background: var(--accent-orange-hover);
 }
 
+/* 15. RESPONSIVO */
 
-/* 14. RESPONSIVE */
-
-/* Tablet / small laptop: hero column goes away */
 @media (max-width: 1100px) {
   :root {
     --hero-width: 0px;
   }
 
   .app-layout {
-    grid-template-columns: var(--sidebar-width) 1fr;
+    grid-template-columns:
+      var(--sidebar-width)
+      1fr;
   }
 
   .hero-column {
@@ -1642,9 +2091,12 @@ button:focus-visible {
   .profile-grid {
     grid-template-columns: 1fr;
   }
+
+  .exercise-modal {
+    width: min(600px, 100%);
+  }
 }
 
-/* Phone: sidebar becomes a horizontal strip above the content */
 @media (max-width: 768px) {
   .topbar {
     padding: 12px 16px;
@@ -1664,6 +2116,7 @@ button:focus-visible {
 
     flex-direction: row;
     gap: 8px;
+
     overflow-x: auto;
   }
 
@@ -1675,6 +2128,7 @@ button:focus-visible {
   .ghost-btn {
     width: auto;
     min-height: 48px;
+
     flex-shrink: 0;
   }
 
@@ -1686,9 +2140,18 @@ button:focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .student-grid,
   .workspace-actions {
     grid-template-columns: 1fr;
+  }
+
+  .student-grid {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(0, 1fr)
+      );
+
+    grid-template-rows: none;
   }
 
   .workspace-toolbar,
@@ -1708,7 +2171,31 @@ button:focus-visible {
     flex-wrap: wrap;
   }
 
-  /* Chat uses the full width on small screens */
+  .exercise-modal-backdrop {
+    padding: 12px;
+  }
+
+  .exercise-modal {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+
+    padding: 18px;
+
+    border-radius: 18px;
+  }
+
+  .exercise-modal-title {
+    font-size: 1.2rem;
+  }
+
+  .exercise-modal-meta {
+    justify-content: flex-start;
+  }
+
+  .exercise-meta-bubble {
+    font-size: 0.72rem;
+  }
+
   .floating-chat-toggle {
     right: 16px;
     bottom: 16px;
@@ -1721,12 +2208,38 @@ button:focus-visible {
 
     width: auto;
     max-width: none;
+
     height: min(540px, 70vh);
   }
 }
 
+@media (max-width: 520px) {
+  .student-grid {
+    grid-template-columns: 1fr;
+  }
 
-/* 15. REDUCED MOTION */
+  .student-card {
+    min-height: 104px;
+  }
+
+  .exercise-modal-header {
+    margin-bottom: 14px;
+  }
+
+  .exercise-modal-media {
+    aspect-ratio: 4 / 3;
+  }
+
+  .exercise-modal-meta {
+    gap: 6px;
+  }
+
+  .exercise-meta-bubble {
+    padding: 7px 10px;
+  }
+}
+
+/* 16. REDUCED MOTION */
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -1737,38 +2250,233 @@ button:focus-visible {
   }
 }
 
-/* --- PAGER DE EXERCÍCIOS --- */
-.pager {
+/* 17. AJUSTE FINAL — MODAL DE EXERCÍCIO */
+
+#modalExercicio .exercise-modal-card {
+  width: min(620px, calc(100vw - 48px));
+  max-height: calc(100vh - 48px);
+  min-height: 490px;
+
+  padding: 24px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgb(11 48 69 / 0.98),
+      rgb(7 21 33 / 0.99)
+    );
+
+  border: 1px solid rgb(var(--blue-rgb) / 0.35);
+  border-radius: 22px;
+
+  box-shadow:
+    0 24px 60px rgb(0 0 0 / 0.45),
+    0 0 30px rgb(var(--blue-rgb) / 0.18);
+
+  overflow-y: auto;
+}
+
+#modalExercicio .exercise-modal-header {
+  position: relative;
+
+  min-height: 42px;
+  margin-bottom: 18px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 16px 0;
 }
 
-.page-btn {
-  background: transparent;
-  border: 1px solid var(--border, #3a4150);
-  color: var(--text-primary, #ffffff);
-  border-radius: 6px;
-  padding: 6px 12px;
+#modalExercicio .exercise-modal-title {
+  margin: 0;
+
+  color: #fff;
+
+  font-size: 1.45rem;
+  font-weight: 800;
+
+  line-height: 1.2;
+  text-align: center;
+}
+
+#modalExercicio .modal-close-btn {
+  position: absolute;
+  top: 50%;
+  right: 0;
+
+  width: 36px;
+  height: 36px;
+
+  display: grid;
+  place-items: center;
+
+  transform: translateY(-50%);
+
+  background: rgb(255 255 255 / 0.06);
+
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: 50%;
+
+  color: rgb(255 255 255 / 0.7);
+
   cursor: pointer;
-  font-size: 0.875rem;
-  transition: background 0.2s;
 }
 
-.page-btn:hover:not(:disabled) {
-  background: var(--primary-blue, #0093dd);
-  border-color: var(--primary-blue, #0093dd);
+#modalExercicio .modal-close-btn:hover {
+  background: rgb(var(--blue-rgb) / 0.16);
+  border-color: rgb(var(--blue-rgb) / 0.35);
+  color: #fff;
 }
 
-.page-btn.active {
-  background: var(--primary-blue, #0093dd);
-  border-color: var(--primary-blue, #0093dd);
-  font-weight: bold;
+
+/* Mídia */
+
+#modalExercicio .exercise-media {
+  width: 100%;
+  height: 320px;
+
+  margin: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  background:
+    rgb(255 255 255 / 0.045);
+
+  border: 1px solid rgb(255 255 255 / 0.10);
+  border-radius: 16px;
 }
 
-.page-btn:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
+#modalExercicio .exercise-media img,
+#modalExercicio .exercise-media video {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+
+/* Placeholder da mídia */
+
+#modalExercicio .exercise-media-placeholder {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  color: rgb(255 255 255 / 0.5);
+
+  text-align: center;
+}
+
+#modalExercicio .exercise-media-placeholder strong {
+  color: rgb(255 255 255 / 0.75);
+
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+#modalExercicio .exercise-media-placeholder span {
+  color: rgb(255 255 255 / 0.45);
+
+  font-size: 0.74rem;
+}
+
+#modalExercicio .exercise-media-icon {
+  width: 48px;
+  height: 48px;
+
+  margin-bottom: 4px;
+
+  display: grid;
+  place-items: center;
+
+  background: rgb(var(--blue-rgb) / 0.14);
+
+  border: 1px solid rgb(var(--blue-rgb) / 0.35);
+  border-radius: 50%;
+
+  color: var(--primary-blue);
+
+  font-size: 0.9rem;
+}
+
+
+/* Bolhas */
+
+#modalExercicio .exercise-tags {
+  margin-top: 16px;
+
+  display: flex;
+  flex-wrap: wrap;
+
+  justify-content: center;
+
+  gap: 8px;
+}
+
+#modalExercicio .exercise-tag {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 34px;
+  padding: 7px 13px;
+
+  background: rgb(var(--blue-rgb) / 0.10);
+
+  border: 1px solid rgb(var(--blue-rgb) / 0.30);
+  border-radius: 24px;
+
+  color: rgb(255 255 255 / 0.86);
+
+  font-size: 0.76rem;
+  font-weight: 700;
+
+  white-space: nowrap;
+
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+#modalExercicio .exercise-tag:hover {
+  background: rgb(var(--blue-rgb) / 0.17);
+  border-color: rgb(var(--blue-rgb) / 0.45);
+  color: #fff;
+}
+
+
+/* Responsivo */
+
+@media (max-width: 768px) {
+  #modalExercicio {
+    padding: 12px;
+  }
+
+  #modalExercicio .exercise-modal-card {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    padding: 18px;
+  }
+
+  #modalExercicio .exercise-modal-title {
+    font-size: 1.2rem;
+  }
+
+  #modalExercicio .exercise-media {
+    height: 240px;
+  }
+
+  #modalExercicio .exercise-tags {
+    justify-content: flex-start;
+  }
 }
