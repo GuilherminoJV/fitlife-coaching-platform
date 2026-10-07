@@ -1736,3 +1736,39 @@ button:focus-visible {
     transition: none !important;
   }
 }
+
+/* --- PAGER DE EXERCÍCIOS --- */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 0;
+}
+
+.page-btn {
+  background: transparent;
+  border: 1px solid var(--border, #3a4150);
+  color: var(--text-primary, #ffffff);
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.2s;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--primary-blue, #0093dd);
+  border-color: var(--primary-blue, #0093dd);
+}
+
+.page-btn.active {
+  background: var(--primary-blue, #0093dd);
+  border-color: var(--primary-blue, #0093dd);
+  font-weight: bold;
+}
+
+.page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}

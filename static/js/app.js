@@ -434,19 +434,8 @@ function bindExerciseSearch() {
   if (!input) return;
 
   input.addEventListener('input', () => {
-    const query =
-      input.value.toLowerCase().trim();
-
-    document
-      .querySelectorAll(
-        '#workspace-exercicios tbody tr'
-      )
-      .forEach(row => {
-        row.hidden =
-          !row.textContent
-            .toLowerCase()
-            .includes(query);
-      });
+    exercicioPage = 0;
+    renderExercicios(input.value.trim());
   });
 }
 
@@ -483,6 +472,10 @@ function bindFinancialFilters() {
 }
 
 // --- EXERCÍCIOS DA API ---
+const EXERCISES_PER_PAGE = 10;
+let exerciciosData = [];
+let exercicioPage = 0;
+
 async function loadExercicios(categoria = null) {
   const url = categoria
     ? `/exercicios/categoria/${encodeURIComponent(categoria)}`
@@ -490,30 +483,73 @@ async function loadExercicios(categoria = null) {
 
   try {
     const response = await fetch(url);
-    const exercicios = await response.json();
-
-    const tbody = document.querySelector(
-      '#workspace-exercicios tbody'
-    );
-
-    if (!tbody) return;
-
-    tbody.innerHTML = exercicios.map(e => `
-      <tr>
-        <td><strong>${e.nome}</strong></td>
-        <td>${e.musculo_alvo}</td>
-        <td>${e.categoria}</td>
-        <td>
-          <button class="secondary-btn" onclick="verExercicio(${e.id})">
-            Ver
-          </button>
-        </td>
-      </tr>
-    `).join('');
-
+    exerciciosData = await response.json();
+    exercicioPage = 0;
+    renderExercicios();
   } catch (error) {
     console.error('Erro ao carregar exercícios:', error);
   }
+}
+
+function renderExercicios(filtro = '') {
+  const tbody = document.querySelector('#workspace-exercicios tbody');
+  const pager = document.getElementById('exercicioPager');
+
+  if (!tbody) return;
+
+  // Filtra pelo nome se houver busca
+  const filtrados = exerciciosData.filter(e =>
+    e.nome.toLowerCase().includes(filtro.toLowerCase()) ||
+    e.musculo_alvo.toLowerCase().includes(filtro.toLowerCase())
+  );
+
+  const totalPages = Math.max(1, Math.ceil(filtrados.length / EXERCISES_PER_PAGE));
+  exercicioPage = Math.min(exercicioPage, totalPages - 1);
+
+  const inicio = exercicioPage * EXERCISES_PER_PAGE;
+  const pagina = filtrados.slice(inicio, inicio + EXERCISES_PER_PAGE);
+
+  // Renderiza as linhas
+  tbody.innerHTML = pagina.map(e => `
+    <tr>
+      <td><strong>${e.nome}</strong></td>
+      <td>${e.musculo_alvo}</td>
+      <td>${e.categoria}</td>
+      <td>
+        <button class="secondary-btn" onclick="verExercicio(${e.id})">
+          Ver
+        </button>
+      </td>
+    </tr>
+  `).join('');
+
+  // Renderiza os botões de página
+  if (pager) {
+    const botoes = Array.from({ length: totalPages }, (_, i) => `
+      <button
+        class="page-btn ${i === exercicioPage ? 'active' : ''}"
+        onclick="goToExercicioPage(${i})">
+        ${i + 1}
+      </button>
+    `).join('');
+
+    pager.innerHTML = `
+      <button class="page-btn" onclick="goToExercicioPage(${exercicioPage - 1})" ${exercicioPage === 0 ? 'disabled' : ''}>&lsaquo;</button>
+      ${botoes}
+      <button class="page-btn" onclick="goToExercicioPage(${exercicioPage + 1})" ${exercicioPage === totalPages - 1 ? 'disabled' : ''}>&rsaquo;</button>
+    `;
+
+    pager.hidden = filtrados.length <= EXERCISES_PER_PAGE;
+  }
+}
+
+function goToExercicioPage(page) {
+  const input = document.querySelector('#workspace-exercicios input[type="search"]');
+  const filtro = input?.value.trim() ?? '';
+  const totalPages = Math.max(1, Math.ceil(exerciciosData.length / EXERCISES_PER_PAGE));
+
+  exercicioPage = Math.max(0, Math.min(page, totalPages - 1));
+  renderExercicios(filtro);
 }
 
 function verExercicio(id) {

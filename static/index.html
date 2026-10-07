@@ -481,81 +481,49 @@
 
           </section>
 
-
           <!-- Exercise library -->
-          <section id="workspace-exercicios" class="workspace-panel" aria-labelledby="exercicios-title" hidden>
+<section id="workspace-exercicios" class="workspace-panel" aria-labelledby="exercicios-title" hidden>
 
-            <div class="workspace-toolbar">
-              <div>
-                <h2 id="exercicios-title" class="section-title">Exercícios</h2>
-                <p class="workspace-description">Biblioteca de exercícios utilizados nas prescrições.</p>
-              </div>
+  <div class="workspace-toolbar">
+    <div>
+      <h2 id="exercicios-title" class="section-title">Exercícios</h2>
+      <p class="workspace-description">Biblioteca de exercícios utilizados nas prescrições.</p>
+    </div>
+    <button type="button" class="primary-btn" data-action="new-exercise">
+      + Novo exercício
+    </button>
+  </div>
 
-              <button type="button" class="primary-btn" data-action="new-exercise">
-                + Novo exercício
-              </button>
-            </div>
+  <div class="exercise-toolbar">
+    <input type="search" placeholder="Buscar exercício..." aria-label="Buscar exercício">
+    <select aria-label="Filtrar por grupo muscular">
+      <option value="">Todos os grupos</option>
+      <option value="peito">Peito</option>
+      <option value="costas">Costas</option>
+      <option value="ombros">Ombros</option>
+      <option value="bracos">Braços</option>
+      <option value="pernas">Pernas</option>
+      <option value="core">Core</option>
+    </select>
+  </div>
 
-            <div class="exercise-toolbar">
-              <input type="search" placeholder="Buscar exercício..." aria-label="Buscar exercício">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Exercício</th>
+          <th scope="col">Grupo muscular</th>
+          <th scope="col">Tipo</th>
+          <th scope="col">Ações</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-              <select aria-label="Filtrar por grupo muscular">
-                <option value="">Todos os grupos</option>
-                <option value="peito">Peito</option>
-                <option value="costas">Costas</option>
-                <option value="ombros">Ombros</option>
-                <option value="bracos">Braços</option>
-                <option value="pernas">Pernas</option>
-                <option value="core">Core</option>
-              </select>
-            </div>
+    <div id="exercicioPager" class="pager" hidden></div>
+  </div>
 
-            <div class="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">Exercício</th>
-                    <th scope="col">Grupo muscular</th>
-                    <th scope="col">Tipo</th>
-                    <th scope="col">Ações</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  <tr>
-                    <th scope="row">Agachamento Livre</th>
-                    <td>Pernas</td>
-                    <td>Composto</td>
-                    <td><button type="button" class="table-btn" data-exercise-id="1">Ver</button></td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Supino Reto</th>
-                    <td>Peito</td>
-                    <td>Composto</td>
-                    <td><button type="button" class="table-btn" data-exercise-id="2">Ver</button></td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Remada Curvada</th>
-                    <td>Costas</td>
-                    <td>Composto</td>
-                    <td><button type="button" class="table-btn" data-exercise-id="3">Ver</button></td>
-                  </tr>
-                  <tr>
-                    <th scope="row">Elevação Lateral</th>
-                    <td>Ombros</td>
-                    <td>Isolador</td>
-                    <td><button type="button" class="table-btn" data-exercise-id="4">Ver</button></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-          </section>
-
-        </div>
-
-      </section>
-
+</section>
 
       <!-- ---------- Nutrition (placeholder) ---------- -->
       <section id="tab-nutricao" class="tab-content" aria-labelledby="nutricao-title">
