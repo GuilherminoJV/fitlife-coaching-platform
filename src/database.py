@@ -92,3 +92,32 @@ if __name__ == "__main__":
 
     except Exception as e:
         print(f"❌ Erro: {e}")
+
+# --- EXERCÍCIOS ---
+def listar_exercicios():
+    with engine.connect() as conn:
+        result = conn.execute(text("""
+            SELECT id, nome, categoria, musculo_alvo, nivel, equipamento, descricao, indicacoes, contraindicacoes
+            FROM exercicios
+            ORDER BY categoria, nome
+        """))
+        return result.fetchall()
+
+def listar_exercicios_por_categoria(categoria):
+    with engine.connect() as conn:
+        result = conn.execute(text("""
+            SELECT id, nome, categoria, musculo_alvo, nivel, equipamento, descricao, indicacoes, contraindicacoes
+            FROM exercicios
+            WHERE categoria = :categoria
+            ORDER BY nome
+        """), {"categoria": categoria})
+        return result.fetchall()
+
+def buscar_exercicio(exercicio_id):
+    with engine.connect() as conn:
+        result = conn.execute(text("""
+            SELECT id, nome, categoria, musculo_alvo, nivel, equipamento, descricao, indicacoes, contraindicacoes
+            FROM exercicios
+            WHERE id = :id
+        """), {"id": exercicio_id})
+        return result.fetchone()

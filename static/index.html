@@ -1,731 +1,795 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FitLife Coaching - Painel do Coach</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="FitLife Coaching - plataforma integrada de Treino, Nutrição e Psicologia.">
+  <meta name="theme-color" content="#2b303a">
+
+  <title>FitLife Coaching - Plataforma Multidisciplinar</title>
+
+  <!-- ===== Fonts ===== -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <style>
-    :root {
-      /* Paleta Harmônica Extraída da Logo FitLife */
-      --header-bg: #1e293b;        /* Grafite escuro elegante */
-      --fit-white: #ffffff;        /* Branco puro para o "FIT" */
-      --life-blue: #00a8e8;        /* Azul elétrico/ciano para o "LIFE" */
-      --coaching-gray: #94a3b8;    /* Cinza suave para o "COACHING" */
-      --health-green: #84cc16;     /* Verde para saúde e anamneses */
-      --accent-orange: #f97316;    /* Laranja de alta performance para o copiloto IA */
-      
-      --bg-page: #f8fafc;          /* Cinza/azulado ultra leve para fundo */
-      --card-bg: #ffffff;
-      --text-dark: #0f172a;
-      --text-muted: #64748b;
-      --border-color: #e2e8f0;
-    }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Inter', sans-serif;
-    }
+  <!-- ===== Styles ===== -->
+  <link rel="stylesheet" href="/static/css/styles.css">
 
-    body {
-      background-color: var(--bg-page);
-      color: var(--text-dark);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Topbar / Header Profissional */
-    .topbar {
-      background-color: var(--header-bg);
-      color: white;
-      padding: 14px 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .brand-logo-img {
-      height: 42px;
-      width: auto;
-      object-fit: contain;
-    }
-
-    .brand-title {
-      font-weight: 800;
-      font-size: 1.35rem;
-      letter-spacing: -0.02em;
-      display: flex;
-      gap: 4px;
-      align-items: center;
-    }
-
-    .brand-title .fit { color: var(--fit-white); }
-    .brand-title .life { color: var(--life-blue); }
-    .brand-title .coaching { 
-      color: var(--coaching-gray); 
-      font-weight: 500; 
-      font-size: 0.95rem; 
-      margin-left: 4px;
-      letter-spacing: 0.05em;
-    }
-
-    .user-profile {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.95rem;
-      color: #e2e8f0;
-    }
-
-    .avatar {
-      width: 38px;
-      height: 38px;
-      border-radius: 50%;
-      background: var(--life-blue);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      box-shadow: 0 0 10px rgba(0, 168, 232, 0.4);
-    }
-
-    /* Navigation Tabs */
-    .nav-tabs {
-      background: white;
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      border-bottom: 1px solid var(--border-color);
-      padding: 0 16px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-    }
-
-    .tab-btn {
-      background: none;
-      border: none;
-      padding: 16px 28px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      transition: all 0.2s ease;
-    }
-
-    .tab-btn:hover {
-      color: var(--life-blue);
-    }
-
-    .tab-btn.active {
-      color: var(--life-blue);
-      border-bottom-color: var(--life-blue);
-    }
-
-    /* Main Container */
-    .container {
-      max-width: 1100px;
-      width: 100%;
-      margin: 28px auto;
-      padding: 0 20px;
-      flex: 1;
-    }
-
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    /* Welcome Banner */
-    .welcome-banner {
-      margin-bottom: 24px;
-    }
-
-    .welcome-banner h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--text-dark);
-    }
-
-    .welcome-banner p {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    /* Dashboard Grid & Cards */
-    .metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 22px;
-      border: 1px solid var(--border-color);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    }
-
-    .card-metric {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .metric-value {
-      font-size: 1.85rem;
-      font-weight: 800;
-      color: var(--text-dark);
-      margin-top: 6px;
-    }
-
-    .metric-label {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-
-    .metric-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-    }
-
-    .metric-icon.blue { background: #e0f2fe; color: var(--life-blue); }
-    .metric-icon.green { background: #f7fee7; color: var(--health-green); }
-    .metric-icon.orange { background: #fff7ed; color: var(--accent-orange); }
-
-    /* Section Titles */
-    .section-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      margin-bottom: 16px;
-      color: var(--text-dark);
-    }
-
-    /* Quick Action Blocks */
-    .actions-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-
-    .action-card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 20px;
-      border: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-
-    .action-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-    }
-
-    .action-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: var(--life-blue);
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
-    }
-
-    /* Tables */
-    .table-container {
-      background: var(--card-bg);
-      border-radius: 16px;
-      border: 1px solid var(--border-color);
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-      font-size: 0.9rem;
-    }
-
-    th {
-      background: #f8fafc;
-      padding: 14px 20px;
-      font-weight: 600;
-      color: var(--text-muted);
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    td {
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    tr:last-child td {
-      border-bottom: none;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 0.78rem;
-      font-weight: 600;
-    }
-
-    .badge-plan {
-      background: #e0f2fe;
-      color: #0369a1;
-    }
-
-    /* Floating Chat Drawer */
-    .floating-chat-toggle {
-      position: fixed;
-      bottom: 28px;
-      right: 28px;
-      background: var(--accent-orange);
-      color: white;
-      border: none;
-      padding: 14px 22px;
-      border-radius: 30px;
-      font-weight: 700;
-      font-size: 0.95rem;
-      box-shadow: 0 8px 24px rgba(249, 115, 22, 0.4);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      z-index: 99;
-      transition: transform 0.2s, background-color 0.2s;
-    }
-
-    .floating-chat-toggle:hover {
-      transform: scale(1.05);
-      background: #ea580c;
-    }
-
-    .chat-drawer {
-      position: fixed;
-      bottom: 96px;
-      right: 28px;
-      width: 380px;
-      height: 520px;
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 12px 36px rgba(0,0,0,0.18);
-      border: 1px solid var(--border-color);
-      display: none;
-      flex-direction: column;
-      z-index: 100;
-      overflow: hidden;
-    }
-
-    .chat-drawer.open {
-      display: flex;
-    }
-
-    .chat-drawer-header {
-      background: var(--header-bg);
-      color: white;
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 600;
-    }
-
-    .close-chat-btn {
-      background: none;
-      border: none;
-      color: #94a3b8;
-      font-size: 20px;
-      cursor: pointer;
-    }
-
-    .close-chat-btn:hover { color: white; }
-
-    .drawer-body {
-      flex: 1;
-      padding: 16px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      background: #f8fafc;
-    }
-
-    .chat-msg {
-      max-width: 85%;
-      padding: 12px 16px;
-      border-radius: 16px;
-      font-size: 0.88rem;
-      line-height: 1.45;
-    }
-
-    .chat-msg.user {
-      align-self: flex-end;
-      background: var(--life-blue);
-      color: white;
-      border-bottom-right-radius: 4px;
-    }
-
-    .chat-msg.bot {
-      align-self: flex-start;
-      background: white;
-      border: 1px solid var(--border-color);
-      color: var(--text-dark);
-      border-bottom-left-radius: 4px;
-    }
-
-    .drawer-footer {
-      padding: 12px 16px;
-      border-top: 1px solid var(--border-color);
-      display: flex;
-      gap: 8px;
-      background: white;
-    }
-
-    .drawer-input {
-      flex: 1;
-      padding: 10px 16px;
-      border: 1px solid var(--border-color);
-      border-radius: 24px;
-      outline: none;
-      font-size: 0.88rem;
-    }
-
-    .drawer-input:focus { border-color: var(--life-blue); }
-
-    .drawer-send-btn {
-      background: var(--accent-orange);
-      color: white;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 24px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.2s;
-    }
-
-    .drawer-send-btn:hover { background: #ea580c; }
-  </style>
+  <!-- ===== Markdown renderer (AI chat answers) ===== -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js" defer></script>
 </head>
-<body>
 
-  <!-- Topbar com a Logo Real e Marca -->
+<!--
+  data-theme = active professional area (fitness | nutrition | psychology).
+  It is updated by app.js when the user switches areas.
+-->
+<body data-theme="fitness">
+
+  <!-- ===== SVG icon sprite =====
+       Each icon is declared once and reused with <use href="#icon-name">.
+       To add an icon: add a <symbol> here and reference it where needed. -->
+  <svg xmlns="http://www.w3.org/2000/svg" hidden>
+    <symbol id="icon-home" viewBox="0 0 24 24">
+      <path d="m3 10 9-7 9 7"></path>
+      <path d="M5 10v10h14V10"></path>
+    </symbol>
+    <symbol id="icon-training" viewBox="0 0 24 24">
+      <path d="M6.5 6.5h11"></path>
+      <path d="M6.5 17.5h11"></path>
+      <path d="M4 9v6"></path>
+      <path d="M20 9v6"></path>
+      <path d="M7 4v16"></path>
+      <path d="M17 4v16"></path>
+    </symbol>
+    <symbol id="icon-nutrition" viewBox="0 0 24 24">
+      <path d="M7 3c-1 1.5-1.5 3.1-1.2 4.5.4 1.8 1.8 2.8 3.7 2.8h4.9c1.9 0 3.3-1 3.7-2.8.3-1.4-.2-3-1.2-4.5"></path>
+      <path d="M12 10.3V21"></path>
+      <path d="M8.5 21h7"></path>
+    </symbol>
+    <symbol id="icon-psychology" viewBox="0 0 24 24">
+      <path d="M9.5 4.2A4.8 4.8 0 0 0 5 9c0 .8.2 1.5.5 2.2A4.2 4.2 0 0 0 7.5 19H9v2h2v-2h2v2h2v-2h1.5A4.2 4.2 0 0 0 19 11.2c.3-.7.5-1.4.5-2.2a4.8 4.8 0 0 0-4.5-4.8A4.7 4.7 0 0 0 12 5a4.7 4.7 0 0 0-2.5-.8Z"></path>
+      <path d="M9 10h.01"></path>
+      <path d="M15 10h.01"></path>
+      <path d="M9.5 14c1.7 1.2 3.3 1.2 5 0"></path>
+    </symbol>
+    <symbol id="icon-feed" viewBox="0 0 24 24">
+      <path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8 8 0 0 1-4.2-1.2L4 19l1.2-3.3A7.3 7.3 0 1 1 20 11.5Z"></path>
+      <path d="M8.5 11.5h.01"></path>
+      <path d="M12 11.5h.01"></path>
+      <path d="M15.5 11.5h.01"></path>
+    </symbol>
+    <symbol id="icon-finance" viewBox="0 0 24 24">
+      <path d="M4 19V10"></path>
+      <path d="M10 19V6"></path>
+      <path d="M16 19v-9"></path>
+      <path d="M22 19V3"></path>
+      <path d="m3 7 5-3 6 3 7-4"></path>
+    </symbol>
+  </svg>
+
+
+  <!-- ===== Topbar ===== -->
   <header class="topbar">
+
     <div class="brand">
-      <img src="/static/logo.png" alt="FitLife Coaching Logo" class="brand-logo-img" />
-      <div class="brand-title">
-        <span class="fit">FIT</span><span class="life">LIFE</span><span class="coaching">COACHING</span>
-      </div>
+      <img src="/static/logo.png" alt="FitLife Coaching" class="brand-logo-img">
+
+      <p class="brand-title">
+        <span class="fit">FIT</span>
+        <span class="life">LIFE</span>
+        <span class="coaching">COACHING</span>
+      </p>
     </div>
+
     <div class="user-profile">
       <span>Olá, <strong>Coach João</strong></span>
-      <div class="avatar">J</div>
+      <div class="avatar" aria-hidden="true">J</div>
     </div>
+
   </header>
 
-  <!-- Navigation Tabs -->
-  <nav class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('inicio', event)">🏠 Início</button>
-    <button class="tab-btn" onclick="switchTab('alunos', event)">👥 Alunos & Anamneses</button>
-    <button class="tab-btn" onclick="switchTab('historico', event)">💬 Histórico IA</button>
-  </nav>
 
-  <!-- Content Container -->
-  <main class="container">
+  <div class="app-layout">
 
-    <!-- ABA 1: INÍCIO (DASHBOARD) -->
-    <section id="tab-inicio" class="tab-content active">
-      
-      <!-- Welcome Banner -->
-      <div class="welcome-banner">
-        <h1>Visão Geral do Consultório</h1>
-        <p>Acompanhe seus alunos cadastrados, anamneses e interações com a IA.</p>
-      </div>
+    <!-- ===== Sidebar navigation =====
+         Every button with data-tab switches to the section #tab-{value}.
+         To add an area: add a button here + a <section id="tab-{name}"> below. -->
+    <nav class="sidebar" aria-label="Navegação principal">
 
-      <!-- Metrics Row -->
-      <div class="metrics-grid">
-        <div class="card">
-          <div class="card-metric">
-            <div>
-              <div class="metric-label">Alunos Ativos</div>
-              <div class="metric-value">3</div>
+      <div class="sidebar-title">Home</div>
+
+      <button type="button" class="ghost-btn active" data-tab="geral" aria-current="page">
+        <span class="btn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round"><use href="#icon-home"></use></svg>
+        </span>
+        <span class="btn-content">
+          <strong>Home</strong>
+          <small>Visão Geral</small>
+        </span>
+      </button>
+
+
+      <div class="sidebar-title">Áreas</div>
+
+      <button type="button" class="ghost-btn" data-tab="treino">
+        <span class="btn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round"><use href="#icon-training"></use></svg>
+        </span>
+        <span class="btn-content">
+          <strong>Treino</strong>
+          <small>Educação Física</small>
+        </span>
+      </button>
+
+      <button type="button" class="ghost-btn" data-tab="nutricao">
+        <span class="btn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round"><use href="#icon-nutrition"></use></svg>
+        </span>
+        <span class="btn-content">
+          <strong>Nutrição</strong>
+          <small>Nutrição Esportiva</small>
+        </span>
+      </button>
+
+      <button type="button" class="ghost-btn" data-tab="psicologia">
+        <span class="btn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round"><use href="#icon-psychology"></use></svg>
+        </span>
+        <span class="btn-content">
+          <strong>Psicologia</strong>
+          <small>Mente &amp; Comportamento</small>
+        </span>
+      </button>
+
+
+      <div class="sidebar-title">Acompanhamento</div>
+
+      <button type="button" class="ghost-btn" data-tab="feed">
+        <span class="btn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round"><use href="#icon-feed"></use></svg>
+        </span>
+        <span class="btn-content">
+          <strong>Feed</strong>
+          <small>Diário dos Alunos</small>
+        </span>
+      </button>
+
+      <div class="sidebar-title">Gestão</div>
+
+      <button type="button" class="ghost-btn" data-tab="financeiro">
+        <span class="btn-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round"><use href="#icon-finance"></use></svg>
+        </span>
+        <span class="btn-content">
+          <strong>Financeiro</strong>
+          <small>Contratos &amp; Receitas</small>
+        </span>
+      </button>
+
+    </nav>
+
+
+    <!-- ===== Main content: one <section class="tab-content"> per area ===== -->
+    <main class="main-content">
+
+      <!-- ---------- Home / Overview ---------- -->
+      <section id="tab-geral" class="tab-content active" aria-labelledby="geral-title">
+
+        <div class="welcome-banner">
+          <h1 id="geral-title">Ecossistema FitLife Coaching</h1>
+          <p>Visão integrada de Treino, Nutrição e Acompanhamento Psicológico.</p>
+        </div>
+
+        <!-- Metrics (values are static for now; later fed by the API) -->
+        <div class="metrics-grid">
+
+          <div class="card">
+            <div class="card-metric">
+              <div>
+                <div class="metric-label">Alunos Ativos</div>
+                <div class="metric-value" data-metric="active-students">3</div>
+              </div>
+              <div class="metric-icon blue" aria-hidden="true">👥</div>
             </div>
-            <div class="metric-icon blue">👥</div>
           </div>
-        </div>
 
-        <div class="card">
-          <div class="card-metric">
-            <div>
-              <div class="metric-label">Anamneses</div>
-              <div class="metric-value">3</div>
+          <div class="card">
+            <div class="card-metric">
+              <div>
+                <div class="metric-label">Planos Nutri</div>
+                <div class="metric-value" data-metric="nutrition-plans">3</div>
+              </div>
+              <div class="metric-icon green" aria-hidden="true">🥗</div>
             </div>
-            <div class="metric-icon green">📋</div>
           </div>
-        </div>
 
-        <div class="card">
-          <div class="card-metric">
-            <div>
-              <div class="metric-label">Consultas IA (Mês)</div>
-              <div class="metric-value">12</div>
+          <div class="card">
+            <div class="card-metric">
+              <div>
+                <div class="metric-label">Sessões Mente</div>
+                <div class="metric-value" data-metric="psychology-sessions">2</div>
+              </div>
+              <div class="metric-icon purple" aria-hidden="true">🧠</div>
             </div>
-            <div class="metric-icon orange">🤖</div>
+          </div>
+
+          <div class="card">
+            <div class="card-metric">
+              <div>
+                <div class="metric-label">Consultas IA</div>
+                <div class="metric-value" data-metric="ai-queries">12</div>
+              </div>
+              <div class="metric-icon orange" aria-hidden="true">🤖</div>
+            </div>
+          </div>
+
+        </div>
+
+
+        <!-- Quick actions: data-tab switches area, data-action="toggle-chat" opens the AI chat -->
+        <h2 class="section-title">Ações Rápidas da Equipe</h2>
+
+        <div class="actions-grid">
+
+          <button type="button" class="action-card" data-tab="treino">
+            <span class="action-icon" aria-hidden="true">🏋️‍♂️</span>
+            <span>
+              <strong>Prescrever Treino</strong>
+              <small>Prescrição e Biomecânica</small>
+            </span>
+          </button>
+
+          <button type="button" class="action-card" data-tab="nutricao">
+            <span class="action-icon action-icon-green" aria-hidden="true">🥗</span>
+            <span>
+              <strong>Plano Alimentar</strong>
+              <small>Montar dieta e metas</small>
+            </span>
+          </button>
+
+          <button type="button" class="action-card" data-tab="psicologia">
+            <span class="action-icon action-icon-purple" aria-hidden="true">🧠</span>
+            <span>
+              <strong>Registrar Sessão</strong>
+              <small>Evolução comportamental</small>
+            </span>
+          </button>
+
+          <button type="button" class="action-card" data-action="toggle-chat">
+            <span class="action-icon action-icon-orange" aria-hidden="true">🤖</span>
+            <span>
+              <strong>Copiloto IA FitLife</strong>
+              <small>Consultar base RAG</small>
+            </span>
+          </button>
+
+        </div>
+
+
+        <!-- Integrated follow-up table -->
+        <h2 class="section-title">Alunos em Acompanhamento Integrado</h2>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Aluno</th>
+                <th scope="col">Personal</th>
+                <th scope="col">Nutricionista</th>
+                <th scope="col">Psicóloga</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <th scope="row">João Silva</th>
+                <td><span class="badge badge-blue">Ativo</span></td>
+                <td><span class="badge badge-green">Plano Enviado</span></td>
+                <td><span class="badge badge-purple">Em Acompanhamento</span></td>
+                <td><strong>Em Dia</strong></td>
+              </tr>
+
+              <tr>
+                <th scope="row">Maria Souza</th>
+                <td><span class="badge badge-blue">Ativo</span></td>
+                <td><span class="badge badge-green">Aguardando Anamnese</span></td>
+                <td><span class="badge badge-purple">Sem Demanda</span></td>
+                <td><strong>Em Dia</strong></td>
+              </tr>
+
+              <tr>
+                <th scope="row">Carlos Eduardo</th>
+                <td><span class="badge badge-blue">Ativo</span></td>
+                <td><span class="badge badge-green">Plano Enviado</span></td>
+                <td><span class="badge badge-purple">Sessão Agendada</span></td>
+                <td><strong>Pendente</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </section>
+
+
+      <!-- ---------- Training (Educação Física) ---------- -->
+      <section id="tab-treino" class="tab-content" aria-labelledby="treino-title">
+
+        <div class="workspace-header">
+          <span class="hero-tag">Educação Física &amp; Biomecânica</span>
+          <h1 id="treino-title">Treino &amp; Biomecânica</h1>
+          <p>Gestão de alunos, exercícios, avaliações e treinamentos.</p>
+        </div>
+
+        <!-- Sub-navigation inside the Training area (data-workspace -> #workspace-{value}) -->
+        <div class="workspace-nav">
+
+          <button type="button" class="workspace-btn active" data-workspace="alunos">
+            <span class="workspace-icon" aria-hidden="true">👥</span>
+            <span>
+              <strong>Alunos</strong>
+              <small>Todos os alunos</small>
+            </span>
+          </button>
+
+          <button type="button" class="workspace-btn" data-workspace="exercicios">
+            <span class="workspace-icon" aria-hidden="true">🏋️</span>
+            <span>
+              <strong>Exercícios</strong>
+              <small>Biblioteca de exercícios</small>
+            </span>
+          </button>
+
+        </div>
+
+        <div class="workspace-actions" aria-label="Ações rápidas de alunos">
+
+          <button type="button" class="workspace-btn workspace-action-btn" data-action="open-modal-presencial">
+            <span class="workspace-icon" aria-hidden="true">＋</span>
+            <span>
+              <strong>Cadastrar aluno</strong>
+              <small>Presencial</small>
+            </span>
+          </button>
+
+          <button type="button" class="workspace-btn workspace-action-btn" data-action="copy-self-registration-link">
+            <span class="workspace-icon" aria-hidden="true">↗</span>
+            <span>
+              <strong>Link de cadastro</strong>
+              <small>Auto-cadastro</small>
+            </span>
+          </button>
+
+        </div>
+
+        <div class="workspace-content">
+
+          <!-- Student list -->
+          <section id="workspace-alunos" class="workspace-panel active" aria-labelledby="alunos-title">
+
+            <div class="workspace-toolbar student-toolbar">
+              <div>
+                <h2 id="alunos-title" class="section-title">Alunos</h2>
+                <p class="workspace-description">Consulte os alunos acompanhados por você.</p>
+              </div>
+
+              <div class="workspace-search glass-search">
+                <input type="search" placeholder="Buscar aluno..." aria-label="Buscar aluno">
+              </div>
+            </div>
+
+            <div class="student-grid" id="studentGrid" aria-live="polite"></div>
+
+            <div class="student-pager" id="studentPager" hidden>
+              <button type="button" class="pager-btn" data-student-page="prev" aria-label="Alunos anteriores">
+                ←
+              </button>
+              <span id="studentPagerLabel">1 / 1</span>
+              <button type="button" class="pager-btn" data-student-page="next" aria-label="Próximos alunos">
+                →
+              </button>
+            </div>
+
+          </section>
+
+
+          <!-- Student profile (single template; JS fills the data-field elements) -->
+          <section id="workspace-aluno-perfil" class="workspace-panel" aria-labelledby="profile-name" hidden>
+
+            <div class="profile-header">
+
+              <button type="button" class="back-btn" data-action="back-to-students">
+                ← Voltar para alunos
+              </button>
+
+              <div class="student-profile-heading">
+                <div class="student-avatar large" aria-hidden="true" data-field="initials">JS</div>
+
+                <div>
+                  <span class="profile-label">Perfil do aluno</span>
+                  <h2 id="profile-name" data-field="name">João Silva</h2>
+                  <p data-field="summary">Hipertrofia • Plano Trimestral</p>
+                </div>
+              </div>
+
+            </div>
+
+
+            <div class="profile-grid">
+
+              <div class="card profile-card">
+                <h3>Dados do aluno</h3>
+
+                <dl class="profile-data">
+                  <div>
+                    <dt>Objetivo</dt>
+                    <dd data-field="goal">Hipertrofia</dd>
+                  </div>
+                  <div>
+                    <dt>Plano</dt>
+                    <dd data-field="plan">Trimestral</dd>
+                  </div>
+                  <div>
+                    <dt>Status</dt>
+                    <dd data-field="status">Ativo</dd>
+                  </div>
+                </dl>
+              </div>
+
+              <div class="card profile-card">
+                <div class="card-heading">
+                  <div>
+                    <h3>Avaliação Física</h3>
+                    <p>Última avaliação registrada</p>
+                  </div>
+                  <button type="button" class="primary-btn" data-action="new-assessment">
+                    + Nova avaliação
+                  </button>
+                </div>
+
+                <div class="empty-state">Nenhuma avaliação cadastrada.</div>
+              </div>
+
+            </div>
+
+
+            <div class="training-section">
+              <div class="card">
+                <div class="card-heading">
+                  <div>
+                    <h3>Treinamento</h3>
+                    <p>Treinos prescritos para o aluno</p>
+                  </div>
+                  <button type="button" class="primary-btn" data-action="new-workout">
+                    + Criar treino
+                  </button>
+                </div>
+
+                <div class="workout-list">
+                  <div class="empty-state">Nenhum treino criado para este aluno.</div>
+                </div>
+              </div>
+            </div>
+
+          </section>
+
+
+          <!-- Exercise library -->
+          <section id="workspace-exercicios" class="workspace-panel" aria-labelledby="exercicios-title" hidden>
+
+            <div class="workspace-toolbar">
+              <div>
+                <h2 id="exercicios-title" class="section-title">Exercícios</h2>
+                <p class="workspace-description">Biblioteca de exercícios utilizados nas prescrições.</p>
+              </div>
+
+              <button type="button" class="primary-btn" data-action="new-exercise">
+                + Novo exercício
+              </button>
+            </div>
+
+            <div class="exercise-toolbar">
+              <input type="search" placeholder="Buscar exercício..." aria-label="Buscar exercício">
+
+              <select aria-label="Filtrar por grupo muscular">
+                <option value="">Todos os grupos</option>
+                <option value="peito">Peito</option>
+                <option value="costas">Costas</option>
+                <option value="ombros">Ombros</option>
+                <option value="bracos">Braços</option>
+                <option value="pernas">Pernas</option>
+                <option value="core">Core</option>
+              </select>
+            </div>
+
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Exercício</th>
+                    <th scope="col">Grupo muscular</th>
+                    <th scope="col">Tipo</th>
+                    <th scope="col">Ações</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr>
+                    <th scope="row">Agachamento Livre</th>
+                    <td>Pernas</td>
+                    <td>Composto</td>
+                    <td><button type="button" class="table-btn" data-exercise-id="1">Ver</button></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Supino Reto</th>
+                    <td>Peito</td>
+                    <td>Composto</td>
+                    <td><button type="button" class="table-btn" data-exercise-id="2">Ver</button></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Remada Curvada</th>
+                    <td>Costas</td>
+                    <td>Composto</td>
+                    <td><button type="button" class="table-btn" data-exercise-id="3">Ver</button></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Elevação Lateral</th>
+                    <td>Ombros</td>
+                    <td>Isolador</td>
+                    <td><button type="button" class="table-btn" data-exercise-id="4">Ver</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+          </section>
+
+        </div>
+
+      </section>
+
+
+      <!-- ---------- Nutrition (placeholder) ---------- -->
+      <section id="tab-nutricao" class="tab-content" aria-labelledby="nutricao-title">
+
+        <div class="welcome-banner">
+          <h1 id="nutricao-title"><span aria-hidden="true">🥗</span> Nutrição Esportiva &amp; Clínica</h1>
+          <p>Cálculo de macronutrientes, substituições e prescrição de dietas.</p>
+        </div>
+
+        <div class="card module-placeholder">
+          <h3>Módulo de Nutrição</h3>
+          <p>Espaço reservado para a futura interface da Nutrição.</p>
+        </div>
+
+      </section>
+
+
+      <!-- ---------- Psychology (placeholder) ---------- -->
+      <section id="tab-psicologia" class="tab-content" aria-labelledby="psicologia-title">
+
+        <div class="welcome-banner">
+          <h1 id="psicologia-title"><span aria-hidden="true">🧠</span> Psicologia &amp; Saúde Mental</h1>
+          <p>Registro de sessões, estratégias de adesão e acompanhamento.</p>
+        </div>
+
+        <div class="card module-placeholder">
+          <h3>Módulo de Psicologia</h3>
+          <p>Espaço reservado para a futura interface da Psicologia.</p>
+        </div>
+
+      </section>
+
+
+      <!-- ---------- Finance (unified management) ---------- -->
+      <section id="tab-financeiro" class="tab-content" aria-labelledby="financeiro-title">
+
+        <div class="welcome-banner">
+          <h1 id="financeiro-title">Gestão Financeira</h1>
+          <p>Contratos, receitas e acompanhamento financeiro dos serviços FitLife.</p>
+        </div>
+
+        <div class="finance-toolbar card">
+          <div class="card-heading">
+            <div>
+              <h3>Filtrar por especialidade</h3>
+              <p>Visualize os contratos individualmente ou em conjunto.</p>
+            </div>
+          </div>
+
+          <div class="finance-filters" role="group" aria-label="Filtro financeiro por especialidade">
+            <button type="button" class="finance-filter active" data-fin-role="todos">Todos</button>
+            <button type="button" class="finance-filter" data-fin-role="edf">Educação Física</button>
+            <button type="button" class="finance-filter" data-fin-role="nutri">Nutrição</button>
+            <button type="button" class="finance-filter" data-fin-role="psico">Psicologia</button>
           </div>
         </div>
-      </div>
 
-      <!-- Quick Actions -->
-      <h2 class="section-title">Gestão Rápida</h2>
-      <div class="actions-grid">
-        <div class="action-card" onclick="document.querySelectorAll('.tab-btn')[1].click()">
-          <div class="action-icon">➕</div>
-          <div>
-            <strong>Adicionar Novo Aluno</strong>
-            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">Cadastrar dados no PostgreSQL</div>
-          </div>
+        <div class="table-container finance-table-container">
+          <table id="financeTable">
+            <thead>
+              <tr>
+                <th scope="col">Aluno</th>
+                <th scope="col">Especialidade</th>
+                <th scope="col">Contrato</th>
+                <th scope="col">Receita</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr data-fin-role="edf">
+                <th scope="row">João Silva</th>
+                <td>Educação Física</td>
+                <td>Plano Trimestral</td>
+                <td>R$ 450,00</td>
+                <td><span class="badge badge-blue">Ativo</span></td>
+              </tr>
+              <tr data-fin-role="nutri">
+                <th scope="row">Maria Souza</th>
+                <td>Nutrição</td>
+                <td>Plano Semestral</td>
+                <td>R$ 300,00</td>
+                <td><span class="badge badge-green">Ativo</span></td>
+              </tr>
+              <tr data-fin-role="psico">
+                <th scope="row">Carlos Eduardo</th>
+                <td>Psicologia</td>
+                <td>Sessão avulsa</td>
+                <td>R$ 180,00</td>
+                <td><span class="badge badge-purple">Agendado</span></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <div class="action-card" onclick="toggleChat()">
-          <div class="action-icon" style="background: var(--health-green);">🤖</div>
-          <div>
-            <strong>Consultar Copiloto IA</strong>
-            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">Tirar dúvidas sobre protocolos de alunos</div>
-          </div>
+      </section>
+
+
+      <!-- ---------- Students' daily feed ---------- -->
+      <section id="tab-feed" class="tab-content" aria-labelledby="feed-title">
+
+        <div class="welcome-banner">
+          <h1 id="feed-title"><span aria-hidden="true">💬</span> Feed Diário dos Alunos</h1>
+          <p>Acompanhe registros, relatos de treino e rotina dos alunos.</p>
         </div>
-      </div>
 
-      <!-- Recent Students Summary -->
-      <h2 class="section-title">Alunos Recentes</h2>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>E-mail</th>
-              <th>Telefone</th>
-              <th>Plano</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>João Silva</strong></td>
-              <td>joao@email.com</td>
-              <td>(27) 99999-0001</td>
-              <td><span class="badge badge-plan">Plano Mensal</span></td>
-            </tr>
-            <tr>
-              <td><strong>Maria Souza</strong></td>
-              <td>maria@email.com</td>
-              <td>(27) 99999-0002</td>
-              <td><span class="badge badge-plan">Plano Semestral</span></td>
-            </tr>
-            <tr>
-              <td><strong>Carlos Eduardo</strong></td>
-              <td>carlos@email.com</td>
-              <td>(27) 99999-0003</td>
-              <td><span class="badge badge-plan">Plano Trimestral</span></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+        <div class="feed-container">
 
-    </section>
+          <article class="feed-card">
+            <header class="feed-header">
+              <div class="feed-avatar" aria-hidden="true">JS</div>
+              <div class="feed-user-info">
+                <strong>João Silva</strong>
+                <span>Hoje às 08:30 • Check-in</span>
+              </div>
+            </header>
 
-    <!-- ABA 2: ALUNOS & ANAMNESES -->
-    <section id="tab-alunos" class="tab-content">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <div>
-          <h2 class="section-title" style="margin-bottom: 4px;">Alunos Cadastrados</h2>
-          <p style="font-size: 0.88rem; color: var(--text-muted);">Gerencie as anamneses e fichas dos alunos.</p>
+            <blockquote class="feed-content">
+              Treino de perna concluído! Consegui subir a carga no agachamento sem dor no joelho.
+            </blockquote>
+
+            <div class="feed-placeholder-img">
+              <span aria-hidden="true">📸</span> Espaço reservado para mídia enviada pelo aluno
+            </div>
+          </article>
+
+          <article class="feed-card">
+            <header class="feed-header">
+              <div class="feed-avatar feed-avatar-pink" aria-hidden="true">MS</div>
+              <div class="feed-user-info">
+                <strong>Maria Souza</strong>
+                <span>Ontem às 19:45 • Relato de rotina</span>
+              </div>
+            </header>
+
+            <blockquote class="feed-content">
+              Dia corrido no trabalho, mas consegui manter a rotina e seguir o planejamento.
+            </blockquote>
+          </article>
+
         </div>
-        <button style="background: var(--life-blue); color: white; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 600; cursor: pointer;">
-          + Cadastrar Aluno
-        </button>
+
+      </section>
+
+    </main>
+
+
+    <!-- ===== Hero column (content updated by app.js per active area) ===== -->
+    <aside class="hero-column" aria-label="Destaque da equipe">
+
+      <img id="heroImg" class="hero-bg-img" src="/static/joao.png" alt="Coach João Vitor">
+
+      <div class="hero-smoke-overlay"></div>
+
+      <div class="hero-info">
+        <span id="heroTag" class="hero-tag">Equipe Multidisciplinar</span>
+        <h2 id="heroName" class="hero-name">Ecossistema FitLife</h2>
+        <p id="heroRole" class="hero-role">Treino, Nutrição e Psicologia integrados em um só lugar.</p>
       </div>
 
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nome</th>
-              <th>E-mail</th>
-              <th>Telefone</th>
-              <th>Plano</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>#1</td>
-              <td><strong>João Silva</strong></td>
-              <td>joao@email.com</td>
-              <td>(27) 99999-0001</td>
-              <td><span class="badge badge-plan">Plano Mensal</span></td>
-              <td><button style="border: 1px solid var(--border-color); background: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--life-blue);">Ver Anamnese</button></td>
-            </tr>
-            <tr>
-              <td>#2</td>
-              <td><strong>Maria Souza</strong></td>
-              <td>maria@email.com</td>
-              <td>(27) 99999-0002</td>
-              <td><span class="badge badge-plan">Plano Semestral</span></td>
-              <td><button style="border: 1px solid var(--border-color); background: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--life-blue);">Ver Anamnese</button></td>
-            </tr>
-            <tr>
-              <td>#3</td>
-              <td><strong>Carlos Eduardo</strong></td>
-              <td>carlos@email.com</td>
-              <td>(27) 99999-0003</td>
-              <td><span class="badge badge-plan">Plano Trimestral</span></td>
-              <td><button style="border: 1px solid var(--border-color); background: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; color: var(--life-blue);">Ver Anamnese</button></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+    </aside>
 
-    <!-- ABA 3: HISTÓRICO IA -->
-    <section id="tab-historico" class="tab-content">
-      <div style="margin-bottom: 20px;">
-        <h2 class="section-title" style="margin-bottom: 4px;">Histórico de Consultas da IA</h2>
-        <p style="font-size: 0.88rem; color: var(--text-muted);">Registro das perguntas enviadas e respostas geradas pelo RAG.</p>
-      </div>
+  </div>
 
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Data/Hora</th>
-              <th>Pergunta</th>
-              <th>Resposta Gerada</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="white-space: nowrap; color: var(--text-muted);">30/09/2026 - 11:40</td>
-              <td><strong>O que é uma ficha de anamnese?</strong></td>
-              <td>É o formulário de avaliação inicial que o profissional de personal training utiliza...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
 
-  </main>
-
-  <!-- Floating Chat Assistant Widget -->
-  <button class="floating-chat-toggle" onclick="toggleChat()">
-    <span>🤖 FitLife AI</span>
+  <!-- ===== Floating AI chat ===== -->
+  <button type="button" class="floating-chat-toggle" data-action="toggle-chat"
+    aria-controls="chatDrawer">
+    <span aria-hidden="true">✦</span> FitLife IA
   </button>
 
-  <div class="chat-drawer" id="chatDrawer">
+  <aside class="chat-drawer" id="chatDrawer" aria-label="FitLife Copilot IA">
+
     <div class="chat-drawer-header">
       <span>FitLife Copilot IA</span>
-      <button class="close-chat-btn" onclick="toggleChat()">✕</button>
+
+      <button type="button" class="close-chat-btn" data-action="toggle-chat" aria-label="Fechar chat">
+        ✕
+      </button>
     </div>
-    <div class="drawer-body" id="drawerBody">
+
+    <!-- Messages are appended here by app.js (.chat-msg.bot / .chat-msg.user) -->
+    <div class="drawer-body" id="drawerBody" role="log" aria-live="polite">
       <div class="chat-msg bot">
-        Olá Coach João! Como posso te ajudar com dúvidas sobre protocolos ou alunos hoje?
+        Olá Coach! Como posso te ajudar com dúvidas sobre protocolos,
+        treino, nutrição ou acompanhamento?
       </div>
     </div>
-    <div class="drawer-footer">
-      <input type="text" id="drawerInput" class="drawer-input" placeholder="Digite sua dúvida..." onkeydown="if(event.key === 'Enter') sendDrawerMsg()" />
-      <button class="drawer-send-btn" onclick="sendDrawerMsg()">Enviar</button>
+
+    <!-- A <form> gives Enter-to-send for free (no inline onkeydown needed) -->
+    <form class="drawer-footer" id="chatForm">
+      <input type="text" id="drawerInput" class="drawer-input" placeholder="Digite sua dúvida..."
+        aria-label="Mensagem para o FitLife Copilot" autocomplete="off">
+      <button type="submit" class="drawer-send-btn">Enviar</button>
+    </form>
+
+  </aside>
+
+
+
+  <!-- ===== Modal: presencial student registration ===== -->
+  <div class="modal-backdrop" id="modalNovoAluno" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalNovoAlunoTitle">
+      <div class="modal-header">
+        <div>
+          <span class="profile-label">Cadastro rápido</span>
+          <h2 id="modalNovoAlunoTitle">Novo aluno presencial</h2>
+        </div>
+        <button type="button" class="close-chat-btn" data-action="close-modal-presencial" aria-label="Fechar cadastro">✕</button>
+      </div>
+
+      <form class="modal-form" id="presencialStudentForm">
+        <label>
+          Nome completo
+          <input type="text" name="name" required placeholder="Nome do aluno">
+        </label>
+        <label>
+          Objetivo
+          <input type="text" name="goal" required placeholder="Ex.: Hipertrofia">
+        </label>
+        <label>
+          Plano
+          <input type="text" name="plan" required placeholder="Ex.: Trimestral">
+        </label>
+
+        <div class="modal-actions">
+          <button type="button" class="secondary-btn" data-action="close-modal-presencial">Cancelar</button>
+          <button type="submit" class="primary-btn">Cadastrar aluno</button>
+        </div>
+      </form>
     </div>
   </div>
 
-  <script>
-    // Gerenciamento de Abas
-    function switchTab(tabName, evt) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+  <!-- ===== Scripts ===== -->
+  <script src="/static/js/app.js" defer></script>
 
-      if (evt && evt.target) {
-        evt.target.classList.add('active');
-      }
-      document.getElementById(`tab-${tabName}`).classList.add('active');
-    }
-
-    // Toggle do Chat Flutuante
-    function toggleChat() {
-      const drawer = document.getElementById('chatDrawer');
-      drawer.classList.toggle('open');
-    }
-
-    // Envio do Chat Flutuante
-    async function sendDrawerMsg() {
-      const input = document.getElementById('drawerInput');
-      const body = document.getElementById('drawerBody');
-      const text = input.value.trim();
-
-      if (!text) return;
-
-      const userMsg = document.createElement('div');
-      userMsg.classList.add('chat-msg', 'user');
-      userMsg.innerText = text;
-      body.appendChild(userMsg);
-      input.value = '';
-      body.scrollTop = body.scrollHeight;
-
-      try {
-        const response = await fetch('/perguntar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pergunta: text })
-        });
-        const data = await response.json();
-
-        const botMsg = document.createElement('div');
-        botMsg.classList.add('chat-msg', 'bot');
-        botMsg.innerHTML = data.resposta ? data.resposta.replace(/\n/g, '<br>') : 'Erro na resposta.';
-        body.appendChild(botMsg);
-        body.scrollTop = body.scrollHeight;
-      } catch (err) {
-        const botMsg = document.createElement('div');
-        botMsg.classList.add('chat-msg', 'bot');
-        botMsg.innerText = 'Erro ao conectar ao servidor.';
-        body.appendChild(botMsg);
-      }
-    }
-  </script>
 </body>
 </html>

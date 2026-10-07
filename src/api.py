@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from groq import Groq
-from src.database import salvar_historico, listar_alunos, buscar_aluno
+from src.database import salvar_historico, listar_alunos, buscar_aluno, listar_exercicios, listar_exercicios_por_categoria, buscar_exercicio
 
 # --- CARREGA VARIÁVEIS DE AMBIENTE ---
 load_dotenv()
@@ -106,4 +106,58 @@ def get_aluno(aluno_id: int):
         "telefone": aluno[3],
         "plano": aluno[4],
         "data_cadastro": str(aluno[5])
+    }
+
+# --- ROTAS DE EXERCÍCIOS ---
+@app.get("/exercicios")
+def get_exercicios():
+    exercicios = listar_exercicios()
+    return [
+        {
+            "id": e[0],
+            "nome": e[1],
+            "categoria": e[2],
+            "musculo_alvo": e[3],
+            "nivel": e[4],
+            "equipamento": e[5],
+            "descricao": e[6],
+            "indicacoes": e[7],
+            "contraindicacoes": e[8]
+        }
+        for e in exercicios
+    ]
+
+@app.get("/exercicios/categoria/{categoria}")
+def get_exercicios_por_categoria(categoria: str):
+    exercicios = listar_exercicios_por_categoria(categoria)
+    return [
+        {
+            "id": e[0],
+            "nome": e[1],
+            "categoria": e[2],
+            "musculo_alvo": e[3],
+            "nivel": e[4],
+            "equipamento": e[5],
+            "descricao": e[6],
+            "indicacoes": e[7],
+            "contraindicacoes": e[8]
+        }
+        for e in exercicios
+    ]
+
+@app.get("/exercicios/{exercicio_id}")
+def get_exercicio(exercicio_id: int):
+    exercicio = buscar_exercicio(exercicio_id)
+    if not exercicio:
+        return {"erro": "Exercício não encontrado"}
+    return {
+        "id": exercicio[0],
+        "nome": exercicio[1],
+        "categoria": exercicio[2],
+        "musculo_alvo": exercicio[3],
+        "nivel": exercicio[4],
+        "equipamento": exercicio[5],
+        "descricao": exercicio[6],
+        "indicacoes": exercicio[7],
+        "contraindicacoes": exercicio[8]
     }
