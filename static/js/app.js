@@ -482,6 +482,43 @@ function bindFinancialFilters() {
     });
 }
 
+// --- EXERCÍCIOS DA API ---
+async function loadExercicios(categoria = null) {
+  const url = categoria
+    ? `/exercicios/categoria/${encodeURIComponent(categoria)}`
+    : '/exercicios';
+
+  try {
+    const response = await fetch(url);
+    const exercicios = await response.json();
+
+    const tbody = document.querySelector(
+      '#workspace-exercicios tbody'
+    );
+
+    if (!tbody) return;
+
+    tbody.innerHTML = exercicios.map(e => `
+      <tr>
+        <td><strong>${e.nome}</strong></td>
+        <td>${e.musculo_alvo}</td>
+        <td>${e.categoria}</td>
+        <td>
+          <button class="secondary-btn" onclick="verExercicio(${e.id})">
+            Ver
+          </button>
+        </td>
+      </tr>
+    `).join('');
+
+  } catch (error) {
+    console.error('Erro ao carregar exercícios:', error);
+  }
+}
+
+function verExercicio(id) {
+  console.log('TODO: abrir detalhe do exercício', id);
+}
 
 /* ==========================================================================
    8. AI CHAT (FitLife Copilot)
@@ -754,6 +791,7 @@ function handleDocumentClick(event) {
 function init() {
   applyTheme(DEFAULT_THEME);
   showWorkspace(DEFAULT_WORKSPACE);
+  loadExercicios();
 
   document.addEventListener(
     'click',
