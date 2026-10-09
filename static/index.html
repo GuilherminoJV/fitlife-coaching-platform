@@ -19,26 +19,11 @@
 
   <!-- ===== Markdown renderer (AI chat answers) ===== -->
   <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js" defer></script>
-
-<!--
-  1. Topbar
-  2. Navegação lateral
-  3. Conteúdo principal
-  4. Modal do exercício
-  5. Hero
-  6. FitLife IA
--->
 </head>
 
-<!--
-  data-theme = active professional area (fitness | nutrition | psychology).
-  It is updated by app.js when the user switches areas.
--->
 <body data-theme="fitness">
 
-  <!-- ===== SVG icon sprite =====
-       Each icon is declared once and reused with <use href="#icon-name">.
-       To add an icon: add a <symbol> here and reference it where needed. -->
+  <!-- ===== SVG icon sprite ===== -->
   <svg xmlns="http://www.w3.org/2000/svg" hidden>
     <symbol id="icon-home" viewBox="0 0 24 24">
       <path d="m3 10 9-7 9 7"></path>
@@ -78,13 +63,10 @@
     </symbol>
   </svg>
 
-
   <!-- ===== Topbar ===== -->
   <header class="topbar">
-
-    <div class="brand">
+    <div class="brand" role="button" tabindex="0" aria-label="Ir para a Home" onclick="switchTab('geral')">
       <img src="/static/logo.png" alt="FitLife Coaching" class="brand-logo-img">
-
       <p class="brand-title">
         <span class="fit">FIT</span>
         <span class="life">LIFE</span>
@@ -96,15 +78,11 @@
       <span>Olá, <strong>Coach João</strong></span>
       <div class="avatar" aria-hidden="true">J</div>
     </div>
-
   </header>
-
 
   <div class="app-layout">
 
-    <!-- ===== Sidebar navigation =====
-         Every button with data-tab switches to the section #tab-{value}.
-         To add an area: add a button here + a <section id="tab-{name}"> below. -->
+    <!-- ===== Sidebar ===== -->
     <nav class="sidebar" aria-label="Navegação principal">
 
       <div class="sidebar-title">Home</div>
@@ -119,7 +97,6 @@
           <small>Visão Geral</small>
         </span>
       </button>
-
 
       <div class="sidebar-title">Áreas</div>
 
@@ -156,7 +133,6 @@
         </span>
       </button>
 
-
       <div class="sidebar-title">Acompanhamento</div>
 
       <button type="button" class="ghost-btn" data-tab="feed">
@@ -185,11 +161,10 @@
 
     </nav>
 
-
-    <!-- ===== Main content: one <section class="tab-content"> per area ===== -->
+    <!-- ===== Main content ===== -->
     <main class="main-content">
 
-      <!-- ---------- Home / Overview ---------- -->
+      <!-- ---------- Home ---------- -->
       <section id="tab-geral" class="tab-content active" aria-labelledby="geral-title">
 
         <div class="welcome-banner">
@@ -197,9 +172,7 @@
           <p>Visão integrada de Treino, Nutrição e Acompanhamento Psicológico.</p>
         </div>
 
-        <!-- Metrics (values are static for now; later fed by the API) -->
         <div class="metrics-grid">
-
           <div class="card">
             <div class="card-metric">
               <div>
@@ -239,15 +212,11 @@
               <div class="metric-icon orange" aria-hidden="true">🤖</div>
             </div>
           </div>
-
         </div>
 
-
-        <!-- Quick actions: data-tab switches area, data-action="toggle-chat" opens the AI chat -->
         <h2 class="section-title">Ações Rápidas da Equipe</h2>
 
         <div class="actions-grid">
-
           <button type="button" class="action-card" data-tab="treino">
             <span class="action-icon" aria-hidden="true">🏋️‍♂️</span>
             <span>
@@ -279,11 +248,8 @@
               <small>Consultar base RAG</small>
             </span>
           </button>
-
         </div>
 
-
-        <!-- Integrated follow-up table -->
         <h2 class="section-title">Alunos em Acompanhamento Integrado</h2>
 
         <div class="table-container">
@@ -297,7 +263,6 @@
                 <th scope="col">Status</th>
               </tr>
             </thead>
-
             <tbody>
               <tr>
                 <th scope="row">João Silva</th>
@@ -306,7 +271,6 @@
                 <td><span class="badge badge-purple">Em Acompanhamento</span></td>
                 <td><strong>Em Dia</strong></td>
               </tr>
-
               <tr>
                 <th scope="row">Maria Souza</th>
                 <td><span class="badge badge-blue">Ativo</span></td>
@@ -314,7 +278,6 @@
                 <td><span class="badge badge-purple">Sem Demanda</span></td>
                 <td><strong>Em Dia</strong></td>
               </tr>
-
               <tr>
                 <th scope="row">Carlos Eduardo</th>
                 <td><span class="badge badge-blue">Ativo</span></td>
@@ -325,11 +288,9 @@
             </tbody>
           </table>
         </div>
-
       </section>
 
-
-      <!-- ---------- Training (Educação Física) ---------- -->
+      <!-- ---------- Treino ---------- -->
       <section id="tab-treino" class="tab-content" aria-labelledby="treino-title">
 
         <div class="workspace-header">
@@ -338,208 +299,232 @@
           <p>Gestão de alunos, exercícios, avaliações e treinamentos.</p>
         </div>
 
-        <!-- Sub-navigation inside the Training area (data-workspace -> #workspace-{value}) -->
-        <div class="workspace-nav">
+        <div class="workspace-shell" id="trainingWorkspace">
 
-          <button type="button" class="workspace-btn active" data-workspace="alunos">
-            <span class="workspace-icon" aria-hidden="true">👥</span>
-            <span>
-              <strong>Alunos</strong>
-              <small>Todos os alunos</small>
-            </span>
-          </button>
+          <!-- Landing -->
+          <div class="workspace-nav" aria-label="Módulos de treino">
+            <button type="button" class="workspace-btn active" data-workspace="alunos">
+              <span class="workspace-icon" aria-hidden="true">👥</span>
+              <span>
+                <strong>Alunos</strong>
+                <small>Todos os alunos</small>
+              </span>
+            </button>
 
-          <button type="button" class="workspace-btn" data-workspace="exercicios">
-            <span class="workspace-icon" aria-hidden="true">🏋️</span>
-            <span>
-              <strong>Exercícios</strong>
-              <small>Biblioteca de exercícios</small>
-            </span>
-          </button>
+            <button type="button" class="workspace-btn" data-workspace="exercicios">
+              <span class="workspace-icon" aria-hidden="true">🏋️</span>
+              <span>
+                <strong>Exercícios</strong>
+                <small>Biblioteca de exercícios</small>
+              </span>
+            </button>
+          </div>
 
-        </div>
+          <div class="workspace-actions" aria-label="Ações de cadastro">
+            <button type="button" class="workspace-btn workspace-action-btn" data-action="open-modal-presencial">
+              <span class="workspace-icon" aria-hidden="true">＋</span>
+              <span>
+                <strong>Cadastrar aluno</strong>
+                <small>Presencial</small>
+              </span>
+            </button>
 
-        <div class="workspace-actions" aria-label="Ações rápidas de alunos">
+            <button type="button" class="workspace-btn workspace-action-btn" data-action="copy-self-registration-link">
+              <span class="workspace-icon" aria-hidden="true">↗</span>
+              <span>
+                <strong>Link de cadastro</strong>
+                <small>Auto-cadastro</small>
+              </span>
+            </button>
+          </div>
 
-          <button type="button" class="workspace-btn workspace-action-btn" data-action="open-modal-presencial">
-            <span class="workspace-icon" aria-hidden="true">＋</span>
-            <span>
-              <strong>Cadastrar aluno</strong>
-              <small>Presencial</small>
-            </span>
-          </button>
+          <!-- Focus mode -->
+          <div class="workspace-focus" id="workspaceFocus">
 
-          <button type="button" class="workspace-btn workspace-action-btn" data-action="copy-self-registration-link">
-            <span class="workspace-icon" aria-hidden="true">↗</span>
-            <span>
-              <strong>Link de cadastro</strong>
-              <small>Auto-cadastro</small>
-            </span>
-          </button>
+            <div class="workspace-focus-header">
+              <button type="button" class="back-btn" data-action="back-to-workspace">
+                ← Voltar
+              </button>
 
-        </div>
-
-        <div class="workspace-content">
-
-          <!-- Student list -->
-          <section id="workspace-alunos" class="workspace-panel active" aria-labelledby="alunos-title">
-
-            <div class="workspace-toolbar student-toolbar">
               <div>
-                <h2 id="alunos-title" class="section-title">Alunos</h2>
-                <p class="workspace-description">Consulte os alunos acompanhados por você.</p>
-              </div>
-
-              <div class="workspace-search glass-search">
-                <input type="search" placeholder="Buscar aluno..." aria-label="Buscar aluno">
+                <span class="profile-label" id="workspaceFocusLabel">Treino</span>
+                <h2 id="workspaceFocusTitle">Alunos</h2>
               </div>
             </div>
 
-            <div class="student-grid" id="studentGrid" aria-live="polite"></div>
+            <div class="workspace-content">
 
-            <div class="student-pager" id="studentPager" hidden>
-              <button type="button" class="pager-btn" data-student-page="prev" aria-label="Alunos anteriores">
-                ←
-              </button>
-              <span id="studentPagerLabel">1 / 1</span>
-              <button type="button" class="pager-btn" data-student-page="next" aria-label="Próximos alunos">
-                →
-              </button>
-            </div>
+              <!-- Alunos -->
+              <section id="workspace-alunos" class="workspace-panel active" aria-labelledby="alunos-title">
 
-          </section>
+                <div class="workspace-toolbar student-toolbar">
+                  <div>
+                    <h2 id="alunos-title" class="section-title">Alunos</h2>
+                    <p class="workspace-description">
+                      Consulte os alunos acompanhados por você.
+                    </p>
+                  </div>
 
-
-          <!-- Student profile (single template; JS fills the data-field elements) -->
-          <section id="workspace-aluno-perfil" class="workspace-panel" aria-labelledby="profile-name" hidden>
-
-            <div class="profile-header">
-
-              <button type="button" class="back-btn" data-action="back-to-students">
-                ← Voltar para alunos
-              </button>
-
-              <div class="student-profile-heading">
-                <div class="student-avatar large" aria-hidden="true" data-field="initials">JS</div>
-
-                <div>
-                  <span class="profile-label">Perfil do aluno</span>
-                  <h2 id="profile-name" data-field="name">João Silva</h2>
-                  <p data-field="summary">Hipertrofia • Plano Trimestral</p>
+                  <div class="workspace-search glass-search">
+                    <input type="search" placeholder="Buscar aluno..." aria-label="Buscar aluno">
+                  </div>
                 </div>
-              </div>
 
-            </div>
+                <div class="student-filters" role="group" aria-label="Filtrar alunos por modalidade e status">
+                  <button type="button" class="filter-btn active" data-student-filter="todos">Todos</button>
+                  <button type="button" class="filter-btn" data-student-filter="presencial">Presenciais</button>
+                  <button type="button" class="filter-btn" data-student-filter="online">Online</button>
 
+                  <span class="filter-divider" aria-hidden="true"></span>
 
-            <div class="profile-grid">
+                  <button type="button" class="filter-btn active" data-student-status="ativos">Ativos</button>
+                  <button type="button" class="filter-btn" data-student-status="excluidos">Excluídos</button>
+                </div>
 
-              <div class="card profile-card">
-                <h3>Dados do aluno</h3>
+                <div class="student-grid" id="studentGrid" aria-live="polite"></div>
 
-                <dl class="profile-data">
-                  <div>
-                    <dt>Objetivo</dt>
-                    <dd data-field="goal">Hipertrofia</dd>
+                <div class="student-pager" id="studentPager" hidden>
+                  <button type="button" class="pager-btn" data-student-page="prev" aria-label="Alunos anteriores">←</button>
+                  <span id="studentPagerLabel">1 / 1</span>
+                  <button type="button" class="pager-btn" data-student-page="next" aria-label="Próximos alunos">→</button>
+                </div>
+              </section>
+
+              <!-- Perfil do aluno -->
+              <section id="workspace-aluno-perfil" class="workspace-panel" aria-labelledby="profile-name" hidden>
+
+                <div class="profile-header">
+                  <button type="button" class="back-btn" data-action="back-to-students">
+                    ← Voltar para alunos
+                  </button>
+
+                  <div class="student-profile-heading">
+                    <div class="student-avatar large" aria-hidden="true" data-field="initials">JS</div>
+
+                    <div>
+                      <span class="profile-label">Perfil do aluno</span>
+                      <h2 id="profile-name" data-field="name">João Silva</h2>
+                      <p data-field="summary">Hipertrofia • Plano Trimestral</p>
+                    </div>
+
+                    <button type="button" class="profile-menu-btn" data-action="student-profile-menu"
+                      aria-label="Ações do aluno" aria-expanded="false">⋮</button>
                   </div>
-                  <div>
-                    <dt>Plano</dt>
-                    <dd data-field="plan">Trimestral</dd>
-                  </div>
-                  <div>
-                    <dt>Status</dt>
-                    <dd data-field="status">Ativo</dd>
-                  </div>
-                </dl>
-              </div>
 
-              <div class="card profile-card">
-                <div class="card-heading">
-                  <div>
-                    <h3>Avaliação Física</h3>
-                    <p>Última avaliação registrada</p>
+                  <div class="profile-actions-menu" data-profile-menu hidden>
+                    <button type="button" data-action="contact-student">Conversar → WhatsApp</button>
+                    <button type="button" data-action="edit-student">Editar aluno</button>
+                    <button type="button" data-action="delete-student">Excluir aluno</button>
                   </div>
-                  <button type="button" class="primary-btn" data-action="new-assessment">
-                    + Nova avaliação
+                </div>
+
+                <div class="profile-grid">
+                  <div class="card profile-card">
+                    <h3>Dados do aluno</h3>
+                    <dl class="profile-data">
+                      <div>
+                        <dt>Objetivo</dt>
+                        <dd data-field="goal">Hipertrofia</dd>
+                      </div>
+                      <div>
+                        <dt>Plano</dt>
+                        <dd data-field="plan">Trimestral</dd>
+                      </div>
+                      <div>
+                        <dt>Modalidade</dt>
+                        <dd data-field="modality">Presencial</dd>
+                      </div>
+                      <div>
+                        <dt>Status</dt>
+                        <dd data-field="status">Ativo</dd>
+                      </div>
+                    </dl>
+                  </div>
+
+                  <div class="card profile-card">
+                    <div class="card-heading">
+                      <div>
+                        <h3>Avaliação Física</h3>
+                        <p>Última avaliação registrada</p>
+                      </div>
+                      <button type="button" class="primary-btn" data-action="new-assessment">
+                        + Nova avaliação
+                      </button>
+                    </div>
+                    <div class="empty-state">Nenhuma avaliação cadastrada.</div>
+                  </div>
+                </div>
+
+                <div class="training-section">
+                  <div class="card">
+                    <div class="card-heading">
+                      <div>
+                        <h3>Treinamento</h3>
+                        <p>Treinos prescritos para o aluno</p>
+                      </div>
+                      <button type="button" class="primary-btn" data-action="new-workout">
+                        + Criar treino
+                      </button>
+                    </div>
+                    <div class="workout-list">
+                      <div class="empty-state">Nenhum treino criado para este aluno.</div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- Exercícios -->
+              <section id="workspace-exercicios" class="workspace-panel" aria-labelledby="exercicios-title" hidden>
+
+                <div class="workspace-toolbar">
+                  <div>
+                    <h2 id="exercicios-title" class="section-title">Exercícios</h2>
+                    <p class="workspace-description">
+                      Biblioteca de exercícios utilizados nas prescrições.
+                    </p>
+                  </div>
+
+                  <button type="button" class="primary-btn" data-action="new-exercise">
+                    + Novo exercício
                   </button>
                 </div>
 
-                <div class="empty-state">Nenhuma avaliação cadastrada.</div>
-              </div>
-
-            </div>
-
-
-            <div class="training-section">
-              <div class="card">
-                <div class="card-heading">
-                  <div>
-                    <h3>Treinamento</h3>
-                    <p>Treinos prescritos para o aluno</p>
-                  </div>
-                  <button type="button" class="primary-btn" data-action="new-workout">
-                    + Criar treino
-                  </button>
+                <div class="exercise-toolbar">
+                  <input type="search" placeholder="Buscar exercício..." aria-label="Buscar exercício">
+                  <select aria-label="Filtrar por grupo muscular">
+                    <option value="">Todos os grupos</option>
+                    <option value="peito">Peito</option>
+                    <option value="costas">Costas</option>
+                    <option value="ombros">Ombros</option>
+                    <option value="bracos">Braços</option>
+                    <option value="pernas">Pernas</option>
+                    <option value="core">Core</option>
+                  </select>
                 </div>
 
-                <div class="workout-list">
-                  <div class="empty-state">Nenhum treino criado para este aluno.</div>
+                <div class="table-container">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Exercício</th>
+                        <th scope="col">Grupo muscular</th>
+                        <th scope="col">Tipo</th>
+                        <th scope="col">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="exerciseTableBody"></tbody>
+                  </table>
                 </div>
-              </div>
+
+                <div class="exercise-pager" id="exercicioPager" hidden></div>
+              </section>
+
             </div>
-
-          </section>
-
-
-          <!-- Exercise library -->
-          <section id="workspace-exercicios" class="workspace-panel" aria-labelledby="exercicios-title" hidden>
-
-            <div class="workspace-toolbar">
-              <div>
-                <h2 id="exercicios-title" class="section-title">Exercícios</h2>
-                <p class="workspace-description">Biblioteca de exercícios utilizados nas prescrições.</p>
-              </div>
-
-              <button type="button" class="primary-btn" data-action="new-exercise">
-                + Novo exercício
-              </button>
-            </div>
-
-            <div class="exercise-toolbar">
-              <input type="search" placeholder="Buscar exercício..." aria-label="Buscar exercício">
-
-              <select aria-label="Filtrar por grupo muscular">
-                <option value="">Todos os grupos</option>
-                <option value="peito">Peito</option>
-                <option value="costas">Costas</option>
-                <option value="ombros">Ombros</option>
-                <option value="bracos">Braços</option>
-                <option value="pernas">Pernas</option>
-                <option value="core">Core</option>
-              </select>
-            </div>
-
-            <div class="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th scope="col">Exercício</th>
-                    <th scope="col">Grupo muscular</th>
-                    <th scope="col">Tipo</th>
-                    <th scope="col">Ações</th>
-                  </tr>
-                </thead>
-                <tbody id="exerciseTableBody"></tbody>
-              </table>
-            </div>
-
-          </section>
-
+          </div>
         </div>
-
       </section>
 
-      <!-- 4. Modal do exercício -->
+      <!-- Modal do exercício -->
       <aside id="modalExercicio" class="modal-backdrop" role="dialog" aria-modal="true"
         aria-labelledby="exerciseModalTitle" hidden>
 
@@ -548,7 +533,6 @@
             <h2 id="exerciseModalTitle" class="exercise-modal-title" data-exercise-field="name">
               Agachamento Livre
             </h2>
-
             <button type="button" class="modal-close-btn" data-action="close-modal-exercicio"
               aria-label="Fechar detalhes do exercício">✕</button>
           </div>
@@ -569,41 +553,32 @@
         </div>
       </aside>
 
-      <!-- ---------- Nutrition (placeholder) ---------- -->
+      <!-- Nutrição (placeholder) -->
       <section id="tab-nutricao" class="tab-content" aria-labelledby="nutricao-title">
-
         <div class="welcome-banner">
           <h1 id="nutricao-title"><span aria-hidden="true">🥗</span> Nutrição Esportiva &amp; Clínica</h1>
           <p>Cálculo de macronutrientes, substituições e prescrição de dietas.</p>
         </div>
-
         <div class="card module-placeholder">
           <h3>Módulo de Nutrição</h3>
           <p>Espaço reservado para a futura interface da Nutrição.</p>
         </div>
-
       </section>
 
-
-      <!-- ---------- Psychology (placeholder) ---------- -->
+      <!-- Psicologia (placeholder) -->
       <section id="tab-psicologia" class="tab-content" aria-labelledby="psicologia-title">
-
         <div class="welcome-banner">
           <h1 id="psicologia-title"><span aria-hidden="true">🧠</span> Psicologia &amp; Saúde Mental</h1>
           <p>Registro de sessões, estratégias de adesão e acompanhamento.</p>
         </div>
-
         <div class="card module-placeholder">
           <h3>Módulo de Psicologia</h3>
           <p>Espaço reservado para a futura interface da Psicologia.</p>
         </div>
-
       </section>
 
-
-      <!-- ---------- Finance (unified management) ---------- -->
+      <!-- Financeiro -->
       <section id="tab-financeiro" class="tab-content" aria-labelledby="financeiro-title">
-
         <div class="welcome-banner">
           <h1 id="financeiro-title">Gestão Financeira</h1>
           <p>Contratos, receitas e acompanhamento financeiro dos serviços FitLife.</p>
@@ -616,7 +591,6 @@
               <p>Visualize os contratos individualmente ou em conjunto.</p>
             </div>
           </div>
-
           <div class="finance-filters" role="group" aria-label="Filtro financeiro por especialidade">
             <button type="button" class="finance-filter active" data-fin-role="todos">Todos</button>
             <button type="button" class="finance-filter" data-fin-role="edf">Educação Física</button>
@@ -661,20 +635,16 @@
             </tbody>
           </table>
         </div>
-
       </section>
 
-
-      <!-- ---------- Students' daily feed ---------- -->
+      <!-- Feed -->
       <section id="tab-feed" class="tab-content" aria-labelledby="feed-title">
-
         <div class="welcome-banner">
           <h1 id="feed-title"><span aria-hidden="true">💬</span> Feed Diário dos Alunos</h1>
           <p>Acompanhe registros, relatos de treino e rotina dos alunos.</p>
         </div>
 
         <div class="feed-container">
-
           <article class="feed-card">
             <header class="feed-header">
               <div class="feed-avatar" aria-hidden="true">JS</div>
@@ -683,11 +653,9 @@
                 <span>Hoje às 08:30 • Check-in</span>
               </div>
             </header>
-
             <blockquote class="feed-content">
               Treino de perna concluído! Consegui subir a carga no agachamento sem dor no joelho.
             </blockquote>
-
             <div class="feed-placeholder-img">
               <span aria-hidden="true">📸</span> Espaço reservado para mídia enviada pelo aluno
             </div>
@@ -701,73 +669,53 @@
                 <span>Ontem às 19:45 • Relato de rotina</span>
               </div>
             </header>
-
             <blockquote class="feed-content">
               Dia corrido no trabalho, mas consegui manter a rotina e seguir o planejamento.
             </blockquote>
           </article>
-
         </div>
-
       </section>
 
     </main>
 
-
-    <!-- ===== Hero column (content updated by app.js per active area) ===== -->
+    <!-- ===== Hero column ===== -->
     <aside class="hero-column" aria-label="Destaque da equipe">
-
       <img id="heroImg" class="hero-bg-img" src="/static/joao.png" alt="Coach João Vitor">
-
       <div class="hero-smoke-overlay"></div>
-
       <div class="hero-info">
         <span id="heroTag" class="hero-tag">Equipe Multidisciplinar</span>
         <h2 id="heroName" class="hero-name">Ecossistema FitLife</h2>
         <p id="heroRole" class="hero-role">Treino, Nutrição e Psicologia integrados em um só lugar.</p>
       </div>
-
     </aside>
 
   </div>
 
-
   <!-- ===== Floating AI chat ===== -->
-  <button type="button" class="floating-chat-toggle" data-action="toggle-chat"
-    aria-controls="chatDrawer">
+  <button type="button" class="floating-chat-toggle" data-action="toggle-chat" aria-controls="chatDrawer">
     <span aria-hidden="true">✦</span> FitLife IA
   </button>
 
   <aside class="chat-drawer" id="chatDrawer" aria-label="FitLife Copilot IA">
-
     <div class="chat-drawer-header">
       <span>FitLife Copilot IA</span>
-
-      <button type="button" class="close-chat-btn" data-action="toggle-chat" aria-label="Fechar chat">
-        ✕
-      </button>
+      <button type="button" class="close-chat-btn" data-action="toggle-chat" aria-label="Fechar chat">✕</button>
     </div>
 
-    <!-- Messages are appended here by app.js (.chat-msg.bot / .chat-msg.user) -->
     <div class="drawer-body" id="drawerBody" role="log" aria-live="polite">
       <div class="chat-msg bot">
-        Olá Coach! Como posso te ajudar com dúvidas sobre protocolos,
-        treino, nutrição ou acompanhamento?
+        Olá Coach! Como posso te ajudar com dúvidas sobre protocolos, treino, nutrição ou acompanhamento?
       </div>
     </div>
 
-    <!-- A <form> gives Enter-to-send for free (no inline onkeydown needed) -->
     <form class="drawer-footer" id="chatForm">
       <input type="text" id="drawerInput" class="drawer-input" placeholder="Digite sua dúvida..."
         aria-label="Mensagem para o FitLife Copilot" autocomplete="off">
       <button type="submit" class="drawer-send-btn">Enviar</button>
     </form>
-
   </aside>
 
-
-
-  <!-- ===== Modal: presencial student registration ===== -->
+  <!-- ===== Modal: Novo aluno presencial ===== -->
   <div class="modal-backdrop" id="modalNovoAluno" hidden>
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalNovoAlunoTitle">
       <div class="modal-header">

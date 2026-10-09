@@ -38,24 +38,28 @@ engine = create_engine(DATABASE_URL)
 # 2. ALUNOS
 # ==========================================================================
 
-def listar_alunos():
+def listar_alunos(apenas_ativos=False):
     with engine.connect() as conn:
+        filtro = "WHERE a.ativo = TRUE" if apenas_ativos else ""
         result = conn.execute(
-            text("""
+            text(f"""
                 SELECT
                     a.id,
                     a.nome,
                     a.email,
                     a.telefone,
                     p.nome AS plano,
-                    a.data_cadastro
+                    a.data_cadastro,
+                    a.ativo,
+                    a.objetivo,
+                    a.modalidade
                 FROM alunos a
                 LEFT JOIN planos p
                     ON a.plano_id = p.id
+                {filtro}
                 ORDER BY a.nome
             """)
         )
-
         return result.fetchall()
 
 
@@ -69,7 +73,10 @@ def buscar_aluno(aluno_id):
                     a.email,
                     a.telefone,
                     p.nome AS plano,
-                    a.data_cadastro
+                    a.data_cadastro,
+                    a.ativo,
+                    a.objetivo,
+                    a.modalidade
                 FROM alunos a
                 LEFT JOIN planos p
                     ON a.plano_id = p.id
@@ -77,25 +84,20 @@ def buscar_aluno(aluno_id):
             """),
             {"id": aluno_id}
         )
-
         return result.fetchone()
 
 
-def criar_aluno(nome, email, telefone, plano_id):
+def criar_aluno(nome, email, telefone, plano_id, objetivo, modalidade):
     with engine.connect() as conn:
         result = conn.execute(
             text("""
                 INSERT INTO alunos (
-                    nome,
-                    email,
-                    telefone,
-                    plano_id
+                    nome, email, telefone,
+                    plano_id, objetivo, modalidade
                 )
                 VALUES (
-                    :nome,
-                    :email,
-                    :telefone,
-                    :plano_id
+                    :nome, :email, :telefone,
+                    :plano_id, :objetivo, :modalidade
                 )
                 RETURNING id
             """),
@@ -103,13 +105,76 @@ def criar_aluno(nome, email, telefone, plano_id):
                 "nome": nome,
                 "email": email,
                 "telefone": telefone,
-                "plano_id": plano_id
+                "plano_id": plano_id,
+                "objetivo": objetivo,
+                "modalidade": modalidade
             }
         )
+        conn.commit()
+        return result.fetchone()[0]
 
+def listar_planos():
+    with engine.connect() as conn:
+        result = conn.execute(
+            text("""
+                SELECT id, nome, preco
+                FROM planos
+                ORDER BY preco
+            """)
+        )
+        return result.fetchall()
+
+
+def atualizar_aluno(aluno_id, nome, email, telefone, plano_id, objetivo, modalidade):
+    with engine.connect() as conn:
+        conn.execute(
+            text("""
+                UPDATE alunos SET
+                    nome = :nome,
+                    email = :email,
+                    telefone = :telefone,
+                    plano_id = :plano_id,
+                    objetivo = :objetivo,
+                    modalidade = :modalidade
+                WHERE id = :id
+            """),
+            {
+                "id": aluno_id,
+                "nome": nome,
+                "email": email,
+                "telefone": telefone,
+                "plano_id": plano_id,
+                "objetivo": objetivo,
+                "modalidade": modalidade
+            }
+        )
         conn.commit()
 
-        return result.fetchone()[0]
+
+def desativar_aluno(aluno_id):
+    with engine.connect() as conn:
+        conn.execute(
+            text("""
+                UPDATE alunos
+                SET ativo = FALSE
+                WHERE id = :id
+            """),
+            {"id": aluno_id}
+        )
+        conn.commit()
+
+
+def reativar_aluno(aluno_id):
+    with engine.connect() as conn:
+        conn.execute(
+            text("""
+                UPDATE alunos
+                SET ativo = TRUE
+                WHERE id = :id
+            """),
+            {"id": aluno_id}
+        )
+        conn.commit()
 
 
 # ==========================================================================

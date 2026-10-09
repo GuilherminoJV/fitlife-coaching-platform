@@ -1,1513 +1,695 @@
-/*
-  1. Configuração
-  2. Dados
-  3. DOM
-  4. Tema / hero
-  5. Navegação
-  6. Treino / alunos
-  7. Exercícios / filtros / modal
-  8. FitLife IA
-  9. Ações / eventos
-  10. Inicialização
-*/
-
-/* 1. CONFIGURAÇÃO */
+/* FitLife Coaching — app.js (refatorado) */
 
 const DEFAULT_TAB = 'geral';
-const DEFAULT_THEME = 'general';
 const DEFAULT_WORKSPACE = 'alunos';
 const CHAT_ENDPOINT = '/perguntar';
-const STUDENTS_PER_PAGE = 6;
+const STUDENTS_PER_PAGE = 9;
 const EXERCISES_PER_PAGE = 10;
 
-/* 2. DADOS */
+/* ========== DADOS ========== */
 
 const heroProfiles = {
-  geral: {
-    tag: 'Equipe Multidisciplinar',
-    name: 'Ecossistema FitLife',
-    role: 'Treino, Nutrição e Psicologia integrados em um só lugar.',
-    img: '/static/joao.png',
-    theme: 'general'
-  },
-
-  treino: {
-    tag: 'Educação Física & Biomecânica',
-    name: 'Coach João Vitor',
-    role: 'Especialista em Biomecânica, Grupos Especiais e Corrida de Rua.',
-    img: '/static/joao.png',
-    theme: 'fitness'
-  },
-
-  nutricao: {
-    tag: 'Nutrição Esportiva & Clínica',
-    name: 'Nutricionista',
-    role: 'Planos alimentares personalizados, reeducação e metas nutricionais.',
-    img: 'https://images.unsplash.com/photo-1594824813566-788530791a4d?auto=format&fit=crop&w=800&q=80',
-    theme: 'nutrition'
-  },
-
-  psicologia: {
-    tag: 'Psicologia & Comportamento',
-    name: 'Psicóloga',
-    role: 'Acompanhamento comportamental, gestão de ansiedade e saúde mental.',
-    img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80',
-    theme: 'psychology'
-  },
-
-  feed: {
-    tag: 'Diário do Aluno',
-    name: 'Feed Integrado',
-    role: 'Acompanhe fotos, relatos de treino e rotina dos alunos.',
-    img: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80',
-    theme: 'feed'
-  },
-
-  financeiro: {
-    tag: 'Gestão & Contratos',
-    name: 'Financeiro FitLife',
-    role: 'Organização de contratos, receitas e serviços da equipe.',
-    img: '/static/joao.png',
-    theme: 'finance'
-  }
+  geral: { tag: 'Equipe Multidisciplinar', name: 'Ecossistema FitLife', role: 'Treino, Nutrição e Psicologia integrados em um só lugar.', img: '/static/joao.png', theme: 'general' },
+  treino: { tag: 'Educação Física & Biomecânica', name: 'Coach João Vitor', role: 'Especialista em Biomecânica, Grupos Especiais e Corrida de Rua.', img: '/static/joao.png', theme: 'fitness' },
+  nutricao: { tag: 'Nutrição Esportiva & Clínica', name: 'Nutricionista', role: 'Planos alimentares personalizados, reeducação e metas nutricionais.', img: 'https://images.unsplash.com/photo-1594824813566-788530791a4d?auto=format&fit=crop&w=800&q=80', theme: 'nutrition' },
+  psicologia: { tag: 'Psicologia & Comportamento', name: 'Psicóloga', role: 'Acompanhamento comportamental, gestão de ansiedade e saúde mental.', img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80', theme: 'psychology' },
+  feed: { tag: 'Diário do Aluno', name: 'Feed Integrado', role: 'Acompanhe fotos, relatos de treino e rotina dos alunos.', img: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80', theme: 'feed' },
+  financeiro: { tag: 'Gestão & Contratos', name: 'Financeiro FitLife', role: 'Organização de contratos, receitas e serviços da equipe.', img: '/static/joao.png', theme: 'finance' }
 };
 
 const students = {
-  1: {
-    initials: 'JS',
-    name: 'João Silva',
-    goal: 'Hipertrofia',
-    plan: 'Plano Trimestral',
-    status: 'Ativo'
-  },
-
-  2: {
-    initials: 'MS',
-    name: 'Maria Souza',
-    goal: 'Emagrecimento',
-    plan: 'Plano Semestral',
-    status: 'Ativo'
-  },
-
-  3: {
-    initials: 'CE',
-    name: 'Carlos Eduardo',
-    goal: 'Performance',
-    plan: 'Plano Trimestral',
-    status: 'Ativo'
-  }
+  1: { initials: 'JS', name: 'João Silva', goal: 'Hipertrofia', plan: 'Plano Trimestral', status: 'Ativo', modality: 'Presencial', phone: '', deleted: false },
+  2: { initials: 'MS', name: 'Maria Souza', goal: 'Emagrecimento', plan: 'Plano Semestral', status: 'Ativo', modality: 'Online', phone: '', deleted: false },
+  3: { initials: 'CE', name: 'Carlos Eduardo', goal: 'Performance', plan: 'Plano Trimestral', status: 'Ativo', modality: 'Presencial', phone: '', deleted: false }
 };
 
-const tabEnterHooks = {
-  treino: () => showWorkspace(DEFAULT_WORKSPACE)
+/* ========== ESTADO ========== */
+
+const state = {
+  studentPage: 0,
+  studentFilter: 'todos',
+  studentStatus: 'ativos',
+  selectedStudentId: null,
+  studentEditMode: false,
+  exerciciosData: [],
+  exercicioPage: 0,
+  exercicioCategoria: ''
 };
 
-/* 3. DOM */
+/* ========== DOM ========== */
+
+const $ = (sel, ctx = document) => ctx.querySelector(sel);
+const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 
 const dom = {
-  heroImg: document.getElementById('heroImg'),
-  heroTag: document.getElementById('heroTag'),
-  heroName: document.getElementById('heroName'),
-  heroRole: document.getElementById('heroRole'),
-
-  chatDrawer: document.getElementById('chatDrawer'),
-  chatBody: document.getElementById('drawerBody'),
-  chatForm: document.getElementById('chatForm'),
-  chatInput: document.getElementById('drawerInput'),
-
-  studentGrid: document.getElementById('studentGrid'),
-  studentPager: document.getElementById('studentPager'),
-  studentPagerLabel: document.getElementById('studentPagerLabel'),
-  studentForm: document.getElementById('presencialStudentForm'),
-  newStudentModal: document.getElementById('modalNovoAluno'),
-
-  exerciseTableBody: document.getElementById('exerciseTableBody'),
-  exercisePager: document.getElementById('exercicioPager'),
-
-  exerciseModal: document.getElementById('modalExercicio'),
-  exerciseModalMedia: document.getElementById('exerciseModalMedia')
+  heroImg: $('#heroImg'),
+  heroTag: $('#heroTag'),
+  heroName: $('#heroName'),
+  heroRole: $('#heroRole'),
+  chatDrawer: $('#chatDrawer'),
+  chatBody: $('#drawerBody'),
+  chatForm: $('#chatForm'),
+  chatInput: $('#drawerInput'),
+  trainingWorkspace: $('#trainingWorkspace'),
+  workspaceFocusLabel: $('#workspaceFocusLabel'),
+  workspaceFocusTitle: $('#workspaceFocusTitle'),
+  studentGrid: $('#studentGrid'),
+  studentPager: $('#studentPager'),
+  studentPagerLabel: $('#studentPagerLabel'),
+  studentForm: $('#presencialStudentForm'),
+  newStudentModal: $('#modalNovoAluno'),
+  exerciseTableBody: $('#exerciseTableBody'),
+  exercisePager: $('#exercicioPager'),
+  exerciseModal: $('#modalExercicio'),
+  exerciseModalMedia: $('#exerciseModalMedia')
 };
 
-let studentPage = 0;
-let exerciciosData = [];
-let exercicioPage = 0;
-let exercicioCategoria = '';
+/* ========== HELPERS ========== */
 
-/* 4. TEMA / HERO */
+const escapeHtml = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 
-function applyTheme(theme = DEFAULT_THEME) {
+const getExerciseValue = (ex, keys, fallback = '—') => {
+  for (const k of keys) {
+    const v = ex?.[k];
+    if (v != null && String(v).trim()) return String(v).trim();
+  }
+  return fallback;
+};
+
+const fillFields = (container, values) => {
+  $$('[data-field]', container).forEach(el => {
+    if (values[el.dataset.field] !== undefined) el.textContent = values[el.dataset.field];
+  });
+};
+
+/* ========== TEMA / HERO ========== */
+
+function applyTheme(theme = 'general') {
   document.body.dataset.theme = theme;
-}
-
-function updateHeroImage(imageUrl) {
-  const { heroImg } = dom;
-
-  if (!heroImg || !imageUrl) return;
-
-  if (heroImg.getAttribute('src') === imageUrl) return;
-
-  heroImg.classList.remove('is-error');
-  heroImg.classList.add('is-loading');
-
-  heroImg.onload = () => {
-    requestAnimationFrame(() => {
-      heroImg.classList.remove('is-loading');
-    });
-  };
-
-  heroImg.onerror = () => {
-    console.warn(`Não foi possível carregar: ${imageUrl}`);
-
-    heroImg.classList.remove('is-loading');
-    heroImg.classList.add('is-error');
-  };
-
-  heroImg.src = imageUrl;
 }
 
 function updateHero(profile) {
   if (!profile) return;
-
   applyTheme(profile.theme);
-  updateHeroImage(profile.img);
 
-  if (dom.heroTag) {
-    dom.heroTag.textContent = profile.tag;
+  if (dom.heroImg && profile.img && dom.heroImg.getAttribute('src') !== profile.img) {
+    dom.heroImg.classList.remove('is-error');
+    dom.heroImg.classList.add('is-loading');
+    dom.heroImg.onload = () => requestAnimationFrame(() => dom.heroImg.classList.remove('is-loading'));
+    dom.heroImg.onerror = () => { console.warn(`Não foi possível carregar: ${profile.img}`); dom.heroImg.classList.remove('is-loading'); dom.heroImg.classList.add('is-error'); };
+    dom.heroImg.src = profile.img;
   }
 
-  if (dom.heroName) {
-    dom.heroName.textContent = profile.name;
-  }
-
-  if (dom.heroRole) {
-    dom.heroRole.textContent = profile.role;
-  }
+  if (dom.heroTag) dom.heroTag.textContent = profile.tag;
+  if (dom.heroName) dom.heroName.textContent = profile.name;
+  if (dom.heroRole) dom.heroRole.textContent = profile.role;
 }
 
-/* 5. NAVEGAÇÃO */
+/* ========== NAVEGAÇÃO ========== */
 
 function switchTab(tabName) {
-  const targetTab = document.getElementById(`tab-${tabName}`);
+  const target = $(`#tab-${tabName}`);
+  if (!target) return;
 
-  if (!targetTab) return;
+  $$('.ghost-btn[data-tab]').forEach(btn => {
+    const active = btn.dataset.tab === tabName;
+    btn.classList.toggle('active', active);
+    active ? btn.setAttribute('aria-current', 'page') : btn.removeAttribute('aria-current');
+  });
 
-  document
-    .querySelectorAll('.ghost-btn[data-tab]')
-    .forEach(button => {
-      const isActive = button.dataset.tab === tabName;
+  $$('.tab-content').forEach(tab => tab.classList.toggle('active', tab === target));
+  updateHero(heroProfiles[tabName] ?? heroProfiles[DEFAULT_TAB]);
 
-      button.classList.toggle('active', isActive);
-
-      if (isActive) {
-        button.setAttribute('aria-current', 'page');
-      } else {
-        button.removeAttribute('aria-current');
-      }
-    });
-
-  document
-    .querySelectorAll('.tab-content')
-    .forEach(tab => {
-      tab.classList.toggle(
-        'active',
-        tab === targetTab
-      );
-    });
-
-  updateHero(
-    heroProfiles[tabName] ??
-    heroProfiles[DEFAULT_TAB]
-  );
-
-  tabEnterHooks[tabName]?.();
+  if (tabName === 'treino') showTrainingLanding();
 }
 
-/* 6. TREINO / ALUNOS */
+function showTrainingLanding() {
+  if (!dom.trainingWorkspace) return;
+  dom.trainingWorkspace.classList.remove('is-focused');
+  $$('.workspace-btn[data-workspace]').forEach(b => b.classList.remove('active'));
+  $$('.workspace-panel').forEach(p => { p.classList.remove('active'); p.hidden = true; });
+  closeAllMenus();
+}
 
-function showWorkspace(workspaceName) {
-  document
-    .querySelectorAll('.workspace-btn')
-    .forEach(button => {
-      button.classList.toggle(
-        'active',
-        button.dataset.workspace === workspaceName
-      );
-    });
+function showWorkspace(name) {
+  if (!dom.trainingWorkspace) return;
+  dom.trainingWorkspace.classList.add('is-focused');
 
-  document
-    .querySelectorAll('.workspace-panel')
-    .forEach(panel => {
-      const isTarget =
-        panel.id === `workspace-${workspaceName}`;
+  $$('.workspace-btn[data-workspace]').forEach(b => b.classList.toggle('active', b.dataset.workspace === name));
+  $$('.workspace-panel').forEach(p => {
+    const isTarget = p.id === `workspace-${name}`;
+    p.classList.toggle('active', isTarget);
+    p.hidden = !isTarget;
+  });
 
-      panel.classList.toggle(
-        'active',
-        isTarget
-      );
+  closeAllMenus();
 
-      panel.hidden = !isTarget;
-    });
+  if (name === 'alunos') {
+    state.studentPage = 0;
+    if (dom.workspaceFocusLabel) dom.workspaceFocusLabel.textContent = 'Gestão de alunos';
+    if (dom.workspaceFocusTitle) dom.workspaceFocusTitle.textContent = 'Alunos';
+    renderStudentCards();
+  }
 
-  if (workspaceName === 'alunos') {
-    studentPage = 0;
-    updateStudentPager();
+  if (name === 'exercicios') {
+    if (dom.workspaceFocusLabel) dom.workspaceFocusLabel.textContent = 'Biblioteca';
+    if (dom.workspaceFocusTitle) dom.workspaceFocusTitle.textContent = 'Exercícios';
+    loadExercicios(state.exercicioCategoria);
   }
 }
 
-function fillFields(container, values) {
-  container
-    .querySelectorAll('[data-field]')
-    .forEach(element => {
-      const value =
-        values[element.dataset.field];
+/* ========== ALUNOS ========== */
 
-      if (value !== undefined) {
-        element.textContent = value;
-      }
-    });
-}
+function getFilteredStudents() {
+  const query = ($('#workspace-alunos input[type="search"]')?.value || '').toLowerCase().trim();
 
-function openStudentProfile(studentId) {
-  const student = students[studentId];
-
-  const profilePanel =
-    document.getElementById(
-      'workspace-aluno-perfil'
-    );
-
-  if (!student || !profilePanel) return;
-
-  fillFields(profilePanel, {
-    ...student,
-    summary:
-      `${student.goal} • ${student.plan}`
+  return Object.entries(students).filter(([, s]) => {
+    if (state.studentStatus === 'ativos' && s.deleted) return false;
+    if (state.studentStatus === 'excluidos' && !s.deleted) return false;
+    if (state.studentFilter !== 'todos' && String(s.modality || '').toLowerCase() !== state.studentFilter) return false;
+    if (!query) return true;
+    return [s.name, s.goal, s.plan, s.status, s.modality].join(' ').toLowerCase().includes(query);
   });
-
-  showWorkspace('aluno-perfil');
 }
 
 function renderStudentCards() {
   if (!dom.studentGrid) return;
 
-  dom.studentGrid.innerHTML =
-    Object.entries(students)
-      .map(([id, student]) => `
-        <article class="student-card">
-          <div
-            class="student-avatar"
-            aria-hidden="true"
-          >
-            ${escapeHtml(student.initials)}
-          </div>
+  const filtered = getFilteredStudents();
+  const totalPages = Math.max(1, Math.ceil(filtered.length / STUDENTS_PER_PAGE));
+  state.studentPage = Math.min(state.studentPage, totalPages - 1);
 
-          <div class="student-info">
-            <h3>
-              ${escapeHtml(student.name)}
-            </h3>
+  const page = filtered.slice(state.studentPage * STUDENTS_PER_PAGE, (state.studentPage + 1) * STUDENTS_PER_PAGE);
 
-            <span>
-              ${escapeHtml(student.goal)}
-              •
-              ${escapeHtml(student.plan)}
-            </span>
-          </div>
+  dom.studentGrid.innerHTML = page.map(([id, s]) => {
+    const deleted = !!s.deleted;
+    return `
+      <article class="student-card ${deleted ? 'is-deleted' : ''}" data-student-id="${escapeHtml(id)}" tabindex="0" role="button" aria-label="Abrir perfil de ${escapeHtml(s.name)}">
+        <div class="student-avatar" aria-hidden="true">${escapeHtml(s.initials)}</div>
+        <div class="student-info">
+          <h3>${escapeHtml(s.name)}</h3>
+          <span>${escapeHtml(s.goal)} • ${escapeHtml(s.plan)}</span>
+          <small>${escapeHtml(s.modality || 'Modalidade não informada')}</small>
+        </div>
+        <span class="status-dot ${deleted ? 'inactive' : 'active'}" role="img" aria-label="Aluno ${deleted ? 'excluído' : 'ativo'}"></span>
+        <button type="button" class="student-card-menu" data-action="student-card-menu" data-student-id="${escapeHtml(id)}" aria-label="Ações de ${escapeHtml(s.name)}" aria-expanded="false">⋮</button>
+        <div class="student-card-actions" data-student-card-menu hidden>
+          ${deleted
+            ? `<button type="button" data-action="restore-student" data-student-id="${escapeHtml(id)}">Restaurar aluno</button>`
+            : `<button type="button" data-action="edit-student" data-student-id="${escapeHtml(id)}">Editar aluno</button>
+               <button type="button" data-action="delete-student" data-student-id="${escapeHtml(id)}">Excluir aluno</button>`}
+        </div>
+      </article>`;
+  }).join('');
 
-          <span
-            class="status-dot active"
-            role="img"
-            aria-label="Aluno ativo"
-          ></span>
-
-          <button
-            type="button"
-            class="secondary-btn"
-            data-student-id="${escapeHtml(id)}"
-          >
-            Ver perfil
-          </button>
-        </article>
-      `)
-      .join('');
+  updateStudentPager(filtered.length);
 }
 
-function updateStudentPager() {
-  if (!dom.studentGrid) return;
+function updateStudentPager(total = getFilteredStudents().length) {
+  if (!dom.studentPager) return;
+  const totalPages = Math.max(1, Math.ceil(total / STUDENTS_PER_PAGE));
+  state.studentPage = Math.max(0, Math.min(state.studentPage, totalPages - 1));
 
-  const input =
-    document.querySelector(
-      '#workspace-alunos input[type="search"]'
-    );
+  dom.studentPager.hidden = total <= STUDENTS_PER_PAGE;
+  if (dom.studentPagerLabel) dom.studentPagerLabel.textContent = `${state.studentPage + 1} / ${totalPages}`;
 
-  const query =
-    input?.value
-      .toLowerCase()
-      .trim() ?? '';
+  const prev = $('[data-student-page="prev"]', dom.studentPager);
+  const next = $('[data-student-page="next"]', dom.studentPager);
+  if (prev) prev.disabled = state.studentPage === 0;
+  if (next) next.disabled = state.studentPage >= totalPages - 1;
+}
 
-  const cards =
-    Array.from(
-      dom.studentGrid.querySelectorAll(
-        '.student-card'
-      )
-    );
+function openStudentProfile(id) {
+  const student = students[id];
+  const panel = $('#workspace-aluno-perfil');
+  if (!student || !panel || student.deleted) return;
 
-  const matchingCards =
-    cards.filter(card =>
-      card.textContent
-        .toLowerCase()
-        .includes(query)
-    );
+  state.selectedStudentId = String(id);
+  fillFields(panel, { ...student, summary: `${student.goal} • ${student.plan}`, status: student.status || 'Ativo', modality: student.modality || 'Não informado' });
 
-  const totalPages =
-    Math.max(
-      1,
-      Math.ceil(
-        matchingCards.length /
-        STUDENTS_PER_PAGE
-      )
-    );
+  closeAllMenus();
+  $$('.workspace-panel').forEach(p => { p.classList.remove('active'); p.hidden = true; });
+  panel.classList.add('active');
+  panel.hidden = false;
+  dom.trainingWorkspace?.classList.add('is-focused');
+}
 
-  studentPage =
-    Math.min(
-      studentPage,
-      totalPages - 1
-    );
+function editStudent(id = state.selectedStudentId) {
+  const student = students[id];
+  if (!student || student.deleted || !dom.newStudentModal) return;
 
-  cards.forEach(card => {
-    card.hidden = true;
-  });
+  state.studentEditMode = true;
+  state.selectedStudentId = String(id);
 
-  matchingCards
-    .slice(
-      studentPage * STUDENTS_PER_PAGE,
-      (studentPage + 1) *
-      STUDENTS_PER_PAGE
-    )
-    .forEach(card => {
-      card.hidden = false;
-    });
+  const title = $('#modalNovoAlunoTitle', dom.newStudentModal);
+  const label = $('.profile-label', dom.newStudentModal);
+  const submit = $('button[type="submit"]', dom.newStudentModal);
 
-  if (dom.studentPager) {
-    dom.studentPager.hidden =
-      matchingCards.length <=
-      STUDENTS_PER_PAGE;
+  if (title) title.textContent = 'Editar aluno';
+  if (label) label.textContent = 'Dados do aluno';
+  if (submit) submit.textContent = 'Salvar alterações';
+
+  if (dom.studentForm) {
+    dom.studentForm.name.value = student.name || '';
+    dom.studentForm.goal.value = student.goal || '';
+    dom.studentForm.plan.value = student.plan || '';
   }
 
-  if (dom.studentPagerLabel) {
-    dom.studentPagerLabel.textContent =
-      `${studentPage + 1} / ${totalPages}`;
+  openPresencialModal();
+}
+
+function deleteStudent(id = state.selectedStudentId) {
+  const student = students[id];
+  if (!student || student.deleted) return;
+  if (!confirm(`Excluir o aluno "${student.name}"? O aluno será arquivado e poderá ser restaurado.`)) return;
+
+  student.deleted = true;
+  student.status = 'Excluído';
+  closeAllMenus();
+
+  if (String(state.selectedStudentId) === String(id)) {
+    state.selectedStudentId = null;
+    showWorkspace('alunos');
   }
+  renderStudentCards();
 }
 
-function bindStudentSearch() {
-  const input =
-    document.querySelector(
-      '#workspace-alunos input[type="search"]'
-    );
-
-  if (!input) return;
-
-  input.addEventListener(
-    'input',
-    () => {
-      studentPage = 0;
-      updateStudentPager();
-    }
-  );
+function restoreStudent(id) {
+  const student = students[id];
+  if (!student || !student.deleted) return;
+  student.deleted = false;
+  student.status = 'Ativo';
+  renderStudentCards();
 }
 
-function changeStudentPage(direction) {
-  const input =
-    document.querySelector(
-      '#workspace-alunos input[type="search"]'
-    );
+function contactStudent(id = state.selectedStudentId) {
+  const student = students[id];
+  if (!student) return;
+  if (!student.phone) return alert(`O aluno ${student.name} ainda não possui telefone cadastrado.`);
 
-  const query =
-    input?.value
-      .toLowerCase()
-      .trim() ?? '';
-
-  const matches =
-    Array.from(
-      dom.studentGrid
-        ?.querySelectorAll(
-          '.student-card'
-        ) ?? []
-    ).filter(card =>
-      card.textContent
-        .toLowerCase()
-        .includes(query)
-    ).length;
-
-  const totalPages =
-    Math.max(
-      1,
-      Math.ceil(
-        matches /
-        STUDENTS_PER_PAGE
-      )
-    );
-
-  studentPage =
-    Math.max(
-      0,
-      Math.min(
-        studentPage + direction,
-        totalPages - 1
-      )
-    );
-
-  updateStudentPager();
+  const phone = String(student.phone).replace(/\D/g, '');
+  if (!phone) return alert(`O aluno ${student.name} ainda não possui telefone cadastrado.`);
+  window.open(`https://wa.me/${phone}`, '_blank', 'noopener,noreferrer');
 }
 
-/* 7. EXERCÍCIOS / FILTROS / MODAL */
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
+function changeStudentPage(dir) {
+  const totalPages = Math.max(1, Math.ceil(getFilteredStudents().length / STUDENTS_PER_PAGE));
+  state.studentPage = Math.max(0, Math.min(state.studentPage + dir, totalPages - 1));
+  renderStudentCards();
 }
 
-function getExerciseValue(
-  exercise,
-  keys,
-  fallback = '—'
-) {
-  for (const key of keys) {
-    const value = exercise?.[key];
+/* ========== EXERCÍCIOS ========== */
 
-    if (
-      value !== undefined &&
-      value !== null &&
-      String(value).trim() !== ''
-    ) {
-      return String(value).trim();
-    }
-  }
-
-  return fallback;
-}
-
-async function loadExercicios(
-  categoria = exercicioCategoria
-) {
-  exercicioCategoria =
-    categoria || '';
-
-  const url =
-    exercicioCategoria
-      ? `/exercicios/categoria/${encodeURIComponent(
-          exercicioCategoria
-        )}`
-      : '/exercicios';
+async function loadExercicios(categoria = state.exercicioCategoria) {
+  state.exercicioCategoria = categoria || '';
+  const url = state.exercicioCategoria ? `/exercicios/categoria/${encodeURIComponent(state.exercicioCategoria)}` : '/exercicios';
 
   try {
-    const response =
-      await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(
-        `HTTP ${response.status}`
-      );
-    }
-
-    const data =
-      await response.json();
-
-    exerciciosData =
-      Array.isArray(data)
-        ? data
-        : [];
-
-    exercicioPage = 0;
-
-    renderExercicios();
-
-  } catch (error) {
-    console.error(
-      'Erro ao carregar exercícios:',
-      error
-    );
-
-    exerciciosData = [];
-
-    renderExercicios();
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    state.exerciciosData = Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error('Erro ao carregar exercícios:', err);
+    state.exerciciosData = [];
   }
-}
 
-function getExerciseSearchValue() {
-  const input =
-    document.querySelector(
-      '#workspace-exercicios input[type="search"]'
-    );
-
-  return (
-    input?.value
-      .toLowerCase()
-      .trim() ?? ''
-  );
+  state.exercicioPage = 0;
+  renderExercicios();
 }
 
 function getFilteredExercises() {
-  const filtro =
-    getExerciseSearchValue();
-
-  if (!filtro) {
-    return exerciciosData;
-  }
-
-  return exerciciosData.filter(
-    exercise => {
-      const text = [
-        exercise.nome,
-        exercise.musculo_alvo,
-        exercise.categoria,
-        exercise.nivel,
-        exercise.equipamento,
-        exercise.tipo_articular
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-
-      return text.includes(filtro);
-    }
+  const q = ($('#workspace-exercicios input[type="search"]')?.value || '').toLowerCase().trim();
+  if (!q) return state.exerciciosData;
+  return state.exerciciosData.filter(ex =>
+    [ex.nome, ex.musculo_alvo, ex.categoria, ex.nivel, ex.equipamento, ex.tipo_articular].filter(Boolean).join(' ').toLowerCase().includes(q)
   );
 }
 
 function renderExercicios() {
-  const tbody =
-    dom.exerciseTableBody;
+  if (!dom.exerciseTableBody) return;
 
-  if (!tbody) return;
+  const filtered = getFilteredExercises();
+  const totalPages = Math.max(1, Math.ceil(filtered.length / EXERCISES_PER_PAGE));
+  state.exercicioPage = Math.min(state.exercicioPage, totalPages - 1);
 
-  const filtrados =
-    getFilteredExercises();
+  const page = filtered.slice(state.exercicioPage * EXERCISES_PER_PAGE, (state.exercicioPage + 1) * EXERCISES_PER_PAGE);
 
-  const totalPages =
-    Math.max(
-      1,
-      Math.ceil(
-        filtrados.length /
-        EXERCISES_PER_PAGE
-      )
-    );
+  dom.exerciseTableBody.innerHTML = page.map(ex => `
+    <tr>
+      <th scope="row">${escapeHtml(ex.nome)}</th>
+      <td>${escapeHtml(ex.musculo_alvo)}</td>
+      <td>${escapeHtml(getExerciseValue(ex, ['tipo_articular']))}</td>
+      <td><button type="button" class="table-btn" data-exercise-id="${escapeHtml(ex.id)}">Ver</button></td>
+    </tr>`).join('');
 
-  exercicioPage =
-    Math.min(
-      exercicioPage,
-      totalPages - 1
-    );
-
-  const inicio =
-    exercicioPage *
-    EXERCISES_PER_PAGE;
-
-  const pagina =
-    filtrados.slice(
-      inicio,
-      inicio + EXERCISES_PER_PAGE
-    );
-
-  tbody.innerHTML =
-    pagina
-      .map(exercise => `
-        <tr>
-          <th scope="row">
-            ${escapeHtml(
-              exercise.nome
-            )}
-          </th>
-
-          <td>
-            ${escapeHtml(
-              exercise.musculo_alvo
-            )}
-          </td>
-
-          <td>
-            ${escapeHtml(
-              getExerciseValue(
-                exercise,
-                ['tipo_articular']
-              )
-            )}
-          </td>
-
-          <td>
-            <button
-              type="button"
-              class="table-btn"
-              data-exercise-id="${escapeHtml(
-                exercise.id
-              )}"
-            >
-              Ver
-            </button>
-          </td>
-        </tr>
-      `)
-      .join('');
-
-  renderExercisePager(
-    totalPages,
-    filtrados.length
-  );
+  renderExercisePager(totalPages, filtered.length);
 }
 
-function renderExercisePager(
-  totalPages,
-  totalItems
-) {
-  const pager =
-    dom.exercisePager;
+function renderExercisePager(totalPages, totalItems) {
+  if (!dom.exercisePager) return;
 
-  if (!pager) return;
+  const buttons = Array.from({ length: totalPages }, (_, i) =>
+    `<button type="button" class="page-btn ${i === state.exercicioPage ? 'active' : ''}" data-exercise-page="${i}" aria-label="Página ${i + 1}">${i + 1}</button>`
+  ).join('');
 
-  const buttons =
-    Array.from(
-      { length: totalPages },
-      (_, index) => `
-        <button
-          type="button"
-          class="page-btn ${
-            index === exercicioPage
-              ? 'active'
-              : ''
-          }"
-          data-exercise-page="${index}"
-          aria-label="Página ${
-            index + 1
-          }"
-        >
-          ${index + 1}
-        </button>
-      `
-    )
-    .join('');
-
-  pager.innerHTML = `
-    <button
-      type="button"
-      class="page-btn"
-      data-exercise-page="prev"
-      aria-label="Exercícios anteriores"
-      ${exercicioPage === 0 ? 'disabled' : ''}
-    >
-      &lsaquo;
-    </button>
-
+  dom.exercisePager.innerHTML = `
+    <button type="button" class="page-btn" data-exercise-page="prev" aria-label="Anterior" ${state.exercicioPage === 0 ? 'disabled' : ''}>&lsaquo;</button>
     ${buttons}
+    <button type="button" class="page-btn" data-exercise-page="next" aria-label="Próximo" ${state.exercicioPage === totalPages - 1 ? 'disabled' : ''}>&rsaquo;</button>`;
 
-    <button
-      type="button"
-      class="page-btn"
-      data-exercise-page="next"
-      aria-label="Próximos exercícios"
-      ${
-        exercicioPage ===
-        totalPages - 1
-          ? 'disabled'
-          : ''
-      }
-    >
-      &rsaquo;
-    </button>
-  `;
-
-  pager.hidden =
-    totalItems <=
-    EXERCISES_PER_PAGE;
+  dom.exercisePager.hidden = totalItems <= EXERCISES_PER_PAGE;
 }
 
 function goToExercicioPage(page) {
-  const totalPages =
-    Math.max(
-      1,
-      Math.ceil(
-        getFilteredExercises().length /
-        EXERCISES_PER_PAGE
-      )
-    );
-
-  exercicioPage =
-    Math.max(
-      0,
-      Math.min(
-        Number(page),
-        totalPages - 1
-      )
-    );
-
+  const totalPages = Math.max(1, Math.ceil(getFilteredExercises().length / EXERCISES_PER_PAGE));
+  state.exercicioPage = Math.max(0, Math.min(Number(page), totalPages - 1));
   renderExercicios();
 }
 
-function renderExerciseMedia(
-  exercise
-) {
-  if (!dom.exerciseModalMedia) {
-    return;
-  }
+function openExerciseModal(id) {
+  const ex = state.exerciciosData.find(e => String(e.id) === String(id));
+  if (!ex || !dom.exerciseModal) return;
 
-  const name =
-    getExerciseValue(
-      exercise,
-      ['nome'],
-      'Exercício'
-    );
+  $$('[data-exercise-field]', dom.exerciseModal).forEach(el => {
+    const map = { name: getExerciseValue(ex, ['nome']), muscle: getExerciseValue(ex, ['musculo_alvo'], ''), equipment: getExerciseValue(ex, ['equipamento'], ''), type: getExerciseValue(ex, ['tipo_articular'], '') };
+    if (map[el.dataset.exerciseField] !== undefined) el.textContent = map[el.dataset.exerciseField] || '—';
+  });
 
-  const mediaUrl =
-    getExerciseValue(
-      exercise,
-      [
-        'video_url',
-        'gif_url',
-        'midia_url',
-        'media_url'
-      ],
-      ''
-    );
-
-  if (!mediaUrl) {
-    dom.exerciseModalMedia.innerHTML = `
-      <div class="exercise-media-placeholder">
-
-        <div
-          class="exercise-media-icon"
-          aria-hidden="true"
-        >
-          ▶
-        </div>
-
-        <strong>
-          GIF ou vídeo demonstrativo
-        </strong>
-
-        <span>
-          Mídia de aproximadamente
-          10 segundos
-        </span>
-
-      </div>
-    `;
-
-    return;
-  }
-
-  const isVideo =
-    /\.(mp4|webm|ogg)(\?|#|$)/i.test(
-      mediaUrl
-    );
-
-  if (isVideo) {
-    const video =
-      document.createElement(
-        'video'
-      );
-
-    video.src = mediaUrl;
-    video.autoplay = true;
-    video.loop = true;
-    video.muted = true;
-    video.playsInline = true;
-    video.controls = true;
-
-    video.setAttribute(
-      'aria-label',
-      `Demonstração de ${name}`
-    );
-
-    dom.exerciseModalMedia.replaceChildren(
-      video
-    );
-
-    return;
-  }
-
-  const image =
-    document.createElement(
-      'img'
-    );
-
-  image.src = mediaUrl;
-
-  image.alt =
-    `Demonstração de ${name}`;
-
-  dom.exerciseModalMedia.replaceChildren(
-    image
-  );
-}
-
-function openExerciseModal(
-  exerciseId
-) {
-  const exercise =
-    exerciciosData.find(
-      item =>
-        String(item.id) ===
-        String(exerciseId)
-    );
-
-  if (
-    !exercise ||
-    !dom.exerciseModal
-  ) {
-    return;
-  }
-
-  const fields = {
-    name: getExerciseValue(
-      exercise,
-      ['nome']
-    ),
-
-    muscle: getExerciseValue(
-      exercise,
-      ['musculo_alvo'],
-      ''
-    ),
-
-    equipment: getExerciseValue(
-      exercise,
-      ['equipamento'],
-      ''
-    ),
-
-    type: getExerciseValue(
-      exercise,
-      ['tipo_articular'],
-      ''
-    )
-  };
-
-  dom.exerciseModal
-    .querySelectorAll(
-      '[data-exercise-field]'
-    )
-    .forEach(element => {
-      const field =
-        element.dataset
-          .exerciseField;
-
-      if (!(field in fields)) {
-        return;
-      }
-
-      element.textContent =
-        fields[field] || '—';
-    });
-
-  renderExerciseMedia(
-    exercise
-  );
-
-  dom.exerciseModal.hidden =
-    false;
-
-  dom.exerciseModal.classList.add(
-    'open'
-  );
-
-  document.body.classList.add(
-    'modal-open'
-  );
-
-  dom.exerciseModal
-    .querySelector(
-      '.modal-close-btn'
-    )
-    ?.focus();
+  renderExerciseMedia(ex);
+  dom.exerciseModal.hidden = false;
+  document.body.classList.add('modal-open');
+  $('.modal-close-btn', dom.exerciseModal)?.focus();
 }
 
 function closeExerciseModal() {
-  if (!dom.exerciseModal) {
-    return;
-  }
-
-  dom.exerciseModal.classList.remove(
-    'open'
-  );
-
-  dom.exerciseModal.hidden =
-    true;
-
-  document.body.classList.remove(
-    'modal-open'
-  );
+  if (!dom.exerciseModal) return;
+  dom.exerciseModal.hidden = true;
+  document.body.classList.remove('modal-open');
 
   if (dom.exerciseModalMedia) {
     dom.exerciseModalMedia.innerHTML = `
       <div class="exercise-media-placeholder">
-
-        <div
-          class="exercise-media-icon"
-          aria-hidden="true"
-        >
-          ▶
-        </div>
-
-        <strong>
-          GIF ou vídeo demonstrativo
-        </strong>
-
-        <span>
-          Mídia de aproximadamente
-          10 segundos
-        </span>
-
-      </div>
-    `;
+        <div class="exercise-media-icon" aria-hidden="true">▶</div>
+        <strong>GIF ou vídeo demonstrativo</strong>
+        <span>Mídia de aproximadamente 10 segundos</span>
+      </div>`;
   }
 }
 
-function bindExerciseSearch() {
-  const input =
-    document.querySelector(
-      '#workspace-exercicios input[type="search"]'
-    );
+function renderExerciseMedia(ex) {
+  if (!dom.exerciseModalMedia) return;
+  const name = getExerciseValue(ex, ['nome'], 'Exercício');
+  const url = getExerciseValue(ex, ['video_url', 'gif_url', 'midia_url', 'media_url'], '');
 
-  if (!input) return;
-
-  input.addEventListener(
-    'input',
-    () => {
-      exercicioPage = 0;
-      renderExercicios();
-    }
-  );
-}
-
-function bindExerciseCategoryFilter() {
-  const select =
-    document.querySelector(
-      '#workspace-exercicios select'
-    );
-
-  if (!select) return;
-
-  select.addEventListener(
-    'change',
-    () => {
-      loadExercicios(
-        select.value
-      );
-    }
-  );
-}
-
-function bindFinancialFilters() {
-  document
-    .querySelectorAll(
-      '.finance-filter[data-fin-role]'
-    )
-    .forEach(button => {
-      button.addEventListener(
-        'click',
-        () => {
-          const role =
-            button.dataset.finRole;
-
-          document
-            .querySelectorAll(
-              '.finance-filter'
-            )
-            .forEach(filter => {
-              filter.classList.toggle(
-                'active',
-                filter === button
-              );
-            });
-
-          document
-            .querySelectorAll(
-              '#financeTable tbody tr'
-            )
-            .forEach(row => {
-              row.hidden =
-                role !== 'todos' &&
-                row.dataset.finRole !==
-                  role;
-            });
-        }
-      );
-    });
-}
-
-/* 8. FITLIFE IA */
-
-function toggleChat() {
-  if (!dom.chatDrawer) return;
-
-  const isOpen =
-    dom.chatDrawer.classList.toggle(
-      'open'
-    );
-
-  document
-    .querySelector(
-      '.floating-chat-toggle'
-    )
-    ?.setAttribute(
-      'aria-expanded',
-      String(isOpen)
-    );
-}
-
-function scrollChatToBottom() {
-  if (dom.chatBody) {
-    dom.chatBody.scrollTop =
-      dom.chatBody.scrollHeight;
+  if (!url) {
+    dom.exerciseModalMedia.innerHTML = `
+      <div class="exercise-media-placeholder">
+        <div class="exercise-media-icon" aria-hidden="true">▶</div>
+        <strong>GIF ou vídeo demonstrativo</strong>
+        <span>Mídia de aproximadamente 10 segundos</span>
+      </div>`;
+    return;
   }
-}
 
-function appendChatMessage(
-  role,
-  text
-) {
-  const message =
-    document.createElement(
-      'div'
-    );
-
-  message.classList.add(
-    'chat-msg',
-    role
-  );
-
-  message.textContent =
-    text;
-
-  dom.chatBody.appendChild(
-    message
-  );
-
-  scrollChatToBottom();
-
-  return message;
-}
-
-function renderBotAnswer(
-  messageElement,
-  markdown
-) {
-  if (
-    typeof marked !==
-    'undefined'
-  ) {
-    messageElement.innerHTML =
-      marked.parse(
-        markdown
-      );
+  if (/\.(mp4|webm|ogg)(\?|#|$)/i.test(url)) {
+    const video = document.createElement('video');
+    Object.assign(video, { src: url, autoplay: true, loop: true, muted: true, playsInline: true, controls: true });
+    video.setAttribute('aria-label', `Demonstração de ${name}`);
+    dom.exerciseModalMedia.replaceChildren(video);
   } else {
-    messageElement.textContent =
-      markdown;
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = `Demonstração de ${name}`;
+    dom.exerciseModalMedia.replaceChildren(img);
   }
 }
 
-async function fetchAnswer(
-  question
-) {
-  const response =
-    await fetch(
-      CHAT_ENDPOINT,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type':
-            'application/json'
-        },
-        body: JSON.stringify({
-          pergunta: question
-        })
-      }
-    );
-
-  if (!response.ok) {
-    throw new Error(
-      `HTTP ${response.status}`
-    );
-  }
-
-  const data =
-    await response.json();
-
-  return data.resposta;
-}
-
-async function sendChatMessage(
-  event
-) {
-  event.preventDefault();
-
-  const text =
-    dom.chatInput.value
-      .trim();
-
-  if (!text) return;
-
-  appendChatMessage(
-    'user',
-    text
-  );
-
-  dom.chatInput.value = '';
-
-  const loadingMessage =
-    appendChatMessage(
-      'bot',
-      '🤔 Pensando...'
-    );
-
-  try {
-    const answer =
-      await fetchAnswer(text);
-
-    if (answer) {
-      renderBotAnswer(
-        loadingMessage,
-        answer
-      );
-    } else {
-      loadingMessage.textContent =
-        'Erro na resposta do servidor.';
-    }
-  } catch (error) {
-    console.error(
-      'Erro ao consultar a API:',
-      error
-    );
-
-    loadingMessage.textContent =
-      '⚠️ Erro ao conectar ao servidor.';
-  }
-
-  scrollChatToBottom();
-}
-
-/* 9. AÇÕES / EVENTOS */
+/* ========== MODAL ALUNO ========== */
 
 function openPresencialModal() {
   if (!dom.newStudentModal) return;
-
-  dom.newStudentModal.hidden =
-    false;
-
-  dom.newStudentModal.classList.add(
-    'open'
-  );
-
-  dom.newStudentModal
-    .querySelector('input')
-    ?.focus();
+  dom.newStudentModal.hidden = false;
+  $('input', dom.newStudentModal)?.focus();
 }
 
 function closePresencialModal() {
   if (!dom.newStudentModal) return;
-
-  dom.newStudentModal.classList.remove(
-    'open'
-  );
-
   dom.newStudentModal.hidden = true;
+  dom.studentForm?.reset();
+  resetStudentModalMode();
+}
+
+function resetStudentModalMode() {
+  state.studentEditMode = false;
+  state.selectedStudentId = null;
+
+  const title = $('#modalNovoAlunoTitle', dom.newStudentModal);
+  const label = $('.profile-label', dom.newStudentModal);
+  const submit = $('button[type="submit"]', dom.newStudentModal);
+
+  if (title) title.textContent = 'Novo aluno presencial';
+  if (label) label.textContent = 'Cadastro rápido';
+  if (submit) submit.textContent = 'Cadastrar aluno';
+}
+
+function handleStudentFormSubmit(e) {
+  e.preventDefault();
+  const fd = new FormData(dom.studentForm);
+  const name = String(fd.get('name') || '').trim();
+  const goal = String(fd.get('goal') || '').trim();
+  const plan = String(fd.get('plan') || '').trim();
+  if (!name || !goal || !plan) return;
+
+  if (state.studentEditMode && state.selectedStudentId && students[state.selectedStudentId]) {
+    const id = state.selectedStudentId;
+    const s = students[id];
+    const profileActive = $('#workspace-aluno-perfil')?.classList.contains('active');
+    Object.assign(s, { name, goal, plan, status: 'Ativo' });
+    closePresencialModal();
+    renderStudentCards();
+    if (profileActive) openStudentProfile(id);
+    return;
+  }
+
+  const nextId = Math.max(...Object.keys(students).map(Number), 0) + 1;
+  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
+
+  students[nextId] = { initials, name, goal, plan, status: 'Ativo', modality: 'Presencial', phone: '', deleted: false };
+
+  state.studentFilter = 'todos';
+  state.studentStatus = 'ativos';
+  state.studentPage = Math.floor((Object.keys(students).length - 1) / STUDENTS_PER_PAGE);
+
+  $$('[data-student-filter]').forEach(b => b.classList.toggle('active', b.dataset.studentFilter === 'todos'));
+  $$('[data-student-status]').forEach(b => b.classList.toggle('active', b.dataset.studentStatus === 'ativos'));
+
+  closePresencialModal();
+  renderStudentCards();
 }
 
 async function copySelfRegistrationLink() {
-  const link =
-    `${window.location.origin}/cadastro`;
+  const link = `${location.origin}/cadastro`;
+  try {
+    await navigator.clipboard.writeText(link);
+    alert('Link de cadastro copiado.');
+  } catch {
+    prompt('Copie o link de cadastro:', link);
+  }
+}
+
+/* ========== MENUS ========== */
+
+function closeAllMenus() {
+  $$('[data-student-card-menu]').forEach(m => m.hidden = true);
+  $$('[data-action="student-card-menu"]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+
+  const profileMenu = $('[data-profile-menu]');
+  const profileBtn = $('[data-action="student-profile-menu"]');
+  if (profileMenu) profileMenu.hidden = true;
+  if (profileBtn) profileBtn.setAttribute('aria-expanded', 'false');
+}
+
+function toggleStudentCardMenu(id, btn) {
+  const card = btn.closest('.student-card');
+  const menu = card?.querySelector('[data-student-card-menu]');
+  if (!menu) return;
+
+  const wasOpen = !menu.hidden;
+  closeAllMenus();
+  if (!wasOpen) {
+    menu.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+  }
+}
+
+function toggleProfileMenu() {
+  const menu = $('[data-profile-menu]');
+  const btn = $('[data-action="student-profile-menu"]');
+  if (!menu || !btn) return;
+
+  const wasOpen = !menu.hidden;
+  closeAllMenus();
+  menu.hidden = wasOpen;
+  btn.setAttribute('aria-expanded', String(!wasOpen));
+}
+
+/* ========== CHAT IA ========== */
+
+function toggleChat() {
+  if (!dom.chatDrawer) return;
+  const open = dom.chatDrawer.classList.toggle('open');
+  $('.floating-chat-toggle')?.setAttribute('aria-expanded', String(open));
+}
+
+function appendChatMessage(role, text) {
+  const msg = document.createElement('div');
+  msg.className = `chat-msg ${role}`;
+  msg.textContent = text;
+  dom.chatBody.appendChild(msg);
+  dom.chatBody.scrollTop = dom.chatBody.scrollHeight;
+  return msg;
+}
+
+async function sendChatMessage(e) {
+  e.preventDefault();
+  const text = dom.chatInput.value.trim();
+  if (!text) return;
+
+  appendChatMessage('user', text);
+  dom.chatInput.value = '';
+  const loading = appendChatMessage('bot', '🤔 Pensando...');
 
   try {
-    await navigator.clipboard.writeText(
-      link
-    );
-
-    console.info(
-      `Link de cadastro copiado: ${link}`
-    );
-  } catch (error) {
-    console.warn(
-      'Não foi possível copiar o link de cadastro.',
-      error
-    );
+    const res = await fetch(CHAT_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pergunta: text })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (data.resposta) {
+      loading.innerHTML = typeof marked !== 'undefined' ? marked.parse(data.resposta) : data.resposta;
+    } else {
+      loading.textContent = 'Erro na resposta do servidor.';
+    }
+  } catch (err) {
+    console.error('Erro ao consultar a API:', err);
+    loading.textContent = '⚠️ Erro ao conectar ao servidor.';
   }
+
+  dom.chatBody.scrollTop = dom.chatBody.scrollHeight;
 }
 
-const actionHandlers = {
-  'toggle-chat':
-    toggleChat,
+/* ========== EVENTOS ========== */
 
-  'back-to-students':
-    () =>
-      showWorkspace(
-        DEFAULT_WORKSPACE
-      ),
-
-  'open-modal-presencial':
-    openPresencialModal,
-
-  'close-modal-presencial':
-    closePresencialModal,
-
-  'copy-self-registration-link':
-    copySelfRegistrationLink,
-
-  'student-page-prev':
-    () =>
-      changeStudentPage(-1),
-
-  'student-page-next':
-    () =>
-      changeStudentPage(1),
-
-  'close-modal-exercicio':
-    closeExerciseModal,
-
-  'new-assessment':
-    () =>
-      console.log(
-        'TODO: nova avaliação física'
-      ),
-
-  'new-workout':
-    () =>
-      console.log(
-        'TODO: novo treino'
-      ),
-
-  'new-exercise':
-    () =>
-      console.log(
-        'TODO: novo exercício'
-      )
+const actions = {
+  'toggle-chat': toggleChat,
+  'back-to-workspace': showTrainingLanding,
+  'back-to-students': () => showWorkspace(DEFAULT_WORKSPACE),
+  'open-modal-presencial': openPresencialModal,
+  'close-modal-presencial': closePresencialModal,
+  'copy-self-registration-link': copySelfRegistrationLink,
+  'student-profile-menu': toggleProfileMenu,
+  'student-card-menu': (_, t) => toggleStudentCardMenu(t.dataset.studentId, t),
+  'contact-student': (_, t) => contactStudent(t.dataset.studentId || state.selectedStudentId),
+  'edit-student': (_, t) => editStudent(t.dataset.studentId || state.selectedStudentId),
+  'delete-student': (_, t) => deleteStudent(t.dataset.studentId || state.selectedStudentId),
+  'restore-student': (_, t) => restoreStudent(t.dataset.studentId),
+  'student-page-prev': () => changeStudentPage(-1),
+  'student-page-next': () => changeStudentPage(1),
+  'close-modal-exercicio': closeExerciseModal,
+  'new-assessment': () => console.log('TODO: nova avaliação física'),
+  'new-workout': () => console.log('TODO: novo treino'),
+  'new-exercise': () => console.log('TODO: novo exercício')
 };
 
-function handleDocumentClick(event) {
-  if (
-    event.target ===
-    dom.newStudentModal
-  ) {
-    closePresencialModal();
+function handleClick(e) {
+  if (e.target === dom.newStudentModal) return closePresencialModal();
+  if (e.target === dom.exerciseModal) return closeExerciseModal();
+  if (e.target.closest('.brand')) return switchTab('geral');
+
+  const profileMenu = $('[data-profile-menu]');
+  if (profileMenu && !profileMenu.hidden && !e.target.closest('[data-profile-menu], [data-action="student-profile-menu"]')) {
+    closeAllMenus();
+  }
+
+  const t = e.target.closest('[data-tab], [data-workspace], [data-student-id], [data-exercise-id], [data-action], [data-student-page], [data-exercise-page]');
+  if (!t) {
+    if (!e.target.closest('.student-card')) closeAllMenus();
     return;
   }
 
-  if (
-    event.target ===
-    dom.exerciseModal
-  ) {
-    closeExerciseModal();
-    return;
+  const { tab, workspace, studentId, exerciseId, action, studentPage, exercisePage } = t.dataset;
+
+  if (tab) return switchTab(tab);
+  if (workspace) return showWorkspace(workspace);
+  if (action) return actions[action]?.(e, t);
+  if (exerciseId) return openExerciseModal(exerciseId);
+
+  if (studentId && !t.closest('[data-student-card-menu], .student-card-actions')) {
+    return openStudentProfile(studentId);
   }
 
-  const trigger =
-    event.target.closest(
-      '[data-tab], [data-workspace], [data-student-id], [data-exercise-id], [data-action], [data-student-page], [data-exercise-page]'
-    );
-
-  if (!trigger) return;
-
-  const {
-    tab,
-    workspace,
-    studentId,
-    exerciseId,
-    action,
-    studentPage: studentPageAction,
-    exercisePage
-  } = trigger.dataset;
-
-  if (tab) {
-    switchTab(tab);
-
-  } else if (workspace) {
-    showWorkspace(workspace);
-
-  } else if (studentId) {
-    openStudentProfile(
-      studentId
-    );
-
-  } else if (exerciseId) {
-    openExerciseModal(
-      exerciseId
-    );
-
-  } else if (action) {
-    actionHandlers[action]?.();
-
-  } else if (studentPageAction) {
-    actionHandlers[
-      `student-page-${studentPageAction}`
-    ]?.();
-
-  } else if (
-    exercisePage === 'prev'
-  ) {
-    goToExercicioPage(
-      exercicioPage - 1
-    );
-
-  } else if (
-    exercisePage === 'next'
-  ) {
-    goToExercicioPage(
-      exercicioPage + 1
-    );
-
-  } else if (
-    exercisePage !== undefined
-  ) {
-    goToExercicioPage(
-      Number(exercisePage)
-    );
-  }
+  if (studentPage) return actions[`student-page-${studentPage}`]?.();
+  if (exercisePage === 'prev') return goToExercicioPage(state.exercicioPage - 1);
+  if (exercisePage === 'next') return goToExercicioPage(state.exercicioPage + 1);
+  if (exercisePage !== undefined) return goToExercicioPage(Number(exercisePage));
 }
 
-function handleDocumentKeydown(
-  event
-) {
-  if (event.key !== 'Escape') {
-    return;
+function handleKeydown(e) {
+  if (e.key === 'Escape') {
+    if (dom.exerciseModal && !dom.exerciseModal.hidden) return closeExerciseModal();
+    if (dom.newStudentModal && !dom.newStudentModal.hidden) return closePresencialModal();
+    return closeAllMenus();
   }
 
-  if (
-    dom.exerciseModal &&
-    !dom.exerciseModal.hidden
-  ) {
-    closeExerciseModal();
-  }
-
-  if (
-    dom.newStudentModal &&
-    !dom.newStudentModal.hidden
-  ) {
-    closePresencialModal();
-  }
+  const card = e.target.closest('.student-card');
+  if (!card || (e.key !== 'Enter' && e.key !== ' ')) return;
+  if (e.target.closest('button, a, input, select, textarea')) return;
+  e.preventDefault();
+  if (card.dataset.studentId) openStudentProfile(card.dataset.studentId);
 }
 
-/* 10. INICIALIZAÇÃO */
+/* ========== INIT ========== */
 
 function init() {
-  applyTheme(
-    DEFAULT_THEME
-  );
-
-  showWorkspace(
-    DEFAULT_WORKSPACE
-  );
-
+  applyTheme('general');
+  showTrainingLanding();
   renderStudentCards();
 
-  bindStudentSearch();
+  // Busca e filtros de alunos
+  $('#workspace-alunos input[type="search"]')?.addEventListener('input', () => { state.studentPage = 0; renderStudentCards(); });
+  $$('[data-student-filter]').forEach(b => b.addEventListener('click', () => {
+    state.studentFilter = b.dataset.studentFilter || 'todos';
+    state.studentPage = 0;
+    $$('[data-student-filter]').forEach(x => x.classList.toggle('active', x === b));
+    renderStudentCards();
+  }));
+  $$('[data-student-status]').forEach(b => b.addEventListener('click', () => {
+    state.studentStatus = b.dataset.studentStatus || 'ativos';
+    state.studentPage = 0;
+    $$('[data-student-status]').forEach(x => x.classList.toggle('active', x === b));
+    renderStudentCards();
+  }));
 
-  bindExerciseSearch();
+  // Busca e filtro de exercícios
+  $('#workspace-exercicios input[type="search"]')?.addEventListener('input', () => { state.exercicioPage = 0; renderExercicios(); });
+  $('#workspace-exercicios select')?.addEventListener('change', e => loadExercicios(e.target.value));
 
-  bindExerciseCategoryFilter();
-
-  bindFinancialFilters();
-
-  updateStudentPager();
+  // Filtros financeiros
+  $$('.finance-filter[data-fin-role]').forEach(b => b.addEventListener('click', () => {
+    const role = b.dataset.finRole;
+    $$('.finance-filter').forEach(x => x.classList.toggle('active', x === b));
+    $$('#financeTable tbody tr').forEach(row => { row.hidden = role !== 'todos' && row.dataset.finRole !== role; });
+  }));
 
   loadExercicios();
 
-  document.addEventListener(
-    'click',
-    handleDocumentClick
-  );
-
-  document.addEventListener(
-    'keydown',
-    handleDocumentKeydown
-  );
-
-  dom.chatForm?.addEventListener(
-    'submit',
-    sendChatMessage
-  );
-
-  dom.studentForm?.addEventListener(
-    'submit',
-    event => {
-      event.preventDefault();
-
-      const formData =
-        new FormData(
-          dom.studentForm
-        );
-
-      const name =
-        String(
-          formData.get('name') ?? ''
-        ).trim();
-
-      const goal =
-        String(
-          formData.get('goal') ?? ''
-        ).trim();
-
-      const plan =
-        String(
-          formData.get('plan') ?? ''
-        ).trim();
-
-      if (
-        !name ||
-        !goal ||
-        !plan
-      ) {
-        return;
-      }
-
-      const nextId =
-        Math.max(
-          ...Object.keys(students)
-            .map(Number),
-          0
-        ) + 1;
-
-      const initials =
-        name
-          .split(/\s+/)
-          .filter(Boolean)
-          .slice(0, 2)
-          .map(
-            part =>
-              part[0]
-                .toUpperCase()
-          )
-          .join('');
-
-      students[nextId] = {
-        initials,
-        name,
-        goal,
-        plan,
-        status: 'Ativo'
-      };
-
-      dom.studentForm.reset();
-
-      closePresencialModal();
-
-      studentPage =
-        Math.floor(
-          (
-            Object.keys(
-              students
-            ).length - 1
-          ) /
-          STUDENTS_PER_PAGE
-        );
-
-      renderStudentCards();
-
-      updateStudentPager();
-    }
-  );
+  document.addEventListener('click', handleClick);
+  document.addEventListener('keydown', handleKeydown);
+  dom.chatForm?.addEventListener('submit', sendChatMessage);
+  dom.studentForm?.addEventListener('submit', handleStudentFormSubmit);
 }
 
-document.addEventListener(
-  'DOMContentLoaded',
-  init
-);
+document.addEventListener('DOMContentLoaded', init);

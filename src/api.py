@@ -21,6 +21,11 @@ from src.database import (
     salvar_historico,
     listar_alunos,
     buscar_aluno,
+    criar_aluno,
+    atualizar_aluno,
+    desativar_aluno,
+    reativar_aluno,
+    listar_planos,
     listar_exercicios,
     listar_exercicios_por_categoria,
     buscar_exercicio
@@ -80,6 +85,22 @@ app.mount(
 
 class Pergunta(BaseModel):
     pergunta: str
+
+class AlunoCreate(BaseModel):
+    nome: str
+    email: str
+    telefone: str
+    plano_id: int
+    objetivo: str
+    modalidade: str
+
+class AlunoUpdate(BaseModel):
+    nome: str
+    email: str
+    telefone: str
+    plano_id: int
+    objetivo: str
+    modalidade: str
 
 
 # ==========================================================================
@@ -148,11 +169,17 @@ def perguntar(body: Pergunta):
 # 8. ALUNOS
 # ==========================================================================
 
+@app.get("/planos")
+def get_planos():
+    planos = listar_planos()
+    return [
+        {"id": p[0], "nome": p[1], "preco": float(p[2])}
+        for p in planos
+    ]
+
 @app.get("/alunos")
-def get_alunos():
-
-    alunos = listar_alunos()
-
+def get_alunos(apenas_ativos: bool = False):
+    alunos = listar_alunos(apenas_ativos)
     return [
         {
             "id": a[0],
@@ -160,33 +187,65 @@ def get_alunos():
             "email": a[2],
             "telefone": a[3],
             "plano": a[4],
-            "data_cadastro": str(a[5])
+            "data_cadastro": str(a[5]),
+            "ativo": a[6],
+            "objetivo": a[7],
+            "modalidade": a[8]
         }
         for a in alunos
     ]
 
-
 @app.get("/alunos/{aluno_id}")
 def get_aluno(aluno_id: int):
-
-    aluno = buscar_aluno(
-        aluno_id
-    )
-
+    aluno = buscar_aluno(aluno_id)
     if not aluno:
-        return {
-            "erro": "Aluno não encontrado"
-        }
-
+        return {"erro": "Aluno não encontrado"}
     return {
         "id": aluno[0],
         "nome": aluno[1],
         "email": aluno[2],
         "telefone": aluno[3],
         "plano": aluno[4],
-        "data_cadastro": str(aluno[5])
+        "data_cadastro": str(aluno[5]),
+        "ativo": aluno[6],
+        "objetivo": aluno[7],
+        "modalidade": aluno[8]
     }
 
+@app.post("/alunos")
+def post_aluno(body: AlunoCreate):
+    novo_id = criar_aluno(
+        body.nome,
+        body.email,
+        body.telefone,
+        body.plano_id,
+        body.objetivo,
+        body.modalidade
+    )
+    return {"id": novo_id, "mensagem": "Aluno cadastrado com sucesso!"}
+
+@app.put("/alunos/{aluno_id}")
+def put_aluno(aluno_id: int, body: AlunoUpdate):
+    atualizar_aluno(
+        aluno_id,
+        body.nome,
+        body.email,
+        body.telefone,
+        body.plano_id,
+        body.objetivo,
+        body.modalidade
+    )
+    return {"mensagem": "Aluno atualizado com sucesso!"}
+
+@app.delete("/alunos/{aluno_id}")
+def delete_aluno(aluno_id: int):
+    desativar_aluno(aluno_id)
+    return {"mensagem": "Aluno desativado com sucesso!"}
+
+@app.patch("/alunos/{aluno_id}/reativar")
+def patch_reativar_aluno(aluno_id: int):
+    reativar_aluno(aluno_id)
+    return {"mensagem": "Aluno reativado com sucesso!"}
 
 # ==========================================================================
 # 9. EXERCÍCIOS
