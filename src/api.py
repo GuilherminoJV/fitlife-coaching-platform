@@ -93,6 +93,7 @@ class AlunoCreate(BaseModel):
     plano_id: int
     objetivo: str
     modalidade: str
+    data_nascimento: str | None = None
 
 class AlunoUpdate(BaseModel):
     nome: str
@@ -101,6 +102,7 @@ class AlunoUpdate(BaseModel):
     plano_id: int
     objetivo: str
     modalidade: str
+    data_nascimento: str | None = None
 
 
 # ==========================================================================
@@ -190,7 +192,8 @@ def get_alunos(apenas_ativos: bool = False):
             "data_cadastro": str(a[5]),
             "ativo": a[6],
             "objetivo": a[7],
-            "modalidade": a[8]
+            "modalidade": a[8],
+            "data_nascimento": str(a[9]) if a[9] else None
         }
         for a in alunos
     ]
@@ -209,7 +212,8 @@ def get_aluno(aluno_id: int):
         "data_cadastro": str(aluno[5]),
         "ativo": aluno[6],
         "objetivo": aluno[7],
-        "modalidade": aluno[8]
+        "modalidade": aluno[8],
+        "data_nascimento": str(aluno[9]) if aluno[9] else None
     }
 
 @app.post("/alunos")
@@ -220,7 +224,8 @@ def post_aluno(body: AlunoCreate):
         body.telefone,
         body.plano_id,
         body.objetivo,
-        body.modalidade
+        body.modalidade,
+        body.data_nascimento
     )
     return {"id": novo_id, "mensagem": "Aluno cadastrado com sucesso!"}
 
@@ -233,7 +238,8 @@ def put_aluno(aluno_id: int, body: AlunoUpdate):
         body.telefone,
         body.plano_id,
         body.objetivo,
-        body.modalidade
+        body.modalidade,
+        body.data_nascimento
     )
     return {"mensagem": "Aluno atualizado com sucesso!"}
 

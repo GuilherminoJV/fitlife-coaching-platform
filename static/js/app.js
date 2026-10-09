@@ -17,12 +17,6 @@ const heroProfiles = {
   financeiro: { tag: 'Gestão & Contratos', name: 'Financeiro FitLife', role: 'Organização de contratos, receitas e serviços da equipe.', img: '/static/joao.png', theme: 'finance' }
 };
 
-const students = {
-  1: { initials: 'JS', name: 'João Silva', goal: 'Hipertrofia', plan: 'Plano Trimestral', status: 'Ativo', modality: 'Presencial', phone: '', deleted: false },
-  2: { initials: 'MS', name: 'Maria Souza', goal: 'Emagrecimento', plan: 'Plano Semestral', status: 'Ativo', modality: 'Online', phone: '', deleted: false },
-  3: { initials: 'CE', name: 'Carlos Eduardo', goal: 'Performance', plan: 'Plano Trimestral', status: 'Ativo', modality: 'Presencial', phone: '', deleted: false }
-};
-
 /* ========== ESTADO ========== */
 
 const state = {
@@ -31,6 +25,7 @@ const state = {
   studentStatus: 'ativos',
   selectedStudentId: null,
   studentEditMode: false,
+  alunosData: [],           // alunos carregados da API
   exerciciosData: [],
   exercicioPage: 0,
   exercicioCategoria: ''
@@ -148,7 +143,7 @@ function showWorkspace(name) {
     state.studentPage = 0;
     if (dom.workspaceFocusLabel) dom.workspaceFocusLabel.textContent = 'Gestão de alunos';
     if (dom.workspaceFocusTitle) dom.workspaceFocusTitle.textContent = 'Alunos';
-    renderStudentCards();
+    loadAlunosFromAPI(); // carrega do banco
   }
 
   if (name === 'exercicios') {
@@ -158,17 +153,30 @@ function showWorkspace(name) {
   }
 }
 
-/* ========== ALUNOS ========== */
+/* ========== ALUNOS — API ========== */
+
+async function loadAlunosFromAPI() {
+  try {
+    const res = await fetch('/alunos');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    state.alunosData = Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error('Erro ao carregar alunos:', err);
+    state.alunosData = [];
+  }
+  renderStudentCards();
+}
 
 function getFilteredStudents() {
   const query = ($('#workspace-alunos input[type="search"]')?.value || '').toLowerCase().trim();
 
-  return Object.entries(students).filter(([, s]) => {
-    if (state.studentStatus === 'ativos' && s.deleted) return false;
-    if (state.studentStatus === 'excluidos' && !s.deleted) return false;
-    if (state.studentFilter !== 'todos' && String(s.modality || '').toLowerCase() !== state.studentFilter) return false;
+  return state.alunosData.filter(a => {
+    if (state.studentStatus === 'ativos' && !a.ativo) return false;
+    if (state.studentStatus === 'excluidos' && a.ativo) return false;
+    if (state.studentFilter !== 'todos' && String(a.modalidade || '').toLowerCase() !== state.studentFilter) return false;
     if (!query) return true;
-    return [s.name, s.goal, s.plan, s.status, s.modality].join(' ').toLowerCase().includes(query);
+    return [a.nome, a.objetivo, a.plano, a.modalidade].filter(Boolean).join(' ').toLowerCase().includes(query);
   });
 }
 
@@ -181,23 +189,23 @@ function renderStudentCards() {
 
   const page = filtered.slice(state.studentPage * STUDENTS_PER_PAGE, (state.studentPage + 1) * STUDENTS_PER_PAGE);
 
-  dom.studentGrid.innerHTML = page.map(([id, s]) => {
-    const deleted = !!s.deleted;
+  dom.studentGrid.innerHTML = page.map(a => {
+    const initials = a.nome.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
     return `
-      <article class="student-card ${deleted ? 'is-deleted' : ''}" data-student-id="${escapeHtml(id)}" tabindex="0" role="button" aria-label="Abrir perfil de ${escapeHtml(s.name)}">
-        <div class="student-avatar" aria-hidden="true">${escapeHtml(s.initials)}</div>
+      <article class="student-card ${!a.ativo ? 'is-deleted' : ''}" data-student-id="${a.id}" tabindex="0" role="button" aria-label="Abrir perfil de ${escapeHtml(a.nome)}">
+        <div class="student-avatar" aria-hidden="true">${escapeHtml(initials)}</div>
         <div class="student-info">
-          <h3>${escapeHtml(s.name)}</h3>
-          <span>${escapeHtml(s.goal)} • ${escapeHtml(s.plan)}</span>
-          <small>${escapeHtml(s.modality || 'Modalidade não informada')}</small>
+          <h3>${escapeHtml(a.nome)}</h3>
+          <span>${escapeHtml(a.objetivo ?? '—')} • ${escapeHtml(a.plano ?? '—')}</span>
+          <small>${escapeHtml(a.modalidade ?? 'Modalidade não informada')}</small>
         </div>
-        <span class="status-dot ${deleted ? 'inactive' : 'active'}" role="img" aria-label="Aluno ${deleted ? 'excluído' : 'ativo'}"></span>
-        <button type="button" class="student-card-menu" data-action="student-card-menu" data-student-id="${escapeHtml(id)}" aria-label="Ações de ${escapeHtml(s.name)}" aria-expanded="false">⋮</button>
+        <span class="status-dot ${a.ativo ? 'active' : 'inactive'}" role="img" aria-label="Aluno ${a.ativo ? 'ativo' : 'inativo'}"></span>
+        <button type="button" class="student-card-menu" data-action="student-card-menu" data-student-id="${a.id}" aria-label="Ações de ${escapeHtml(a.nome)}" aria-expanded="false">⋮</button>
         <div class="student-card-actions" data-student-card-menu hidden>
-          ${deleted
-            ? `<button type="button" data-action="restore-student" data-student-id="${escapeHtml(id)}">Restaurar aluno</button>`
-            : `<button type="button" data-action="edit-student" data-student-id="${escapeHtml(id)}">Editar aluno</button>
-               <button type="button" data-action="delete-student" data-student-id="${escapeHtml(id)}">Excluir aluno</button>`}
+          ${!a.ativo
+            ? `<button type="button" data-action="restore-student" data-student-id="${a.id}">Restaurar aluno</button>`
+            : `<button type="button" data-action="edit-student" data-student-id="${a.id}">Editar aluno</button>
+               <button type="button" data-action="delete-student" data-student-id="${a.id}">Excluir aluno</button>`}
         </div>
       </article>`;
   }).join('');
@@ -220,12 +228,19 @@ function updateStudentPager(total = getFilteredStudents().length) {
 }
 
 function openStudentProfile(id) {
-  const student = students[id];
+  const aluno = state.alunosData.find(a => String(a.id) === String(id));
   const panel = $('#workspace-aluno-perfil');
-  if (!student || !panel || student.deleted) return;
+  if (!aluno || !panel || !aluno.ativo) return;
 
   state.selectedStudentId = String(id);
-  fillFields(panel, { ...student, summary: `${student.goal} • ${student.plan}`, status: student.status || 'Ativo', modality: student.modality || 'Não informado' });
+  fillFields(panel, {
+    name: aluno.nome,
+    goal: aluno.objetivo ?? '—',
+    plan: aluno.plano ?? '—',
+    status: aluno.ativo ? 'Ativo' : 'Inativo',
+    modality: aluno.modalidade ?? 'Não informado',
+    summary: `${aluno.objetivo ?? '—'} • ${aluno.plano ?? '—'}`
+  });
 
   closeAllMenus();
   $$('.workspace-panel').forEach(p => { p.classList.remove('active'); p.hidden = true; });
@@ -234,9 +249,38 @@ function openStudentProfile(id) {
   dom.trainingWorkspace?.classList.add('is-focused');
 }
 
+async function deleteStudent(id = state.selectedStudentId) {
+  const aluno = state.alunosData.find(a => String(a.id) === String(id));
+  if (!aluno || !aluno.ativo) return;
+  if (!confirm(`Excluir o aluno "${aluno.nome}"? O aluno será arquivado e poderá ser restaurado.`)) return;
+
+  try {
+    const res = await fetch(`/alunos/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    closeAllMenus();
+    if (String(state.selectedStudentId) === String(id)) {
+      state.selectedStudentId = null;
+      showWorkspace('alunos');
+    }
+    await loadAlunosFromAPI();
+  } catch (err) {
+    console.error('Erro ao excluir aluno:', err);
+  }
+}
+
+async function restoreStudent(id) {
+  try {
+    const res = await fetch(`/alunos/${id}/reativar`, { method: 'PATCH' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    await loadAlunosFromAPI();
+  } catch (err) {
+    console.error('Erro ao restaurar aluno:', err);
+  }
+}
+
 function editStudent(id = state.selectedStudentId) {
-  const student = students[id];
-  if (!student || student.deleted || !dom.newStudentModal) return;
+  const aluno = state.alunosData.find(a => String(a.id) === String(id));
+  if (!aluno || !dom.newStudentModal) return;
 
   state.studentEditMode = true;
   state.selectedStudentId = String(id);
@@ -250,46 +294,15 @@ function editStudent(id = state.selectedStudentId) {
   if (submit) submit.textContent = 'Salvar alterações';
 
   if (dom.studentForm) {
-    dom.studentForm.name.value = student.name || '';
-    dom.studentForm.goal.value = student.goal || '';
-    dom.studentForm.plan.value = student.plan || '';
+    dom.studentForm.nome.value = aluno.nome || '';
+    dom.studentForm.email.value = aluno.email || '';
+    dom.studentForm.telefone.value = aluno.telefone || '';
+    dom.studentForm.objetivo.value = aluno.objetivo || '';
+    dom.studentForm.modalidade.value = aluno.modalidade || 'presencial';
+    dom.studentForm.data_nascimento.value = aluno.data_nascimento ?? '';
   }
 
   openPresencialModal();
-}
-
-function deleteStudent(id = state.selectedStudentId) {
-  const student = students[id];
-  if (!student || student.deleted) return;
-  if (!confirm(`Excluir o aluno "${student.name}"? O aluno será arquivado e poderá ser restaurado.`)) return;
-
-  student.deleted = true;
-  student.status = 'Excluído';
-  closeAllMenus();
-
-  if (String(state.selectedStudentId) === String(id)) {
-    state.selectedStudentId = null;
-    showWorkspace('alunos');
-  }
-  renderStudentCards();
-}
-
-function restoreStudent(id) {
-  const student = students[id];
-  if (!student || !student.deleted) return;
-  student.deleted = false;
-  student.status = 'Ativo';
-  renderStudentCards();
-}
-
-function contactStudent(id = state.selectedStudentId) {
-  const student = students[id];
-  if (!student) return;
-  if (!student.phone) return alert(`O aluno ${student.name} ainda não possui telefone cadastrado.`);
-
-  const phone = String(student.phone).replace(/\D/g, '');
-  if (!phone) return alert(`O aluno ${student.name} ainda não possui telefone cadastrado.`);
-  window.open(`https://wa.me/${phone}`, '_blank', 'noopener,noreferrer');
 }
 
 function changeStudentPage(dir) {
@@ -427,9 +440,24 @@ function renderExerciseMedia(ex) {
 
 /* ========== MODAL ALUNO ========== */
 
-function openPresencialModal() {
+async function openPresencialModal() {
   if (!dom.newStudentModal) return;
   dom.newStudentModal.hidden = false;
+
+  // Carrega os planos da API e popula o select
+  const select = $('#selectPlano', dom.newStudentModal);
+  if (select) {
+    try {
+      const res = await fetch('/planos');
+      const planos = await res.json();
+      select.innerHTML = planos.map(p =>
+        `<option value="${p.id}">${p.nome} — R$ ${Number(p.preco).toFixed(2)}</option>`
+      ).join('');
+    } catch {
+      select.innerHTML = '<option value="">Erro ao carregar planos</option>';
+    }
+  }
+
   $('input', dom.newStudentModal)?.focus();
 }
 
@@ -453,39 +481,71 @@ function resetStudentModalMode() {
   if (submit) submit.textContent = 'Cadastrar aluno';
 }
 
-function handleStudentFormSubmit(e) {
+async function handleStudentFormSubmit(e) {
   e.preventDefault();
-  const fd = new FormData(dom.studentForm);
-  const name = String(fd.get('name') || '').trim();
-  const goal = String(fd.get('goal') || '').trim();
-  const plan = String(fd.get('plan') || '').trim();
-  if (!name || !goal || !plan) return;
 
-  if (state.studentEditMode && state.selectedStudentId && students[state.selectedStudentId]) {
-    const id = state.selectedStudentId;
-    const s = students[id];
-    const profileActive = $('#workspace-aluno-perfil')?.classList.contains('active');
-    Object.assign(s, { name, goal, plan, status: 'Ativo' });
-    closePresencialModal();
-    renderStudentCards();
-    if (profileActive) openStudentProfile(id);
+  const fd = new FormData(dom.studentForm);
+  const payload = {
+  nome: String(fd.get('nome') ?? '').trim(),
+  email: String(fd.get('email') ?? '').trim(),
+  telefone: String(fd.get('telefone') ?? '').trim(),
+  objetivo: String(fd.get('objetivo') ?? '').trim(),
+  modalidade: String(fd.get('modalidade') ?? 'presencial'),
+  plano_id: parseInt(fd.get('plano_id') ?? '1'),
+  data_nascimento: fd.get('data_nascimento') || null
+};
+
+  if (!payload.nome || !payload.email || !payload.telefone || !payload.objetivo) return;
+
+  const msgDiv = $('#modalFormMsg');
+
+  // MODO EDIÇÃO
+  if (state.studentEditMode && state.selectedStudentId) {
+    try {
+      const res = await fetch(`/alunos/${state.selectedStudentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        if (msgDiv) { msgDiv.style.display = 'block'; msgDiv.style.color = '#8cc63f'; msgDiv.textContent = `✅ ${payload.nome} atualizado com sucesso!`; }
+        setTimeout(async () => {
+          closePresencialModal();
+          if (msgDiv) msgDiv.style.display = 'none';
+          await loadAlunosFromAPI();
+        }, 1500);
+      } else {
+        if (msgDiv) { msgDiv.style.display = 'block'; msgDiv.style.color = '#f37021'; msgDiv.textContent = '❌ Erro ao atualizar aluno.'; }
+      }
+    } catch (err) {
+      console.error('Erro ao atualizar aluno:', err);
+    }
     return;
   }
 
-  const nextId = Math.max(...Object.keys(students).map(Number), 0) + 1;
-  const initials = name.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0].toUpperCase()).join('');
+  // MODO CADASTRO
+  try {
+    const res = await fetch('/alunos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
 
-  students[nextId] = { initials, name, goal, plan, status: 'Ativo', modality: 'Presencial', phone: '', deleted: false };
-
-  state.studentFilter = 'todos';
-  state.studentStatus = 'ativos';
-  state.studentPage = Math.floor((Object.keys(students).length - 1) / STUDENTS_PER_PAGE);
-
-  $$('[data-student-filter]').forEach(b => b.classList.toggle('active', b.dataset.studentFilter === 'todos'));
-  $$('[data-student-status]').forEach(b => b.classList.toggle('active', b.dataset.studentStatus === 'ativos'));
-
-  closePresencialModal();
-  renderStudentCards();
+    if (res.ok) {
+      if (msgDiv) { msgDiv.style.display = 'block'; msgDiv.style.color = '#8cc63f'; msgDiv.textContent = `✅ ${payload.nome} cadastrado com sucesso!`; }
+      dom.studentForm.reset();
+      setTimeout(async () => {
+        closePresencialModal();
+        if (msgDiv) msgDiv.style.display = 'none';
+        await loadAlunosFromAPI();
+      }, 1500);
+    } else {
+      if (msgDiv) { msgDiv.style.display = 'block'; msgDiv.style.color = '#f37021'; msgDiv.textContent = '❌ Erro ao cadastrar aluno.'; }
+    }
+  } catch (err) {
+    console.error('Erro ao cadastrar aluno:', err);
+  }
 }
 
 async function copySelfRegistrationLink() {
@@ -656,7 +716,6 @@ function handleKeydown(e) {
 function init() {
   applyTheme('general');
   showTrainingLanding();
-  renderStudentCards();
 
   // Busca e filtros de alunos
   $('#workspace-alunos input[type="search"]')?.addEventListener('input', () => { state.studentPage = 0; renderStudentCards(); });

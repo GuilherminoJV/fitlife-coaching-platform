@@ -716,37 +716,68 @@
   </aside>
 
   <!-- ===== Modal: Novo aluno presencial ===== -->
-  <div class="modal-backdrop" id="modalNovoAluno" hidden>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalNovoAlunoTitle">
-      <div class="modal-header">
-        <div>
-          <span class="profile-label">Cadastro rápido</span>
-          <h2 id="modalNovoAlunoTitle">Novo aluno presencial</h2>
-        </div>
-        <button type="button" class="close-chat-btn" data-action="close-modal-presencial" aria-label="Fechar cadastro">✕</button>
+<div class="modal-backdrop" id="modalNovoAluno" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalNovoAlunoTitle">
+    <div class="modal-header">
+      <div>
+        <span class="profile-label">Cadastro rápido</span>
+        <h2 id="modalNovoAlunoTitle">Novo aluno presencial</h2>
+      </div>
+      <button type="button" class="close-chat-btn" data-action="close-modal-presencial" aria-label="Fechar cadastro">✕</button>
+    </div>
+
+    <form class="modal-form" id="presencialStudentForm">
+
+      <label>
+        Nome completo
+        <input type="text" name="nome" required placeholder="Nome do aluno">
+      </label>
+
+      <label>
+        Data de nascimento
+        <input type="date" name="data_nascimento">
+      </label>
+
+      <label>
+        E-mail
+        <input type="email" name="email" required placeholder="email@exemplo.com">
+      </label>
+
+      <label>
+        Telefone / WhatsApp
+        <input type="tel" name="telefone" required placeholder="(27) 99999-0000">
+      </label>
+
+      <label>
+        Objetivo principal
+        <input type="text" name="objetivo" required placeholder="Ex.: Hipertrofia, Emagrecimento...">
+      </label>
+
+      <label>
+        Modalidade
+        <select name="modalidade" required>
+          <option value="presencial">Presencial</option>
+          <option value="online">Online</option>
+        </select>
+      </label>
+
+      <label>
+        Plano
+        <select name="plano_id" id="selectPlano" required>
+          <option value="">Carregando planos...</option>
+        </select>
+      </label>
+
+      <div id="modalFormMsg" style="display:none; color: #8cc63f; font-size: 0.9rem;"></div>
+
+      <div class="modal-actions">
+        <button type="button" class="secondary-btn" data-action="close-modal-presencial">Cancelar</button>
+        <button type="submit" class="primary-btn">Cadastrar aluno</button>
       </div>
 
-      <form class="modal-form" id="presencialStudentForm">
-        <label>
-          Nome completo
-          <input type="text" name="name" required placeholder="Nome do aluno">
-        </label>
-        <label>
-          Objetivo
-          <input type="text" name="goal" required placeholder="Ex.: Hipertrofia">
-        </label>
-        <label>
-          Plano
-          <input type="text" name="plan" required placeholder="Ex.: Trimestral">
-        </label>
-
-        <div class="modal-actions">
-          <button type="button" class="secondary-btn" data-action="close-modal-presencial">Cancelar</button>
-          <button type="submit" class="primary-btn">Cadastrar aluno</button>
-        </div>
-      </form>
-    </div>
+    </form>
   </div>
+</div>
 
   <!-- ===== Scripts ===== -->
   <script src="/static/js/app.js" defer></script>

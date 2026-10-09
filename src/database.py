@@ -52,7 +52,8 @@ def listar_alunos(apenas_ativos=False):
                     a.data_cadastro,
                     a.ativo,
                     a.objetivo,
-                    a.modalidade
+                    a.modalidade,
+                    a.data_nascimento
                 FROM alunos a
                 LEFT JOIN planos p
                     ON a.plano_id = p.id
@@ -76,7 +77,8 @@ def buscar_aluno(aluno_id):
                     a.data_cadastro,
                     a.ativo,
                     a.objetivo,
-                    a.modalidade
+                    a.modalidade,
+                    a.data_nascimento
                 FROM alunos a
                 LEFT JOIN planos p
                     ON a.plano_id = p.id
@@ -87,17 +89,19 @@ def buscar_aluno(aluno_id):
         return result.fetchone()
 
 
-def criar_aluno(nome, email, telefone, plano_id, objetivo, modalidade):
+def criar_aluno(nome, email, telefone, plano_id, objetivo, modalidade, data_nascimento=None):
     with engine.connect() as conn:
         result = conn.execute(
             text("""
                 INSERT INTO alunos (
                     nome, email, telefone,
-                    plano_id, objetivo, modalidade
+                    plano_id, objetivo, modalidade,
+                    data_nascimento
                 )
                 VALUES (
                     :nome, :email, :telefone,
-                    :plano_id, :objetivo, :modalidade
+                    :plano_id, :objetivo, :modalidade,
+                    :data_nascimento
                 )
                 RETURNING id
             """),
@@ -107,7 +111,8 @@ def criar_aluno(nome, email, telefone, plano_id, objetivo, modalidade):
                 "telefone": telefone,
                 "plano_id": plano_id,
                 "objetivo": objetivo,
-                "modalidade": modalidade
+                "modalidade": modalidade,
+                "data_nascimento": data_nascimento
             }
         )
         conn.commit()
@@ -125,7 +130,7 @@ def listar_planos():
         return result.fetchall()
 
 
-def atualizar_aluno(aluno_id, nome, email, telefone, plano_id, objetivo, modalidade):
+def atualizar_aluno(aluno_id, nome, email, telefone, plano_id, objetivo, modalidade, data_nascimento=None):
     with engine.connect() as conn:
         conn.execute(
             text("""
@@ -135,7 +140,8 @@ def atualizar_aluno(aluno_id, nome, email, telefone, plano_id, objetivo, modalid
                     telefone = :telefone,
                     plano_id = :plano_id,
                     objetivo = :objetivo,
-                    modalidade = :modalidade
+                    modalidade = :modalidade,
+                    data_nascimento = :data_nascimento
                 WHERE id = :id
             """),
             {
@@ -145,7 +151,8 @@ def atualizar_aluno(aluno_id, nome, email, telefone, plano_id, objetivo, modalid
                 "telefone": telefone,
                 "plano_id": plano_id,
                 "objetivo": objetivo,
-                "modalidade": modalidade
+                "modalidade": modalidade,
+                "data_nascimento": data_nascimento
             }
         )
         conn.commit()
