@@ -6,11 +6,13 @@ import os
 
 from dotenv import load_dotenv
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Any, Literal
 
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
@@ -28,8 +30,18 @@ from src.database import (
     listar_planos,
     listar_exercicios,
     listar_exercicios_por_categoria,
-    buscar_exercicio
+    buscar_exercicio,
+    criar_avaliacao,
+    atualizar_avaliacao,
+    listar_avaliacoes,
+    buscar_avaliacao,
+    deletar_avaliacao,
+    criar_anamnese,
+    listar_anamneses,
+    buscar_anamnese_resposta,
+    deletar_anamnese
 )
+from src.fitlife_assistant import montar_mensagens
 
 
 # ==========================================================================
@@ -104,6 +116,10 @@ class AlunoUpdate(BaseModel):
     modalidade: str
     data_nascimento: str | None = None
 
+class AvaliacaoCreate(BaseModel):
+    tipo: Literal["essencial", "premium", "performance"]
+    dados: dict[str, Any] = Field(default_factory=dict)
+
 
 # ==========================================================================
 # 6. INTERFACE
@@ -134,26 +150,11 @@ def perguntar(body: Pergunta):
         body.pergunta
     )
 
-    contexto = "\n".join(
-        [no.text for no in nos]
-    )
-
     resposta = cliente_groq.chat.completions.create(
         model="openai/gpt-oss-20b",
-        messages=[
-            {
-                "role": "system",
-                "content":
-                    "Você é um assistente especialista da FitLife Coaching. "
-                    "Responda em português com base no contexto fornecido."
-            },
-            {
-                "role": "user",
-                "content":
-                    f"Contexto:\n{contexto}\n\n"
-                    f"Pergunta: {body.pergunta}"
-            }
-        ]
+        messages=montar_mensagens(body.pergunta, nos),
+        temperature=0.2,
+        max_tokens=700,
     )
 
     salvar_historico(
@@ -215,6 +216,88 @@ def get_aluno(aluno_id: int):
         "modalidade": aluno[8],
         "data_nascimento": str(aluno[9]) if aluno[9] else None
     }
+
+
+@app.post("/alunos/{aluno_id}/avaliacoes", status_code=201)
+def post_avaliacao(aluno_id: int, body: AvaliacaoCreate):
+    if not buscar_aluno(aluno_id):
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+
+    try:
+        avaliacao_id = criar_avaliacao(aluno_id, body.tipo, body.dados)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    return {"id": avaliacao_id, "mensagem": "Avaliação cadastrada com sucesso!"}
+
+
+@app.get("/alunos/{aluno_id}/avaliacoes")
+def get_avaliacoes(aluno_id: int):
+    if not buscar_aluno(aluno_id):
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+    return jsonable_encoder(listar_avaliacoes(aluno_id))
+
+
+@app.get("/avaliacoes/{avaliacao_id}")
+def get_avaliacao(avaliacao_id: int):
+    avaliacao = buscar_avaliacao(avaliacao_id)
+    if not avaliacao:
+        raise HTTPException(status_code=404, detail="Avaliação não encontrada")
+    return jsonable_encoder(avaliacao)
+
+
+@app.delete("/avaliacoes/{avaliacao_id}")
+def delete_avaliacao(avaliacao_id: int):
+    if not deletar_avaliacao(avaliacao_id):
+        raise HTTPException(status_code=404, detail="Avaliação não encontrada")
+    return {"mensagem": "Avaliação excluída com sucesso!"}
+
+
+@app.put("/avaliacoes/{avaliacao_id}")
+def put_avaliacao(avaliacao_id: int, body: AvaliacaoCreate):
+    try:
+        if atualizar_avaliacao(avaliacao_id, body.tipo, body.dados) is None:
+            raise HTTPException(status_code=404, detail="Avaliação não encontrada")
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"mensagem": "Avaliação atualizada com sucesso!"}
+
+
+class AnamneseCreate(BaseModel):
+    dados: dict[str, Any] = Field(default_factory=dict)
+
+
+@app.post("/alunos/{aluno_id}/anamneses", status_code=201)
+def post_anamnese(aluno_id: int, body: AnamneseCreate):
+    if not buscar_aluno(aluno_id):
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+    try:
+        anamnese_id = criar_anamnese(aluno_id, body.dados)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"id": anamnese_id, "mensagem": "Anamnese registrada com sucesso!"}
+
+
+@app.get("/alunos/{aluno_id}/anamneses")
+def get_anamneses(aluno_id: int):
+    if not buscar_aluno(aluno_id):
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+    return jsonable_encoder(listar_anamneses(aluno_id))
+
+
+@app.get("/anamneses/{anamnese_id}")
+def get_anamnese(anamnese_id: int):
+    anamnese = buscar_anamnese_resposta(anamnese_id)
+    if not anamnese:
+        raise HTTPException(status_code=404, detail="Anamnese não encontrada")
+    return jsonable_encoder(anamnese)
+
+
+@app.delete("/anamneses/{anamnese_id}")
+def delete_anamnese(anamnese_id: int):
+    if not deletar_anamnese(anamnese_id):
+        raise HTTPException(status_code=404, detail="Anamnese não encontrada")
+    return {"mensagem": "Anamnese excluída com sucesso!"}
 
 @app.post("/alunos")
 def post_aluno(body: AlunoCreate):

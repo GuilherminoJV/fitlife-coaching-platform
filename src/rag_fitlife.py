@@ -7,6 +7,7 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from groq import Groq
 import os
 from dotenv import load_dotenv
+from src.fitlife_assistant import montar_mensagens
 
 # Carrega as variáveis do arquivo .env
 load_dotenv()
@@ -35,21 +36,12 @@ retriever = index.as_retriever(similarity_top_k=3)
 def perguntar(pergunta):
     # Busca trechos relevantes
     nos = retriever.retrieve(pergunta)
-    contexto = "\n".join([no.text for no in nos])
-
     # Manda pro Groq com o contexto
     resposta = cliente_groq.chat.completions.create(
         model="openai/gpt-oss-20b",
-        messages=[
-            {
-                "role": "system",
-                "content": "Você é um assistente especialista da FitLife Coaching. Responda em português com base no contexto fornecido."
-            },
-            {
-                "role": "user",
-                "content": f"Contexto:\n{contexto}\n\nPergunta: {pergunta}"
-            }
-        ]
+        messages=montar_mensagens(pergunta, nos),
+        temperature=0.2,
+        max_tokens=700,
     )
     return resposta.choices[0].message.content
 

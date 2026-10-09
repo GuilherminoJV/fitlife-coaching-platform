@@ -28,7 +28,9 @@ const state = {
   alunosData: [],           // alunos carregados da API
   exerciciosData: [],
   exercicioPage: 0,
-  exercicioCategoria: ''
+  exercicioCategoria: '',
+  editingAssessmentId: null,
+  anamneseOnly: false
 };
 
 /* ========== DOM ========== */
@@ -238,7 +240,7 @@ function openStudentProfile(id) {
     goal: aluno.objetivo ?? '—',
     plan: aluno.plano ?? '—',
     status: aluno.ativo ? 'Ativo' : 'Inativo',
-    modality: aluno.modalidade ?? 'Não informado',
+    modality: aluno.modalidade ? `${aluno.modalidade.trim().charAt(0).toLocaleUpperCase('pt-BR')}${aluno.modalidade.trim().slice(1).toLocaleLowerCase('pt-BR')}` : 'Não informado',
     summary: `${aluno.objetivo ?? '—'} • ${aluno.plano ?? '—'}`
   });
 
@@ -247,11 +249,13 @@ function openStudentProfile(id) {
   panel.classList.add('active');
   panel.hidden = false;
   dom.trainingWorkspace?.classList.add('is-focused');
+  loadStudentRecords(id);
 }
 
 async function deleteStudent(id = state.selectedStudentId) {
   const aluno = state.alunosData.find(a => String(a.id) === String(id));
   if (!aluno || !aluno.ativo) return;
+  closeAllMenus();
   if (!confirm(`Excluir o aluno "${aluno.nome}"? O aluno será arquivado e poderá ser restaurado.`)) return;
 
   try {
@@ -281,6 +285,7 @@ async function restoreStudent(id) {
 function editStudent(id = state.selectedStudentId) {
   const aluno = state.alunosData.find(a => String(a.id) === String(id));
   if (!aluno || !dom.newStudentModal) return;
+  closeAllMenus();
 
   state.studentEditMode = true;
   state.selectedStudentId = String(id);
@@ -509,11 +514,13 @@ async function handleStudentFormSubmit(e) {
       });
 
       if (res.ok) {
+        const editedId = String(state.selectedStudentId);
         if (msgDiv) { msgDiv.style.display = 'block'; msgDiv.style.color = '#8cc63f'; msgDiv.textContent = `✅ ${payload.nome} atualizado com sucesso!`; }
         setTimeout(async () => {
           closePresencialModal();
           if (msgDiv) msgDiv.style.display = 'none';
           await loadAlunosFromAPI();
+          openStudentProfile(editedId);
         }, 1500);
       } else {
         if (msgDiv) { msgDiv.style.display = 'block'; msgDiv.style.color = '#f37021'; msgDiv.textContent = '❌ Erro ao atualizar aluno.'; }
@@ -643,6 +650,207 @@ async function sendChatMessage(e) {
 
 /* ========== EVENTOS ========== */
 
+const anamneseFields = [
+  ['pratica_atividade','Pratica atividade física?','bool'], ['atividade_qual','Qual atividade pratica?'], ['frequencia_semanal','Frequência semanal'],
+  ['treinou_personal','Já treinou com personal?','bool'], ['nivel_condicionamento','Nível de condicionamento'], ['doenca_diagnosticada','Doenças diagnosticadas'],
+  ['medicamentos','Medicamentos em uso'], ['historico_cirurgia_lesao','Cirurgias ou lesões anteriores'], ['dores_articulares','Dores ou desconfortos'],
+  ['restricao_medica','Possui restrição médica?','bool'], ['medico_liberou','Liberação médica'], ['qualidade_sono','Qualidade do sono'], ['horas_sono','Horas de sono','number'],
+  ['nivel_estresse','Nível de estresse'], ['bebida_alcoolica','Consumo de bebida alcoólica'], ['fumante','Tabagismo'], ['suplementos','Suplementos'],
+  ['acompanhamento_nutricional','Acompanhamento nutricional?','bool'], ['restricao_alimentar','Restrições alimentares'], ['refeicoes_por_dia','Refeições por dia','number'],
+  ['objetivo_principal','Objetivo principal'], ['prazo_resultado','Prazo desejado'], ['regiao_priorizar','Região a priorizar'], ['ja_tentou','O que já tentou?'], ['disponibilidade','Disponibilidade']
+];
+const basicAssessmentFields = [
+  ['data_avaliacao','Data da avaliação','date'], ['data_avaliacao_anterior','Data da avaliação anterior','date'], ['peso_kg','Peso (kg)','number'], ['altura_m','Altura (m)','number'], ['imc','IMC','number'], ['percentual_gordura','Gordura corporal (%)','number'], ['massa_gorda_kg','Massa gorda (kg)','number'], ['massa_magra_kg','Massa magra (kg)','number'],
+  ['observacoes_profissional','Observações do profissional','textarea'], ['mensagem_aluno','Mensagem ao aluno','textarea'], ['recomendacoes','Recomendações','textarea'], ['frequencia_ideal','Frequência ideal semanal','number'], ['foco_proximo_bloco','Foco do próximo bloco','textarea'], ['indicacao_nutricional','Indicação nutricional?','bool'], ['proxima_reavaliacao','Próxima reavaliação','date']
+];
+const premiumAssessmentFields = [
+  ['circ_ombro','Circunferência do ombro (cm)','number'], ['circ_peitoral','Circunferência peitoral (cm)','number'], ['circ_cintura','Circunferência da cintura (cm)','number'], ['circ_abdomen','Circunferência do abdômen (cm)','number'], ['circ_quadril','Circunferência do quadril (cm)','number'], ['circ_braco_dir','Braço direito (cm)','number'], ['circ_braco_esq','Braço esquerdo (cm)','number'], ['circ_coxa_dir','Coxa direita (cm)','number'], ['circ_coxa_esq','Coxa esquerda (cm)','number'], ['circ_panturrilha_dir','Panturrilha direita (cm)','number'], ['circ_panturrilha_esq','Panturrilha esquerda (cm)','number'],
+  ['dobra_peitoral','Dobra peitoral (mm)','number'], ['dobra_abdominal','Dobra abdominal (mm)','number'], ['dobra_coxa','Dobra da coxa (mm)','number'], ['dobra_triceps','Dobra do tríceps (mm)','number'], ['dobra_subescapular','Dobra subescapular (mm)','number'], ['dobra_suprailiaca','Dobra supra-ilíaca (mm)','number'], ['dobra_axilar_medial','Dobra axilar média (mm)','number'], ['dobra_somatorio','Somatório das dobras (mm)','number'], ['dobra_percentual_gordura','Gordura por dobras (%)','number'],
+  ['postural_cabeca','Postura da cabeça'], ['postural_ombros','Postura dos ombros'], ['postural_coluna_toracica','Coluna torácica'], ['postural_coluna_lombar','Coluna lombar'], ['postural_pelve','Pelve'], ['postural_joelhos','Joelhos'], ['postural_pes','Pés'], ['postural_observacoes','Observações posturais','textarea'], ['dinam_mao_dir','Dinamometria mão direita','number'], ['dinam_mao_esq','Dinamometria mão esquerda','number']
+];
+const performanceAssessmentFields = [
+  ['func_flexao_braco','Flexões de braço','number'], ['func_agachamento','Agachamentos no teste','number'], ['func_prancha_seg','Prancha (segundos)','number'], ['vo2_distancia_m','Distância do teste VO₂ (m)','number'], ['vo2_maximo','VO₂ máximo','number'], ['vo2_classificacao','Classificação VO₂'],
+  ['perf_forca_inf_1','Força inferior — teste 1'], ['perf_forca_inf_2','Força inferior — teste 2'], ['perf_forca_inf_3','Força inferior — teste 3'], ['perf_forca_sup_1','Força superior — teste 1'], ['perf_forca_sup_2','Força superior — teste 2'], ['perf_forca_sup_3','Força superior — teste 3'], ['perf_potencia_1','Potência — teste 1'], ['perf_potencia_2','Potência — teste 2'], ['perf_potencia_3','Potência — teste 3'], ['perf_pontos_fortes','Pontos fortes','textarea'], ['perf_limitadores','Limitadores','textarea'], ['perf_protocolo','Protocolo utilizado','textarea'], ['perf_periodizacao','Planejamento / periodização','textarea']
+];
+
+function inputFieldsMarkup(fields) {
+  return fields.map(([key, label, type]) => {
+    const control = type === 'bool'
+      ? `<select name="${key}"><option value="">Não informado</option><option value="true">Sim</option><option value="false">Não</option></select>`
+      : type === 'textarea' ? `<textarea name="${key}" rows="2"></textarea>` : `<input name="${key}" type="${type || 'text'}" ${type === 'number' ? 'step="any"' : ''}>`;
+    return `<label>${escapeHtml(label)}${control}</label>`;
+  }).join('');
+}
+
+function renderInputFields(container, fields) {
+  container.innerHTML = inputFieldsMarkup(fields);
+}
+
+function assessmentGroupMarkup(title, description, fields, number) {
+  if (!fields.length) return '';
+  return `<section class="assessment-group" aria-labelledby="assessment-group-${number}">
+    <header class="assessment-group-heading"><span class="assessment-group-number">${number}</span><div><h4 id="assessment-group-${number}">${escapeHtml(title)}</h4><p>${escapeHtml(description)}</p></div></header>
+    <div class="form-field-grid">${inputFieldsMarkup(fields)}</div>
+  </section>`;
+}
+
+function renderAssessmentFields(type) {
+  const groups = [
+    ['Medidas básicas e composição corporal', 'Dados antropométricos e composição corporal do aluno.', basicAssessmentFields.slice(0, 8)]
+  ];
+
+  groups.push(
+    ['Perimetria (circunferências)', 'Medidas corporais para acompanhar as mudanças ao longo do tempo.', premiumAssessmentFields.slice(0, 11)],
+    ['Dobras cutâneas', 'Medidas de dobras e estimativas da composição corporal.', premiumAssessmentFields.slice(11, 20)]
+  );
+
+  if (type === 'premium' || type === 'performance') {
+    groups.push(
+      ['Avaliação postural', 'Observação dos principais segmentos e alinhamentos corporais.', premiumAssessmentFields.slice(20, 28)],
+      ['Dinamometria manual', 'Avaliação da força de preensão da mão direita e esquerda.', premiumAssessmentFields.slice(28, 30)]
+    );
+  }
+
+  if (type === 'performance') {
+    groups.push(
+      ['Testes funcionais', 'Resultados dos testes selecionados para avaliar a capacidade funcional.', performanceAssessmentFields.slice(0, 3)],
+      ['Capacidade cardiorrespiratória — VO₂', 'Distância, estimativa e classificação do teste cardiorrespiratório.', performanceAssessmentFields.slice(3, 6)],
+      ['Testes de força', 'Resultados dos testes de força dos membros inferiores e superiores.', performanceAssessmentFields.slice(6, 12)],
+      ['Testes de potência', 'Resultados dos testes de potência realizados.', performanceAssessmentFields.slice(12, 15)],
+      ['Síntese de desempenho', 'Pontos fortes, limitadores, protocolo e planejamento.', performanceAssessmentFields.slice(15)]
+    );
+  }
+
+  groups.push(['Análise profissional e próximos passos', 'Observações, recomendações e planejamento de acompanhamento.', basicAssessmentFields.slice(8)]);
+
+  const container = $('#assessmentFields');
+  container.className = 'assessment-field-sections';
+  container.innerHTML = groups.map((group, index) => assessmentGroupMarkup(...group, index + 1)).join('');
+}
+
+function openAssessmentModal(studentId = null, mode = 'create') {
+  const modal = $('#assessmentModal');
+  const form = $('#assessmentForm');
+  if (!modal || !form) return;
+  state.editingAssessmentId = mode === 'edit' ? state.editingAssessmentId : null;
+  state.anamneseOnly = mode === 'anamnese';
+  form.reset();
+  const studentSelect = $('#assessmentStudent');
+  studentSelect.innerHTML = '<option value="">Selecione um aluno</option>' + state.alunosData.filter(a => a.ativo).map(a => `<option value="${a.id}">${escapeHtml(a.nome)}</option>`).join('');
+  if (studentId) studentSelect.value = String(studentId);
+  updateAssessmentStudentAge();
+  studentSelect.disabled = Boolean(studentId);
+  $('#assessmentModalTitle').textContent = mode === 'edit' ? 'Editar avaliação física' : state.anamneseOnly ? 'Nova anamnese' : 'Nova avaliação física';
+  $('#anamneseFields').parentElement.hidden = !state.anamneseOnly;
+  $('#assessmentFields').parentElement.hidden = state.anamneseOnly;
+  $('#assessmentType').parentElement.hidden = mode === 'edit' || state.anamneseOnly;
+  $('#assessmentForm button[type="submit"]').textContent = state.anamneseOnly ? 'Salvar anamnese' : mode === 'edit' ? 'Salvar alterações' : 'Salvar avaliação';
+  const anamFields = [...anamneseFields];
+  renderInputFields($('#anamneseFields'), anamFields);
+  renderAssessmentFields($('#assessmentType').value || 'essencial');
+  $('#assessmentFormMsg').textContent = '';
+  modal.hidden = false;
+}
+
+function updateAssessmentStudentAge() {
+  const student = state.alunosData.find(a => String(a.id) === String($('#assessmentStudent')?.value));
+  const output = $('#assessmentStudentAge');
+  if (!output) return;
+  if (!student?.data_nascimento) { output.textContent = 'Idade não informada no cadastro.'; return; }
+  const born = new Date(`${student.data_nascimento}T00:00:00`);
+  const now = new Date();
+  let age = now.getFullYear() - born.getFullYear();
+  if (now.getMonth() < born.getMonth() || (now.getMonth() === born.getMonth() && now.getDate() < born.getDate())) age--;
+  output.textContent = `Idade: ${age} anos`;
+}
+
+function collectFields(container) {
+  const data = {};
+  $$('input[name], select[name], textarea[name]', container).forEach(el => {
+    if (el.value === '') return;
+    data[el.name] = el.type === 'number' ? Number(el.value) : el.tagName === 'SELECT' && ['true','false'].includes(el.value) ? el.value === 'true' : el.value;
+  });
+  return data;
+}
+
+function closeAssessmentModal() {
+  const modal = $('#assessmentModal');
+  if (modal) modal.hidden = true;
+  state.editingAssessmentId = null;
+  state.anamneseOnly = false;
+  const anamSection = $('#anamneseFields')?.parentElement;
+  if (anamSection) anamSection.hidden = false;
+  $('#assessmentStudent')?.removeAttribute('disabled');
+}
+
+async function handleAssessmentSubmit(e) {
+  e.preventDefault();
+  const form = e.currentTarget;
+  const msg = $('#assessmentFormMsg');
+  const studentId = $('#assessmentStudent').value || state.selectedStudentId;
+  if (!studentId) { msg.textContent = 'Selecione um aluno.'; return; }
+  const tipo = $('#assessmentType').value;
+  const dadosAvaliacao = collectFields($('#assessmentFields'));
+  try {
+    if (state.anamneseOnly) {
+      const dadosAnamnese = collectFields($('#anamneseFields'));
+      if (!Object.keys(dadosAnamnese).length) throw new Error('Preencha ao menos uma resposta da anamnese.');
+      const res = await fetch(`/alunos/${studentId}/anamneses`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({dados:dadosAnamnese})});
+      if (!res.ok) throw new Error((await res.json()).detail || 'Falha ao salvar a anamnese.');
+    } else if (state.editingAssessmentId) {
+      const res = await fetch(`/avaliacoes/${state.editingAssessmentId}`, {method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({tipo, dados:dadosAvaliacao})});
+      if (!res.ok) throw new Error((await res.json()).detail || 'Não foi possível atualizar.');
+    } else {
+      const res = await fetch(`/alunos/${studentId}/avaliacoes`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({tipo, dados:dadosAvaliacao})});
+      if (!res.ok) throw new Error((await res.json()).detail || 'Falha ao salvar a avaliação.');
+    }
+    msg.textContent = state.anamneseOnly ? 'Anamnese salva.' : state.editingAssessmentId ? 'Avaliação atualizada.' : 'Avaliação salva.';
+    await loadStudentRecords(studentId);
+    setTimeout(closeAssessmentModal, 450);
+  } catch (err) { msg.textContent = err.message || 'Erro ao salvar os registros.'; }
+}
+
+async function loadStudentRecords(studentId) {
+  try {
+    const [ar, nr] = await Promise.all([fetch(`/alunos/${studentId}/avaliacoes`), fetch(`/alunos/${studentId}/anamneses`)]);
+    if (!ar.ok || !nr.ok) throw new Error('Falha ao carregar histórico');
+    const [assessments, anamneses] = await Promise.all([ar.json(), nr.json()]);
+    $('#assessmentHistory').innerHTML = assessments.length ? assessments.map(a => `<article class="record-row"><div><strong>${escapeHtml(a.tipo)} · ${escapeHtml(a.data_avaliacao)}</strong><small>${a.peso_kg ? `${escapeHtml(a.peso_kg)} kg` : 'Medidas registradas'}</small></div><span><button type="button" class="table-btn" data-action="edit-assessment" data-record-id="${a.id}">Editar</button><button type="button" class="table-btn" data-action="delete-assessment" data-record-id="${a.id}">Excluir</button></span></article>`).join('') : '<div class="empty-state">Nenhuma avaliação cadastrada.</div>';
+    $('#anamneseHistory').innerHTML = anamneses.length ? anamneses.map(a => `<article class="record-row"><div><strong>Anamnese · ${escapeHtml(a.criada_em?.slice(0,10) || '')}</strong><small>Questionário de saúde e objetivos</small></div><span><button type="button" class="table-btn" data-action="view-anamnesis" data-record-id="${a.id}">Visualizar</button><button type="button" class="table-btn" data-action="send-anamnesis" data-record-id="${a.id}">Enviar</button><button type="button" class="table-btn" data-action="delete-anamnesis" data-record-id="${a.id}">Excluir</button></span></article>`).join('') : '<div class="empty-state">Nenhuma anamnese registrada.</div>';
+  } catch (err) { console.error(err); }
+}
+
+async function editAssessment(id) {
+  const res = await fetch(`/avaliacoes/${id}`); if (!res.ok) return;
+  const record = await res.json(); state.editingAssessmentId = id; openAssessmentModal(record.aluno_id, 'edit');
+  $('#assessmentType').value = record.tipo; renderAssessmentFields(record.tipo);
+  Object.entries(record).forEach(([k,v]) => { const el = $(`[name="${k}"]`, $('#assessmentFields')); if (el && v != null) el.value = String(v).slice(0,10); });
+}
+
+async function deleteAssessment(id) {
+  if (!confirm('Excluir esta avaliação física?')) return;
+  const res = await fetch(`/avaliacoes/${id}`, {method:'DELETE'}); if (res.ok) await loadStudentRecords(state.selectedStudentId);
+}
+
+async function viewAnamnesis(id, send = false) {
+  const res = await fetch(`/anamneses/${id}`); if (!res.ok) return;
+  const data = await res.json();
+  const pairs = anamneseFields.filter(([key]) => data[key] !== null && data[key] !== undefined).map(([key,label]) => `${label}: ${data[key] === true ? 'Sim' : data[key] === false ? 'Não' : data[key]}`);
+  const text = `Anamnese FitLife\n${pairs.join('\n')}`;
+  if (!send) { alert(text); return; }
+  const student = state.alunosData.find(a => String(a.id) === String(state.selectedStudentId));
+  let phone = (student?.telefone || '').replace(/\D/g, '');
+  if (phone.length === 10 || phone.length === 11) phone = `55${phone}`;
+  if (!phone) { await navigator.clipboard.writeText(text); alert('Anamnese copiada. O aluno não tem telefone cadastrado.'); return; }
+  const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank', 'noopener');
+}
+
+async function deleteAnamnesis(id) {
+  if (!confirm('Excluir esta anamnese?')) return;
+  const res = await fetch(`/anamneses/${id}`, {method:'DELETE'}); if (res.ok) await loadStudentRecords(state.selectedStudentId);
+}
+
 const actions = {
   'toggle-chat': toggleChat,
   'back-to-workspace': showTrainingLanding,
@@ -659,7 +867,14 @@ const actions = {
   'student-page-prev': () => changeStudentPage(-1),
   'student-page-next': () => changeStudentPage(1),
   'close-modal-exercicio': closeExerciseModal,
-  'new-assessment': () => console.log('TODO: nova avaliação física'),
+  'new-assessment': async () => { if (!state.alunosData.length) await loadAlunosFromAPI(); openAssessmentModal(state.selectedStudentId); },
+  'new-anamnesis': () => openAssessmentModal(state.selectedStudentId, 'anamnese'),
+  'close-assessment': closeAssessmentModal,
+  'edit-assessment': (_, t) => editAssessment(t.dataset.recordId),
+  'delete-assessment': (_, t) => deleteAssessment(t.dataset.recordId),
+  'view-anamnesis': (_, t) => viewAnamnesis(t.dataset.recordId),
+  'send-anamnesis': (_, t) => viewAnamnesis(t.dataset.recordId, true),
+  'delete-anamnesis': (_, t) => deleteAnamnesis(t.dataset.recordId),
   'new-workout': () => console.log('TODO: novo treino'),
   'new-exercise': () => console.log('TODO: novo exercício')
 };
@@ -667,6 +882,7 @@ const actions = {
 function handleClick(e) {
   if (e.target === dom.newStudentModal) return closePresencialModal();
   if (e.target === dom.exerciseModal) return closeExerciseModal();
+  if (e.target === $('#assessmentModal')) return closeAssessmentModal();
   if (e.target.closest('.brand')) return switchTab('geral');
 
   const profileMenu = $('[data-profile-menu]');
@@ -699,6 +915,7 @@ function handleClick(e) {
 
 function handleKeydown(e) {
   if (e.key === 'Escape') {
+    if ($('#assessmentModal') && !$('#assessmentModal').hidden) return closeAssessmentModal();
     if (dom.exerciseModal && !dom.exerciseModal.hidden) return closeExerciseModal();
     if (dom.newStudentModal && !dom.newStudentModal.hidden) return closePresencialModal();
     return closeAllMenus();
@@ -749,6 +966,9 @@ function init() {
   document.addEventListener('keydown', handleKeydown);
   dom.chatForm?.addEventListener('submit', sendChatMessage);
   dom.studentForm?.addEventListener('submit', handleStudentFormSubmit);
+  $('#assessmentForm')?.addEventListener('submit', handleAssessmentSubmit);
+  $('#assessmentType')?.addEventListener('change', e => renderAssessmentFields(e.target.value));
+  $('#assessmentStudent')?.addEventListener('change', updateAssessmentStudentAge);
 }
 
 document.addEventListener('DOMContentLoaded', init);

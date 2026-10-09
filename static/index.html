@@ -321,6 +321,10 @@
           </div>
 
           <div class="workspace-actions" aria-label="Ações de cadastro">
+            <button type="button" class="workspace-btn workspace-action-btn" data-action="new-assessment">
+              <span class="workspace-icon" aria-hidden="true">📋</span>
+              <span><strong>Avaliação Física</strong><small>Nova avaliação</small></span>
+            </button>
             <button type="button" class="workspace-btn workspace-action-btn" data-action="open-modal-presencial">
               <span class="workspace-icon" aria-hidden="true">＋</span>
               <span>
@@ -408,13 +412,13 @@
                     </div>
 
                     <button type="button" class="profile-menu-btn" data-action="student-profile-menu"
-                      aria-label="Ações do aluno" aria-expanded="false">⋮</button>
+                      aria-label="Ações do aluno" aria-controls="studentProfileActions" aria-expanded="false">⋮</button>
                   </div>
 
-                  <div class="profile-actions-menu" data-profile-menu hidden>
-                    <button type="button" data-action="contact-student">Conversar → WhatsApp</button>
-                    <button type="button" data-action="edit-student">Editar aluno</button>
-                    <button type="button" data-action="delete-student">Excluir aluno</button>
+                  <div class="profile-actions-menu" id="studentProfileActions" data-profile-menu role="menu" hidden>
+                    <button type="button" role="menuitem" data-action="contact-student">Conversar → WhatsApp</button>
+                    <button type="button" role="menuitem" data-action="edit-student">Editar aluno</button>
+                    <button type="button" role="menuitem" data-action="delete-student">Excluir aluno</button>
                   </div>
                 </div>
 
@@ -445,13 +449,20 @@
                     <div class="card-heading">
                       <div>
                         <h3>Avaliação Física</h3>
-                        <p>Última avaliação registrada</p>
+                        <p>Histórico de avaliações físicas</p>
                       </div>
                       <button type="button" class="primary-btn" data-action="new-assessment">
                         + Nova avaliação
                       </button>
                     </div>
-                    <div class="empty-state">Nenhuma avaliação cadastrada.</div>
+                    <div id="assessmentHistory" class="record-list"><div class="empty-state">Nenhuma avaliação cadastrada.</div></div>
+                  </div>
+                  <div class="card profile-card profile-records-card">
+                    <div class="card-heading">
+                      <div><h3>Anamnese</h3><p>Questionário e histórico de saúde</p></div>
+                      <button type="button" class="primary-btn" data-action="new-anamnesis">+ Nova anamnese</button>
+                    </div>
+                    <div id="anamneseHistory" class="record-list"><div class="empty-state">Nenhuma anamnese registrada.</div></div>
                   </div>
                 </div>
 
@@ -778,6 +789,28 @@
     </form>
   </div>
 </div>
+
+  <!-- ===== Modal: Anamnese e avaliação física ===== -->
+  <div class="modal-backdrop" id="assessmentModal" hidden>
+    <div class="modal-card assessment-modal-card" role="dialog" aria-modal="true" aria-labelledby="assessmentModalTitle">
+      <div class="modal-header">
+        <div><span class="profile-label">Treino &amp; Biomecânica</span><h2 id="assessmentModalTitle">Nova avaliação física</h2></div>
+        <button type="button" class="close-chat-btn" data-action="close-assessment" aria-label="Fechar">✕</button>
+      </div>
+      <form id="assessmentForm" class="modal-form">
+        <label>Aluno<select name="aluno_id" id="assessmentStudent" required></select><small id="assessmentStudentAge" class="on-dark-muted"></small></label>
+        <label>Tipo de avaliação<select name="tipo" id="assessmentType" required>
+          <option value="essencial">Essencial — perimetria, dobras e medidas básicas</option>
+          <option value="premium">Premium — avaliação postural e dinamometria manual</option>
+          <option value="performance">Performance — VO₂ e testes de desempenho</option>
+        </select></label>
+        <div class="assessment-form-section"><h3>Anamnese</h3><p>Registro independente, salvo no histórico do aluno.</p><div id="anamneseFields" class="form-field-grid"></div></div>
+        <div class="assessment-form-section"><h3>Avaliação física</h3><p>As medidas ficam em um registro separado da anamnese.</p><div id="assessmentFields" class="form-field-grid"></div></div>
+        <div id="assessmentFormMsg" class="form-message" role="status"></div>
+        <div class="modal-actions"><button type="button" class="secondary-btn" data-action="close-assessment">Cancelar</button><button type="submit" class="primary-btn">Salvar registros</button></div>
+      </form>
+    </div>
+  </div>
 
   <!-- ===== Scripts ===== -->
   <script src="/static/js/app.js" defer></script>
