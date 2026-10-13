@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- ===== Styles ===== -->
-  <link rel="stylesheet" href="/static/css/styles.css">
+  <link rel="stylesheet" href="/static/css/styles.css?v=20261012-profile-nav-session-spacing">
 
   <!-- ===== Markdown renderer (AI chat answers) ===== -->
   <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js" defer></script>
@@ -346,9 +346,10 @@
           <div class="workspace-focus" id="workspaceFocus">
 
             <div class="workspace-focus-header">
-              <button type="button" class="back-btn" data-action="back-to-workspace">
-                ← Voltar
-              </button>
+              <div class="workspace-back-actions">
+                <button type="button" class="back-btn" data-action="back-to-workspace">← Voltar</button>
+                <button type="button" class="back-btn" id="backToStudentsButton" data-action="back-to-students" hidden>← Voltar para alunos</button>
+              </div>
 
               <div>
                 <span class="profile-label" id="workspaceFocusLabel">Treino</span>
@@ -398,10 +399,6 @@
               <section id="workspace-aluno-perfil" class="workspace-panel" aria-labelledby="profile-name" hidden>
 
                 <div class="profile-header">
-                  <button type="button" class="back-btn" data-action="back-to-students">
-                    ← Voltar para alunos
-                  </button>
-
                   <div class="student-profile-heading">
                     <div class="student-avatar large" aria-hidden="true" data-field="initials">JS</div>
 
@@ -445,24 +442,27 @@
                     </dl>
                   </div>
 
-                  <div class="card profile-card">
-                    <div class="card-heading">
-                      <div>
-                        <h3>Avaliação Física</h3>
-                        <p>Histórico de avaliações físicas</p>
-                      </div>
-                      <button type="button" class="primary-btn" data-action="new-assessment">
-                        + Nova avaliação
-                      </button>
-                    </div>
-                    <div id="assessmentHistory" class="record-list"><div class="empty-state">Nenhuma avaliação cadastrada.</div></div>
-                  </div>
                   <div class="card profile-card profile-records-card">
-                    <div class="card-heading">
-                      <div><h3>Anamnese</h3><p>Questionário e histórico de saúde</p></div>
-                      <button type="button" class="primary-btn" data-action="new-anamnesis">+ Nova anamnese</button>
-                    </div>
-                    <div id="anamneseHistory" class="record-list"><div class="empty-state">Nenhuma anamnese registrada.</div></div>
+                    <section class="profile-record-section">
+                      <div class="card-heading">
+                        <div><h3>Anamnese</h3><p>Questionário e histórico de saúde</p></div>
+                        <details class="record-actions-menu">
+                          <summary aria-label="Opções da anamnese">⋮</summary>
+                          <div class="record-actions-popover"><button type="button" data-action="new-anamnesis">Nova anamnese</button></div>
+                        </details>
+                      </div>
+                      <div id="anamneseHistory" class="record-list"><div class="empty-state compact-empty-state">Nenhuma anamnese registrada.</div></div>
+                    </section>
+                    <section class="profile-record-section">
+                      <div class="card-heading">
+                        <div><h3>Avaliação Física</h3><p>Histórico de avaliações físicas</p></div>
+                        <div class="assessment-heading-actions">
+                          <button type="button" class="secondary-btn" data-action="compare-assessments" id="compareAssessmentsButton" disabled>Comparar avaliações</button>
+                          <button type="button" class="primary-btn" data-action="new-assessment">+ Nova avaliação</button>
+                        </div>
+                      </div>
+                      <div id="assessmentHistory" class="record-list"><div class="empty-state compact-empty-state">Nenhuma avaliação cadastrada.</div></div>
+                    </section>
                   </div>
                 </div>
 
@@ -502,14 +502,27 @@
 
                 <div class="exercise-toolbar">
                   <input type="search" placeholder="Buscar exercício..." aria-label="Buscar exercício">
-                  <select aria-label="Filtrar por grupo muscular">
+                  <select id="exerciseGroupFilter" aria-label="Filtrar por grupo muscular">
                     <option value="">Todos os grupos</option>
-                    <option value="peito">Peito</option>
-                    <option value="costas">Costas</option>
-                    <option value="ombros">Ombros</option>
-                    <option value="bracos">Braços</option>
-                    <option value="pernas">Pernas</option>
-                    <option value="core">Core</option>
+                    <option value="Peito">Peito</option>
+                    <option value="Costas">Costas</option>
+                    <option value="Ombro">Ombro</option>
+                    <option value="Bíceps">Bíceps</option>
+                    <option value="Tríceps">Tríceps</option>
+                    <option value="Quadríceps">Quadríceps</option>
+                    <option value="Posterior de coxa">Posterior de coxa</option>
+                    <option value="Glúteos">Glúteos</option>
+                    <option value="Core">Core</option>
+                    <option value="Corpo inteiro">Corpo inteiro</option>
+                  </select>
+                  <select id="exerciseCategoryFilter" aria-label="Filtrar por categoria">
+                    <option value="">Todas as categorias</option>
+                    <option value="Musculação">Musculação</option>
+                    <option value="Aeróbico">Aeróbico</option>
+                    <option value="Funcional">Funcional</option>
+                    <option value="Mobilidade">Mobilidade</option>
+                    <option value="Alongamento">Alongamento</option>
+                    <option value="Elásticos e faixas">Elásticos e faixas</option>
                   </select>
                 </div>
 
@@ -519,7 +532,7 @@
                       <tr>
                         <th scope="col">Exercício</th>
                         <th scope="col">Grupo muscular</th>
-                        <th scope="col">Tipo</th>
+                        <th scope="col">Categoria</th>
                         <th scope="col">Ações</th>
                       </tr>
                     </thead>
@@ -558,11 +571,52 @@
 
           <div class="exercise-tags" aria-label="Resumo do exercício">
             <span class="exercise-tag" data-exercise-field="muscle">Quadríceps</span>
-            <span class="exercise-tag" data-exercise-field="equipment">Barra</span>
-            <span class="exercise-tag" data-exercise-field="type">Multiarticular</span>
+            <span class="exercise-tag" data-exercise-field="category">Musculação</span>
           </div>
         </div>
       </aside>
+
+      <!-- Cadastro de exercício -->
+      <div class="modal-backdrop" id="modalNovoExercicio" hidden>
+        <div class="modal-card exercise-form-card" role="dialog" aria-modal="true" aria-labelledby="newExerciseTitle">
+          <div class="modal-header">
+            <div>
+              <span class="profile-label">Biblioteca de exercícios</span>
+              <h2 id="newExerciseTitle">Novo exercício</h2>
+            </div>
+            <button type="button" class="close-chat-btn" data-action="close-new-exercise" aria-label="Fechar cadastro">✕</button>
+          </div>
+          <form class="modal-form" id="exerciseForm">
+            <label>Nome do exercício
+              <input name="nome" type="text" required maxlength="100" placeholder="Ex.: Agachamento sumô">
+            </label>
+            <label>Grupo muscular
+              <select name="musculo_alvo" required>
+                <option value="">Selecione um grupo</option>
+                <option>Peito</option><option>Costas</option><option>Ombro</option>
+                <option>Bíceps</option><option>Tríceps</option><option>Quadríceps</option>
+                <option>Posterior de coxa</option><option>Glúteos</option><option>Core</option>
+                <option>Corpo inteiro</option>
+              </select>
+            </label>
+            <label>Categoria
+              <select name="categoria" required>
+                <option value="">Selecione uma categoria</option>
+                <option>Musculação</option><option>Aeróbico</option><option>Funcional</option>
+                <option>Mobilidade</option><option>Alongamento</option><option>Elásticos e faixas</option>
+              </select>
+            </label>
+            <label>Mídia demonstrativa (opcional)
+              <input name="midia_url" type="url" maxlength="1000" placeholder="Cole um link de vídeo, GIF ou imagem">
+            </label>
+            <div id="exerciseFormMessage" class="form-message" role="status" aria-live="polite"></div>
+            <div class="modal-actions">
+              <button type="button" class="secondary-btn" data-action="close-new-exercise">Cancelar</button>
+              <button type="submit" class="primary-btn">Salvar exercício</button>
+            </div>
+          </form>
+        </div>
+      </div>
 
       <!-- Nutrição (placeholder) -->
       <section id="tab-nutricao" class="tab-content" aria-labelledby="nutricao-title">
@@ -750,6 +804,15 @@
       </label>
 
       <label>
+        Sexo biológico (para cálculo de RCQ e Pollock)
+        <select name="sexo">
+          <option value="">Não informado</option>
+          <option value="masculino">Masculino</option>
+          <option value="feminino">Feminino</option>
+        </select>
+      </label>
+
+      <label>
         E-mail
         <input type="email" name="email" required placeholder="email@exemplo.com">
       </label>
@@ -812,8 +875,82 @@
     </div>
   </div>
 
+  <!-- ===== Modal: comparação de avaliações físicas ===== -->
+  <div class="modal-backdrop" id="assessmentCompareModal" hidden>
+    <div class="modal-card assessment-compare-card" role="dialog" aria-modal="true" aria-labelledby="assessmentCompareTitle">
+      <div class="modal-header">
+        <div><span class="profile-label">Evolução do aluno</span><h2 id="assessmentCompareTitle">Comparar avaliações</h2><p class="on-dark-muted">Compare os principais resultados de duas datas.</p></div>
+        <button type="button" class="close-chat-btn" data-action="close-assessment-comparison" aria-label="Fechar">✕</button>
+      </div>
+      <div class="assessment-compare-selectors">
+        <label>Avaliação anterior<select id="compareAssessmentPrevious" aria-label="Selecionar avaliação anterior"></select></label>
+        <label>Avaliação atual<select id="compareAssessmentCurrent" aria-label="Selecionar avaliação atual"></select></label>
+      </div>
+      <div class="assessment-compare-table-wrap">
+        <table class="assessment-compare-table">
+          <thead><tr><th>Indicador</th><th id="comparePreviousDate">Avaliação anterior</th><th id="compareCurrentDate">Avaliação atual</th><th>Comparação</th></tr></thead>
+          <tbody id="assessmentComparisonResults"></tbody>
+        </table>
+      </div>
+      <div class="modal-actions"><button type="button" class="secondary-btn" data-action="close-assessment-comparison">Fechar</button></div>
+    </div>
+  </div>
+
+  <!-- ===== Modal: criação de treino ===== -->
+  <div class="modal-backdrop" id="workoutModal" hidden>
+    <div class="modal-card workout-modal-card" role="dialog" aria-modal="true" aria-labelledby="workoutModalTitle">
+      <div class="modal-header">
+        <div><span class="profile-label">Treino &amp; Biomecânica</span><h2 id="workoutModalTitle">Criar treino</h2><p id="workoutStudentName" class="on-dark-muted"></p></div>
+        <button type="button" class="close-chat-btn" data-action="close-workout" aria-label="Fechar">✕</button>
+      </div>
+      <form id="workoutForm" class="modal-form">
+        <div class="workout-form-grid">
+          <label>Nome do treino<input name="nome" type="text" maxlength="120" placeholder="Ex.: Treino novo" required></label>
+          <label>Objetivo<input name="objetivo" type="text" maxlength="200" placeholder="Ex.: fortalecimento e hipertrofia" required></label>
+          <label>Dificuldade<select name="dificuldade" required><option value="">Selecione</option><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select></label>
+        </div>
+
+        <label>Orientações gerais<textarea name="orientacoes_gerais" rows="4" maxlength="5000" placeholder="Explique a periodização, progressão ou orientações para o aluno. Ex.: Semanas 1 e 2: 3×12; semanas 3 e 4: 3×10."></textarea></label>
+
+        <div class="workout-form-grid workout-settings-grid">
+          <label>Começa em<input name="data_inicio" type="date" required></label>
+          <label>Termina em<input name="data_fim" type="date" required></label>
+          <label>Retirar a rotina da tela do aluno quando vencer?<select name="remover_apos_vencimento"><option value="true">Sim</option><option value="false">Não</option></select></label>
+          <label>Ocultar a rotina antes da data de início?<select name="ocultar_antes_inicio"><option value="true">Sim</option><option value="false">Não</option></select></label>
+        </div>
+
+        <div id="workoutFormMessage" class="form-message" role="status"></div>
+        <div class="modal-actions"><button type="button" class="secondary-btn" data-action="close-workout">Cancelar</button><button type="submit" class="primary-btn">Salvar treino</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== Etapa 2: exercícios da rotina ===== -->
+  <div class="modal-backdrop" id="workoutExercisesModal" hidden>
+    <div class="modal-card workout-modal-card" role="dialog" aria-modal="true" aria-labelledby="workoutExercisesTitle">
+      <div class="modal-header">
+        <div><span class="profile-label">Prescrição do treino</span><h2 id="workoutExercisesTitle">Nova sessão de treino</h2><p id="workoutExercisesSubtitle" class="on-dark-muted"></p></div>
+        <button type="button" class="close-chat-btn" data-action="close-workout-exercises" aria-label="Fechar">✕</button>
+      </div>
+      <form id="workoutExercisesForm" class="modal-form">
+        <section class="workout-exercises-section">
+          <label>Nome da sessão<input name="sessao_nome" type="text" maxlength="120" placeholder="Ex.: Treino de membros inferiores" required></label>
+          <div class="workout-section-heading"><div><h3>Exercícios da sessão</h3><p>Busque pelo nome, escolha o exercício e complete a prescrição.</p></div><div class="workout-picker-actions"><button type="button" class="secondary-btn" id="openExercisePicker">Biblioteca</button><button type="button" class="secondary-btn" id="addWorkoutExercise">+ Adicionar exercício</button></div></div>
+          <div id="workoutExerciseRows" class="workout-exercise-rows"></div>
+          <div id="exercisePickerPanel" class="exercise-picker-panel" hidden>
+            <div class="exercise-picker-heading"><strong>Biblioteca de exercícios</strong><button type="button" id="closeExercisePicker" aria-label="Fechar biblioteca">×</button></div>
+            <input id="exercisePickerSearch" type="search" placeholder="Buscar pelo nome..." aria-label="Buscar exercício na biblioteca">
+            <div id="exercisePickerResults" class="exercise-picker-results"></div>
+          </div>
+        </section>
+        <div id="workoutExercisesMessage" class="form-message" role="status"></div>
+        <div class="modal-actions"><button type="button" class="secondary-btn" data-action="close-workout-exercises">Cancelar</button><button type="submit" class="primary-btn">Salvar sessão</button></div>
+      </form>
+    </div>
+  </div>
+
   <!-- ===== Scripts ===== -->
-  <script src="/static/js/app.js" defer></script>
+  <script src="/static/js/app.js?v=20261012-profile-nav-session-spacing" defer></script>
 
 </body>
 </html>

@@ -3,6 +3,7 @@
 # ==========================================================================
 
 import os
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 
@@ -13,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 from pydantic import BaseModel, Field
 from typing import Any, Literal
+from datetime import date
 
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
@@ -30,16 +32,24 @@ from src.database import (
     listar_planos,
     listar_exercicios,
     listar_exercicios_por_categoria,
+    listar_exercicios_por_grupo,
     buscar_exercicio,
+    criar_exercicio,
     criar_avaliacao,
     atualizar_avaliacao,
     listar_avaliacoes,
     buscar_avaliacao,
     deletar_avaliacao,
     criar_anamnese,
+    atualizar_anamnese,
     listar_anamneses,
     buscar_anamnese_resposta,
-    deletar_anamnese
+    deletar_anamnese,
+    listar_treinos,
+    criar_treino,
+    criar_sessao_treino,
+    deletar_exercicio_treino,
+    reordenar_exercicios_sessao
 )
 from src.fitlife_assistant import montar_mensagens
 
@@ -106,6 +116,7 @@ class AlunoCreate(BaseModel):
     objetivo: str
     modalidade: str
     data_nascimento: str | None = None
+    sexo: Literal["masculino", "feminino"] | None = None
 
 class AlunoUpdate(BaseModel):
     nome: str
@@ -115,10 +126,47 @@ class AlunoUpdate(BaseModel):
     objetivo: str
     modalidade: str
     data_nascimento: str | None = None
+    sexo: Literal["masculino", "feminino"] | None = None
+
+class ExercicioCreate(BaseModel):
+    nome: str = Field(min_length=2, max_length=100)
+    categoria: Literal["Musculação", "Aeróbico", "Funcional", "Mobilidade", "Alongamento", "Elásticos e faixas"]
+    musculo_alvo: Literal["Peito", "Costas", "Ombro", "Bíceps", "Tríceps", "Quadríceps", "Posterior de coxa", "Glúteos", "Core", "Corpo inteiro"]
+    midia_url: str | None = Field(default=None, max_length=1000)
+
 
 class AvaliacaoCreate(BaseModel):
     tipo: Literal["essencial", "premium", "performance"]
     dados: dict[str, Any] = Field(default_factory=dict)
+
+
+class TreinoExercicioCreate(BaseModel):
+    exercicio_id: int = Field(gt=0)
+    series: int = Field(ge=1, le=20, default=3)
+    repeticoes: str = Field(min_length=1, max_length=40, default="8–12")
+    descanso_segundos: int = Field(ge=0, le=3600, default=60)
+    carga: str | None = Field(default=None, max_length=40)
+    observacoes: str | None = Field(default=None, max_length=500)
+
+
+class TreinoCreate(BaseModel):
+    nome: str = Field(min_length=2, max_length=120)
+    objetivo: str = Field(min_length=2, max_length=200)
+    dificuldade: Literal["Iniciante", "Intermediário", "Avançado"]
+    orientacoes_gerais: str | None = Field(default=None, max_length=5000)
+    data_inicio: date
+    data_fim: date
+    remover_apos_vencimento: bool = False
+    ocultar_antes_inicio: bool = False
+
+
+class TreinoSessaoCreate(BaseModel):
+    nome: str = Field(min_length=2, max_length=120)
+    exercicios: list[TreinoExercicioCreate] = Field(min_length=1, max_length=50)
+
+
+class OrdemExercicios(BaseModel):
+    ids: list[int] = Field(min_length=1, max_length=100)
 
 
 # ==========================================================================
@@ -194,7 +242,8 @@ def get_alunos(apenas_ativos: bool = False):
             "ativo": a[6],
             "objetivo": a[7],
             "modalidade": a[8],
-            "data_nascimento": str(a[9]) if a[9] else None
+            "data_nascimento": str(a[9]) if a[9] else None,
+            "sexo": a[10]
         }
         for a in alunos
     ]
@@ -214,7 +263,8 @@ def get_aluno(aluno_id: int):
         "ativo": aluno[6],
         "objetivo": aluno[7],
         "modalidade": aluno[8],
-        "data_nascimento": str(aluno[9]) if aluno[9] else None
+        "data_nascimento": str(aluno[9]) if aluno[9] else None,
+        "sexo": aluno[10]
     }
 
 
@@ -293,6 +343,16 @@ def get_anamnese(anamnese_id: int):
     return jsonable_encoder(anamnese)
 
 
+@app.put("/anamneses/{anamnese_id}")
+def put_anamnese(anamnese_id: int, body: AnamneseCreate):
+    try:
+        if atualizar_anamnese(anamnese_id, body.dados) is None:
+            raise HTTPException(status_code=404, detail="Anamnese não encontrada")
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"mensagem": "Anamnese atualizada com sucesso!"}
+
+
 @app.delete("/anamneses/{anamnese_id}")
 def delete_anamnese(anamnese_id: int):
     if not deletar_anamnese(anamnese_id):
@@ -308,7 +368,8 @@ def post_aluno(body: AlunoCreate):
         body.plano_id,
         body.objetivo,
         body.modalidade,
-        body.data_nascimento
+        body.data_nascimento,
+        body.sexo
     )
     return {"id": novo_id, "mensagem": "Aluno cadastrado com sucesso!"}
 
@@ -322,7 +383,8 @@ def put_aluno(aluno_id: int, body: AlunoUpdate):
         body.plano_id,
         body.objetivo,
         body.modalidade,
-        body.data_nascimento
+        body.data_nascimento,
+        body.sexo
     )
     return {"mensagem": "Aluno atualizado com sucesso!"}
 
@@ -340,6 +402,78 @@ def patch_reativar_aluno(aluno_id: int):
 # 9. EXERCÍCIOS
 # ==========================================================================
 
+@app.get("/alunos/{aluno_id}/treinos")
+def get_treinos(aluno_id: int):
+    if not buscar_aluno(aluno_id):
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+    return jsonable_encoder(listar_treinos(aluno_id))
+
+
+@app.post("/alunos/{aluno_id}/treinos", status_code=201)
+def post_treino(aluno_id: int, body: TreinoCreate):
+    if not buscar_aluno(aluno_id):
+        raise HTTPException(status_code=404, detail="Aluno não encontrado")
+    if body.data_fim < body.data_inicio:
+        raise HTTPException(status_code=422, detail="A data de término deve ser igual ou posterior à data de início.")
+    dados = body.dict()
+    dados["nome"] = dados["nome"].strip()
+    dados["objetivo"] = dados["objetivo"].strip()
+    if len(dados["nome"]) < 2 or len(dados["objetivo"]) < 2:
+        raise HTTPException(status_code=422, detail="Nome e objetivo precisam ter pelo menos 2 caracteres.")
+    dados["orientacoes_gerais"] = dados["orientacoes_gerais"].strip() if dados["orientacoes_gerais"] else None
+    try:
+        treino_id = criar_treino(aluno_id, dados)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"id": treino_id, "mensagem": "Treino criado com sucesso."}
+
+
+@app.post("/treinos/{treino_id}/sessoes", status_code=201)
+def post_sessao_treino(treino_id: int, body: TreinoSessaoCreate):
+    try:
+        sessao_id = criar_sessao_treino(
+            treino_id, body.nome.strip(), [item.dict() for item in body.exercicios]
+        )
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"id": sessao_id, "mensagem": "Sessão de treino criada com sucesso."}
+
+
+@app.delete("/treino-exercicios/{item_id}")
+def delete_exercicio_treino(item_id: int):
+    if not deletar_exercicio_treino(item_id):
+        raise HTTPException(status_code=404, detail="Exercício do treino não encontrado.")
+    return {"mensagem": "Exercício removido da sessão."}
+
+
+@app.patch("/sessoes/{sessao_id}/exercicios/ordem")
+def patch_ordem_exercicios(sessao_id: int, body: OrdemExercicios):
+    try:
+        reordenar_exercicios_sessao(sessao_id, body.ids)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {"mensagem": "Ordem dos exercícios atualizada."}
+
+
+@app.post("/exercicios", status_code=201)
+def post_exercicio(body: ExercicioCreate):
+    nome = body.nome.strip()
+    grupo = body.musculo_alvo.strip()
+    midia_url = body.midia_url.strip() if body.midia_url else None
+    if len(nome) < 2:
+        raise HTTPException(status_code=422, detail="Informe um nome de exercício válido.")
+    if midia_url:
+        parsed_url = urlparse(midia_url)
+        if parsed_url.scheme not in {"https", "http"} or not parsed_url.netloc:
+            raise HTTPException(status_code=422, detail="A mídia deve ser informada com um link HTTP ou HTTPS válido.")
+    exercicio_id = criar_exercicio(nome, body.categoria, grupo, midia_url)
+    return {"id": exercicio_id, "mensagem": "Exercício cadastrado com sucesso."}
+
+
 @app.get("/exercicios")
 def get_exercicios():
 
@@ -356,7 +490,8 @@ def get_exercicios():
             "descricao": e[6],
             "indicacoes": e[7],
             "contraindicacoes": e[8],
-            "tipo_articular": e[9]
+            "tipo_articular": e[9],
+            "midia_url": e[10]
         }
         for e in exercicios
     ]
@@ -382,7 +517,29 @@ def get_exercicios_por_categoria(
             "descricao": e[6],
             "indicacoes": e[7],
             "contraindicacoes": e[8],
-            "tipo_articular": e[9]
+            "tipo_articular": e[9],
+            "midia_url": e[10]
+        }
+        for e in exercicios
+    ]
+
+
+@app.get("/exercicios/grupo/{grupo}")
+def get_exercicios_por_grupo(grupo: str):
+    exercicios = listar_exercicios_por_grupo(grupo)
+    return [
+        {
+            "id": e[0],
+            "nome": e[1],
+            "categoria": e[2],
+            "musculo_alvo": e[3],
+            "nivel": e[4],
+            "equipamento": e[5],
+            "descricao": e[6],
+            "indicacoes": e[7],
+            "contraindicacoes": e[8],
+            "tipo_articular": e[9],
+            "midia_url": e[10]
         }
         for e in exercicios
     ]
@@ -412,5 +569,6 @@ def get_exercicio(
         "descricao": exercicio[6],
         "indicacoes": exercicio[7],
         "contraindicacoes": exercicio[8],
-        "tipo_articular": exercicio[9]
+        "tipo_articular": exercicio[9],
+        "midia_url": exercicio[10]
     }

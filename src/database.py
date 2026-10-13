@@ -53,7 +53,8 @@ def listar_alunos(apenas_ativos=False):
                     a.ativo,
                     a.objetivo,
                     a.modalidade,
-                    a.data_nascimento
+                    a.data_nascimento,
+                    a.sexo
                 FROM alunos a
                 LEFT JOIN planos p
                     ON a.plano_id = p.id
@@ -78,7 +79,8 @@ def buscar_aluno(aluno_id):
                     a.ativo,
                     a.objetivo,
                     a.modalidade,
-                    a.data_nascimento
+                    a.data_nascimento,
+                    a.sexo
                 FROM alunos a
                 LEFT JOIN planos p
                     ON a.plano_id = p.id
@@ -89,19 +91,19 @@ def buscar_aluno(aluno_id):
         return result.fetchone()
 
 
-def criar_aluno(nome, email, telefone, plano_id, objetivo, modalidade, data_nascimento=None):
+def criar_aluno(nome, email, telefone, plano_id, objetivo, modalidade, data_nascimento=None, sexo=None):
     with engine.connect() as conn:
         result = conn.execute(
             text("""
                 INSERT INTO alunos (
                     nome, email, telefone,
                     plano_id, objetivo, modalidade,
-                    data_nascimento
+                    data_nascimento, sexo
                 )
                 VALUES (
                     :nome, :email, :telefone,
                     :plano_id, :objetivo, :modalidade,
-                    :data_nascimento
+                    :data_nascimento, :sexo
                 )
                 RETURNING id
             """),
@@ -112,7 +114,8 @@ def criar_aluno(nome, email, telefone, plano_id, objetivo, modalidade, data_nasc
                 "plano_id": plano_id,
                 "objetivo": objetivo,
                 "modalidade": modalidade,
-                "data_nascimento": data_nascimento
+                "data_nascimento": data_nascimento,
+                "sexo": sexo
             }
         )
         conn.commit()
@@ -130,7 +133,7 @@ def listar_planos():
         return result.fetchall()
 
 
-def atualizar_aluno(aluno_id, nome, email, telefone, plano_id, objetivo, modalidade, data_nascimento=None):
+def atualizar_aluno(aluno_id, nome, email, telefone, plano_id, objetivo, modalidade, data_nascimento=None, sexo=None):
     with engine.connect() as conn:
         conn.execute(
             text("""
@@ -141,7 +144,8 @@ def atualizar_aluno(aluno_id, nome, email, telefone, plano_id, objetivo, modalid
                     plano_id = :plano_id,
                     objetivo = :objetivo,
                     modalidade = :modalidade,
-                    data_nascimento = :data_nascimento
+                    data_nascimento = :data_nascimento,
+                    sexo = :sexo
                 WHERE id = :id
             """),
             {
@@ -152,7 +156,8 @@ def atualizar_aluno(aluno_id, nome, email, telefone, plano_id, objetivo, modalid
                 "plano_id": plano_id,
                 "objetivo": objetivo,
                 "modalidade": modalidade,
-                "data_nascimento": data_nascimento
+                "data_nascimento": data_nascimento,
+                "sexo": sexo
             }
         )
         conn.commit()
@@ -290,7 +295,8 @@ def listar_exercicios():
                     descricao,
                     indicacoes,
                     contraindicacoes,
-                    tipo_articular
+                    tipo_articular,
+                    midia_url
                 FROM exercicios
                 ORDER BY categoria, nome
             """)
@@ -313,7 +319,8 @@ def listar_exercicios_por_categoria(categoria):
                     descricao,
                     indicacoes,
                     contraindicacoes,
-                    tipo_articular
+                    tipo_articular,
+                    midia_url
                 FROM exercicios
                 WHERE categoria = :categoria
                 ORDER BY nome
@@ -322,6 +329,49 @@ def listar_exercicios_por_categoria(categoria):
         )
 
         return result.fetchall()
+
+
+def listar_exercicios_por_grupo(grupo):
+    with engine.connect() as conn:
+        result = conn.execute(
+            text("""
+                SELECT
+                    id,
+                    nome,
+                    categoria,
+                    musculo_alvo,
+                    nivel,
+                    equipamento,
+                    descricao,
+                    indicacoes,
+                    contraindicacoes,
+                    tipo_articular,
+                    midia_url
+                FROM exercicios
+                WHERE musculo_alvo = :grupo
+                ORDER BY nome
+            """),
+            {"grupo": grupo}
+        )
+        return result.fetchall()
+
+
+def criar_exercicio(nome, categoria, musculo_alvo, midia_url=None):
+    with engine.begin() as conn:
+        result = conn.execute(
+            text("""
+                INSERT INTO exercicios (nome, categoria, musculo_alvo, midia_url)
+                VALUES (:nome, :categoria, :musculo_alvo, :midia_url)
+                RETURNING id
+            """),
+            {
+                "nome": nome,
+                "categoria": categoria,
+                "musculo_alvo": musculo_alvo,
+                "midia_url": midia_url or None,
+            }
+        )
+        return result.scalar_one()
 
 
 def buscar_exercicio(exercicio_id):
@@ -338,7 +388,8 @@ def buscar_exercicio(exercicio_id):
                     descricao,
                     indicacoes,
                     contraindicacoes,
-                    tipo_articular
+                    tipo_articular,
+                    midia_url
                 FROM exercicios
                 WHERE id = :id
             """),
@@ -346,6 +397,150 @@ def buscar_exercicio(exercicio_id):
         )
 
         return result.fetchone()
+
+
+# ===========================================================================
+# 7. TREINOS PRESCRITOS
+# ===========================================================================
+
+def listar_treinos(aluno_id):
+    with engine.connect() as conn:
+        treinos = conn.execute(
+            text("""
+                SELECT id, aluno_id, nome, objetivo, dificuldade, orientacoes_gerais,
+                       data_inicio, data_fim, remover_apos_vencimento,
+                       ocultar_antes_inicio, criado_em
+                FROM treinos
+                WHERE aluno_id = :aluno_id
+                ORDER BY data_inicio DESC, id DESC
+            """), {"aluno_id": aluno_id}
+        ).mappings().all()
+
+        items = []
+        for treino in treinos:
+            sessoes = conn.execute(
+                text("""
+                    SELECT id, treino_id, nome, ordem
+                    FROM treino_sessoes
+                    WHERE treino_id = :treino_id
+                    ORDER BY ordem, id
+                """), {"treino_id": treino["id"]}
+            ).mappings().all()
+            sessoes_com_exercicios = []
+            for sessao in sessoes:
+                exercicios = conn.execute(
+                    text("""
+                        SELECT te.id, te.exercicio_id, e.nome, e.musculo_alvo, e.categoria,
+                               e.midia_url, e.descricao,
+                               te.ordem, te.series, te.repeticoes, te.descanso_segundos,
+                               te.carga, te.observacoes
+                        FROM treino_exercicios te
+                        JOIN exercicios e ON e.id = te.exercicio_id
+                        WHERE te.sessao_id = :sessao_id
+                        ORDER BY te.ordem, te.id
+                    """), {"sessao_id": sessao["id"]}
+                ).mappings().all()
+                sessoes_com_exercicios.append({**dict(sessao), "exercicios": [dict(ex) for ex in exercicios]})
+            items.append({**dict(treino), "sessoes": sessoes_com_exercicios})
+        return items
+
+
+def criar_treino(aluno_id, dados):
+    with engine.begin() as conn:
+        treino_id = conn.execute(
+            text("""
+                INSERT INTO treinos (
+                    aluno_id, nome, objetivo, dificuldade, orientacoes_gerais,
+                    data_inicio, data_fim, remover_apos_vencimento,
+                    ocultar_antes_inicio
+                ) VALUES (
+                    :aluno_id, :nome, :objetivo, :dificuldade, :orientacoes_gerais,
+                    :data_inicio, :data_fim, :remover_apos_vencimento,
+                    :ocultar_antes_inicio
+                ) RETURNING id
+            """), {"aluno_id": aluno_id, **dados}
+        ).scalar_one()
+        return treino_id
+
+
+def criar_sessao_treino(treino_id, nome, exercicios):
+    with engine.begin() as conn:
+        treino = conn.execute(
+            text("SELECT 1 FROM treinos WHERE id = :id"), {"id": treino_id}
+        ).scalar_one_or_none()
+        if not treino:
+            raise LookupError("Treino não encontrado.")
+
+        nome = nome.strip()
+        if len(nome) < 2:
+            raise ValueError("Informe um nome válido para a sessão de treino.")
+
+        ordem_sessao = conn.execute(
+            text("SELECT COALESCE(MAX(ordem), 0) + 1 FROM treino_sessoes WHERE treino_id = :id"),
+            {"id": treino_id}
+        ).scalar_one()
+        sessao_id = conn.execute(
+            text("""
+                INSERT INTO treino_sessoes (treino_id, nome, ordem)
+                VALUES (:treino_id, :nome, :ordem)
+                RETURNING id
+            """), {"treino_id": treino_id, "nome": nome, "ordem": ordem_sessao}
+        ).scalar_one()
+
+        for offset, exercicio in enumerate(exercicios, start=1):
+            existe_exercicio = conn.execute(
+                text("SELECT 1 FROM exercicios WHERE id = :id"),
+                {"id": exercicio["exercicio_id"]}
+            ).scalar_one_or_none()
+            if not existe_exercicio:
+                raise ValueError(f"O exercício {exercicio['exercicio_id']} não existe na biblioteca.")
+            conn.execute(
+                text("""
+                    INSERT INTO treino_exercicios (
+                        sessao_id, exercicio_id, ordem, series, repeticoes,
+                        descanso_segundos, carga, observacoes
+                    ) VALUES (
+                        :sessao_id, :exercicio_id, :ordem, :series, :repeticoes,
+                        :descanso_segundos, :carga, :observacoes
+                    )
+                """), {"sessao_id": sessao_id, "ordem": offset, **exercicio}
+            )
+        return sessao_id
+
+
+def deletar_exercicio_treino(item_id):
+    with engine.begin() as conn:
+        result = conn.execute(
+            text("DELETE FROM treino_exercicios WHERE id = :id RETURNING id"),
+            {"id": item_id}
+        )
+        return result.scalar_one_or_none() is not None
+
+
+def reordenar_exercicios_sessao(sessao_id, ids):
+    with engine.begin() as conn:
+        result = conn.execute(
+            text("SELECT id FROM treino_exercicios WHERE sessao_id = :id ORDER BY ordem, id"),
+            {"id": sessao_id}
+        )
+        atuais = [row[0] for row in result.fetchall()]
+        if not atuais:
+            raise LookupError("Sessão sem exercícios ou sessão não encontrada.")
+        if len(ids) != len(atuais) or set(ids) != set(atuais):
+            raise ValueError("A nova ordem precisa conter todos os exercícios da sessão uma única vez.")
+
+        temporario = len(ids) + len(atuais) + 1
+        for index, item_id in enumerate(ids, start=1):
+            conn.execute(
+                text("UPDATE treino_exercicios SET ordem = :ordem WHERE id = :id AND sessao_id = :sessao_id"),
+                {"ordem": temporario + index, "id": item_id, "sessao_id": sessao_id}
+            )
+        for index, item_id in enumerate(ids, start=1):
+            conn.execute(
+                text("UPDATE treino_exercicios SET ordem = :ordem WHERE id = :id AND sessao_id = :sessao_id"),
+                {"ordem": index, "id": item_id, "sessao_id": sessao_id}
+            )
+        return True
 
 # ==========================================================================
 # 7. ANAMNESES E AVALIAÇÕES FÍSICAS
@@ -366,7 +561,9 @@ ANAMNESE_CAMPOS = {
 
 AVALIACAO_CAMPOS = {
     "data_avaliacao", "data_avaliacao_anterior", "anamnese_id",
-    "peso_kg", "altura_m", "imc", "percentual_gordura",
+    "peso_kg", "altura_m", "imc", "imc_classificacao", "percentual_gordura",
+    "rcq", "rcq_classificacao", "circ_somatorio", "percentual_gordura_ideal",
+    "gordura_ideal_kg", "massa_magra_ideal_kg", "peso_ideal_kg", "gordura_excedente_kg",
     "massa_gorda_kg", "massa_magra_kg", "circ_ombro", "circ_peitoral",
     "circ_cintura", "circ_abdomen", "circ_quadril", "circ_braco_dir",
     "circ_braco_esq", "circ_coxa_dir", "circ_coxa_esq",
@@ -453,6 +650,21 @@ def criar_anamnese(aluno_id, dados):
     binds = {"aluno_id": aluno_id, **dados}
     with engine.begin() as conn:
         return conn.execute(text(f"INSERT INTO anamnese_respostas ({', '.join(cols)}) VALUES ({', '.join(':'+c for c in cols)}) RETURNING id"), binds).scalar_one()
+
+
+def atualizar_anamnese(anamnese_id, dados):
+    if not isinstance(dados, dict) or not dados:
+        raise ValueError("Informe os dados da anamnese.")
+    invalidos = set(dados) - ANAMNESE_CAMPOS
+    if invalidos:
+        raise ValueError("Campos de anamnese desconhecidos: " + ", ".join(sorted(invalidos)))
+    sets = ", ".join(f"{campo} = :{campo}" for campo in dados)
+    with engine.begin() as conn:
+        result = conn.execute(
+            text(f"UPDATE anamnese_respostas SET {sets} WHERE id = :id RETURNING id"),
+            {**dados, "id": anamnese_id}
+        )
+        return result.scalar_one_or_none()
 
 
 def listar_anamneses(aluno_id):

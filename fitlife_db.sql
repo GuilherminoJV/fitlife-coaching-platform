@@ -28,6 +28,7 @@ CREATE TABLE alunos (
     objetivo VARCHAR(200),
     modalidade VARCHAR(80),
     data_nascimento DATE,
+    sexo VARCHAR(20),
     ativo BOOLEAN NOT NULL DEFAULT TRUE
 );
 
@@ -88,7 +89,16 @@ CREATE TABLE IF NOT EXISTS avaliacoes (
     peso_kg NUMERIC(5,2),
     altura_m NUMERIC(4,2),
     imc NUMERIC(5,2),
+    imc_classificacao VARCHAR(40),
     percentual_gordura NUMERIC(5,2),
+    rcq NUMERIC(5,3),
+    rcq_classificacao VARCHAR(20),
+    circ_somatorio NUMERIC(7,2),
+    percentual_gordura_ideal NUMERIC(5,2),
+    gordura_ideal_kg NUMERIC(5,2),
+    massa_magra_ideal_kg NUMERIC(5,2),
+    peso_ideal_kg NUMERIC(5,2),
+    gordura_excedente_kg NUMERIC(5,2),
     massa_gorda_kg NUMERIC(5,2),
     massa_magra_kg NUMERIC(5,2),
     circ_ombro NUMERIC(5,2),
@@ -160,6 +170,21 @@ CREATE TABLE historico_chat (
     pergunta TEXT NOT NULL,
     resposta TEXT NOT NULL,
     data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6. BIBLIOTECA DE EXERCÍCIOS
+CREATE TABLE IF NOT EXISTS exercicios (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    categoria VARCHAR(50),
+    musculo_alvo VARCHAR(100),
+    nivel VARCHAR(20),
+    equipamento VARCHAR(50),
+    descricao TEXT,
+    indicacoes TEXT,
+    contraindicacoes TEXT,
+    tipo_articular VARCHAR(20),
+    midia_url TEXT
 );
 
 -- ================================
