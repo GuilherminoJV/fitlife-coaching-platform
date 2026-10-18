@@ -695,7 +695,8 @@ function toggleProfileMenu() {
 function toggleChat() {
   if (!dom.chatDrawer) return;
   const open = dom.chatDrawer.classList.toggle('open');
-  $('.floating-chat-toggle')?.setAttribute('aria-expanded', String(open));
+  $('.sidebar-chat-toggle')?.setAttribute('aria-expanded', String(open));
+  if (open) $('#drawerInput')?.focus();
 }
 
 function appendChatMessage(role, text) {
@@ -714,7 +715,13 @@ async function sendChatMessage(e) {
 
   appendChatMessage('user', text);
   dom.chatInput.value = '';
-  const loading = appendChatMessage('bot', '🤔 Pensando...');
+  const loading = appendChatMessage('bot', 'Estou pensando na resposta…');
+  dom.chatDrawer?.classList.add('is-thinking');
+  const mascotState = $('#chatMascotState');
+  const mascotThought = $('#chatMascotThought');
+  if (mascotState) mascotState.textContent = 'Pensando…';
+  if (mascotThought) mascotThought.textContent = '…';
+  dom.chatDrawer?.setAttribute('aria-busy', 'true');
 
   try {
     const res = await fetch(CHAT_ENDPOINT, {
@@ -732,6 +739,11 @@ async function sendChatMessage(e) {
   } catch (err) {
     console.error('Erro ao consultar a API:', err);
     loading.textContent = '⚠️ Erro ao conectar ao servidor.';
+  } finally {
+    dom.chatDrawer?.classList.remove('is-thinking');
+    if (mascotState) mascotState.textContent = 'Pronto para ajudar';
+    if (mascotThought) mascotThought.textContent = '✦';
+    dom.chatDrawer?.removeAttribute('aria-busy');
   }
 
   dom.chatBody.scrollTop = dom.chatBody.scrollHeight;
@@ -1591,6 +1603,7 @@ function handleClick(e) {
 
 function handleKeydown(e) {
   if (e.key === 'Escape') {
+    if (dom.chatDrawer?.classList.contains('open')) return toggleChat();
     if ($('#workoutModal') && !$('#workoutModal').hidden) return closeWorkoutModal();
     if ($('#workoutExercisesModal') && !$('#workoutExercisesModal').hidden) return closeWorkoutExercisesModal();
     if ($('#assessmentModal') && !$('#assessmentModal').hidden) return closeAssessmentModal();
