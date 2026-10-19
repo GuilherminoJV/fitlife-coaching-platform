@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- ===== Styles ===== -->
-  <link rel="stylesheet" href="/static/css/styles.css?v=20261018-home-visual-hierarchy">
+  <link rel="stylesheet" href="/static/css/styles.css?v=20261018-home-full-width">
 
   <!-- ===== Markdown renderer (AI chat answers) ===== -->
   <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js" defer></script>
@@ -195,6 +195,7 @@
               <div>
                 <div class="metric-label">Alunos Ativos</div>
                 <div class="metric-value" data-metric="active-students">3</div>
+                <small class="metric-context"><span>Demonstração</span> · +1 esta semana</small>
               </div>
               <div class="metric-icon blue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-users"></use></svg></div>
             </div>
@@ -205,6 +206,7 @@
               <div>
                 <div class="metric-label">Planos Nutri</div>
                 <div class="metric-value" data-metric="nutrition-plans">3</div>
+                <small class="metric-context"><span>Demonstração</span> · 1 aguardando anamnese</small>
               </div>
               <div class="metric-icon green" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-nutrition"></use></svg></div>
             </div>
@@ -215,6 +217,7 @@
               <div>
                 <div class="metric-label">Sessões Mente</div>
                 <div class="metric-value" data-metric="psychology-sessions">2</div>
+                <small class="metric-context"><span>Demonstração</span> · 2 nesta semana</small>
               </div>
               <div class="metric-icon purple" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-psychology"></use></svg></div>
             </div>
@@ -225,11 +228,39 @@
               <div>
                 <div class="metric-label">Consultas IA</div>
                 <div class="metric-value" data-metric="ai-queries">12</div>
+                <small class="metric-context"><span>Demonstração</span> · consultas registradas</small>
               </div>
               <div class="metric-icon neutral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-sparkles"></use></svg></div>
             </div>
           </div>
         </div>
+
+        <section class="home-attention" aria-labelledby="attention-title">
+          <div class="home-section-heading">
+            <div>
+              <h2 id="attention-title" class="section-title">Atenção hoje</h2>
+              <p>Exemplos demonstrativos de itens para acompanhar.</p>
+            </div>
+            <span class="demo-label">Dados de demonstração</span>
+          </div>
+          <div class="attention-grid">
+            <article class="attention-item attention-item-urgent">
+              <span class="attention-indicator" aria-hidden="true"></span>
+              <div><strong>Pendência de acompanhamento</strong><small>Carlos Eduardo · Conferir situação do aluno</small></div>
+              <span class="attention-status">Pendente</span>
+            </article>
+            <article class="attention-item">
+              <span class="attention-indicator" aria-hidden="true"></span>
+              <div><strong>Reavaliação próxima</strong><small>Maria Souza · Revisar avaliação física</small></div>
+              <span class="attention-status attention-status-soon">Próxima</span>
+            </article>
+            <article class="attention-item">
+              <span class="attention-indicator" aria-hidden="true"></span>
+              <div><strong>Revisar planejamento</strong><small>João Silva · Conferir treino atual</small></div>
+              <span class="attention-status attention-status-soon">Revisar</span>
+            </article>
+          </div>
+        </section>
 
         <h2 class="section-title">Ações Rápidas da Equipe</h2>
 
@@ -247,6 +278,7 @@
             <span>
               <strong>Plano Alimentar</strong>
               <small>Montar dieta e metas</small>
+              <span class="action-coming-soon">Em breve</span>
             </span>
           </button>
 
@@ -255,14 +287,15 @@
             <span>
               <strong>Registrar Sessão</strong>
               <small>Evolução comportamental</small>
+              <span class="action-coming-soon">Em breve</span>
             </span>
           </button>
 
-          <button type="button" class="action-card" data-action="toggle-chat">
-            <span class="action-icon neutral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-sparkles"></use></svg></span>
+          <button type="button" class="action-card" data-action="home-open-students">
+            <span class="action-icon blue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-users"></use></svg></span>
             <span>
-              <strong>Copiloto IA FitLife</strong>
-              <small>Consultar base RAG</small>
+              <strong>Acompanhar alunos</strong>
+              <small>Acessar perfis e avaliações</small>
             </span>
           </button>
         </div>
@@ -283,24 +316,24 @@
             <tbody>
               <tr>
                 <th scope="row">João Silva</th>
-                <td><span class="badge badge-blue">Ativo</span></td>
-                <td><span class="badge badge-green">Plano Enviado</span></td>
-                <td><span class="badge badge-purple">Em Acompanhamento</span></td>
-                <td><span class="home-status home-status-current">Em Dia</span></td>
+                <td><span class="home-table-neutral">Ativo</span></td>
+                <td><span class="home-table-neutral">Plano Enviado</span></td>
+                <td><span class="home-table-neutral">Em Acompanhamento</span></td>
+                <td><span class="home-table-neutral">Em Dia</span></td>
               </tr>
               <tr>
                 <th scope="row">Maria Souza</th>
-                <td><span class="badge badge-blue">Ativo</span></td>
-                <td><span class="badge badge-green">Aguardando Anamnese</span></td>
-                <td><span class="badge badge-purple">Sem Demanda</span></td>
-                <td><span class="home-status home-status-current">Em Dia</span></td>
+                <td><span class="home-table-neutral">Ativo</span></td>
+                <td><span class="home-table-exception home-table-exception-pending">Aguardando Anamnese</span></td>
+                <td><span class="home-table-neutral">Sem Demanda</span></td>
+                <td><span class="home-table-neutral">Em Dia</span></td>
               </tr>
               <tr>
                 <th scope="row">Carlos Eduardo</th>
-                <td><span class="badge badge-blue">Ativo</span></td>
-                <td><span class="badge badge-green">Plano Enviado</span></td>
-                <td><span class="badge badge-purple">Sessão Agendada</span></td>
-                <td><span class="home-status home-status-pending">Pendente</span></td>
+                <td><span class="home-table-neutral">Ativo</span></td>
+                <td><span class="home-table-neutral">Plano Enviado</span></td>
+                <td><span class="home-table-neutral">Sessão Agendada</span></td>
+                <td><span class="home-table-exception home-table-exception-pending">Pendente</span></td>
               </tr>
             </tbody>
           </table>
@@ -964,7 +997,7 @@
   </div>
 
   <!-- ===== Scripts ===== -->
-  <script src="/static/js/app.js?v=20261018-sidebar-chat" defer></script>
+  <script src="/static/js/app.js?v=20261018-home-layout" defer></script>
 
 </body>
 </html>
