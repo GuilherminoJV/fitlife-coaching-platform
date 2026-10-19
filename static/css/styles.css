@@ -191,8 +191,8 @@ button:focus-visible { outline: 2px solid var(--profile-primary); outline-offset
 #tab-geral .attention-item-urgent strong { color: #fff; font-size: 1rem; }
 #tab-geral .attention-item-urgent small { color: rgb(255 255 255 / .78); font-size: .76rem; }
 #tab-geral .attention-item-urgent .attention-count { padding: 6px 10px; border-color: rgb(var(--orange-rgb) / .5); background: rgb(var(--orange-rgb) / .22); color: #fed7aa; font-size: .74rem; }
-#tab-geral .attention-item-warning { border-color: rgb(var(--orange-rgb) / .25); }
-#tab-geral .attention-item-warning .attention-indicator { background: var(--accent-orange); }
+#tab-geral .attention-item-warning { grid-column: 1 / -1; grid-template-columns: minmax(0, 1fr); gap: 0; border-color: rgb(var(--orange-rgb) / .25); border-left: 4px solid var(--accent-orange); }
+#tab-geral .attention-item-warning .attention-indicator { display: none; }
 #tab-geral .attention-item-warning .attention-count { border-color: rgb(var(--orange-rgb) / .28); color: #fdba74; }
 #tab-geral .attention-detail { color: #fdba74 !important; }
 #tab-geral .attention-people { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 5px; }
@@ -218,8 +218,9 @@ button:focus-visible { outline: 2px solid var(--profile-primary); outline-offset
 .home-dashboard-table .home-table-state { height: 76px; padding: 20px; color: var(--on-dark-muted); text-align: center; white-space: normal; }
 .home-dashboard-table .home-table-state[data-state="error"] { color: #fdba74; }
 .home-table-neutral { color: var(--on-dark-soft); font-size: .82rem; font-weight: 500; }
+.home-table-upcoming { color: var(--on-dark-faint); font-size: .76rem; font-weight: 500; }
 .home-table-exception { display: inline-flex; align-items: center; min-height: 25px; padding: 4px 10px; border: 1px solid transparent; border-radius: var(--radius-pill); font-size: .74rem; font-weight: 700; }
-.home-table-exception-pending { background: rgb(var(--orange-rgb) / .17); border-color: rgb(var(--orange-rgb) / .32); color: #fdba74; }
+.home-table-exception-pending { background: rgb(var(--orange-rgb) / .07); border-color: rgb(var(--orange-rgb) / .18); color: #e8bd8e; }
 .home-table-reason { display: block; max-width: 190px; margin-top: 4px; color: var(--on-dark-faint); font-size: .66rem; line-height: 1.35; white-space: normal; }
 
 /* 9. TREINO */

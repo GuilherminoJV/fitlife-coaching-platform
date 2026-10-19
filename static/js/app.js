@@ -174,7 +174,7 @@ function showWorkspace(name) {
 
 function renderHomeStudentsTableState(message, stateName) {
   if (!dom.homeStudentsTableBody) return;
-  dom.homeStudentsTableBody.innerHTML = `<tr><td class="home-table-state" colspan="5" data-state="${stateName}">${escapeHtml(message)}</td></tr>`;
+  dom.homeStudentsTableBody.innerHTML = `<tr><td class="home-table-state" colspan="4" data-state="${stateName}">${escapeHtml(message)}</td></tr>`;
 }
 
 const homePendingReasonLabels = {
@@ -202,8 +202,7 @@ function renderHomeStudentsTable(students, summary, summaryError = false) {
     <tr>
       <th scope="row">${escapeHtml(student.nome || 'Aluno sem nome')}</th>
       <td><span class="home-table-neutral">Ativo</span></td>
-      <td><span class="home-table-neutral">—</span></td>
-      <td><span class="home-table-neutral">—</span></td>
+      <td><span class="home-table-upcoming">Em breve</span></td>
       <td>${summaryError
         ? '<span class="home-table-neutral">Indisponível</span>'
         : pending.has(String(student.id))
