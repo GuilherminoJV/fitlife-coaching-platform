@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- ===== Styles ===== -->
-  <link rel="stylesheet" href="/static/css/styles.css?v=20261018-home-indicadores">
+  <link rel="stylesheet" href="/static/css/styles.css?v=20261018-chat-drawer">
 
   <!-- ===== Markdown renderer (AI chat answers) ===== -->
   <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js" defer></script>
@@ -713,23 +713,35 @@
   </div>
 
   <!-- ===== FitLife IA chat ===== -->
-  <aside class="chat-drawer" id="chatDrawer" aria-label="FitLife Copilot IA">
-    <div class="chat-drawer-header">
-      <div class="chat-brand"><span>FitLife Copilot IA</span><small id="chatMascotState">Pronto para ajudar</small></div>
-      <div class="chat-mascot-header" aria-hidden="true"><span id="chatMascotThought">✦</span><img src="/static/mascote_fitlife.png" alt=""></div>
-      <button type="button" class="close-chat-btn" data-action="toggle-chat" aria-label="Fechar chat">✕</button>
-    </div>
-
-    <div class="drawer-body" id="drawerBody" role="log" aria-live="polite">
-      <div class="chat-msg bot">
-        Olá Coach! Como posso te ajudar com dúvidas sobre protocolos, treino, nutrição ou acompanhamento?
+  <div class="chat-backdrop" id="chatBackdrop" data-action="close-chat" aria-hidden="true"></div>
+  <aside class="chat-drawer" id="chatDrawer" role="dialog" aria-modal="true" aria-labelledby="chatTitle" aria-describedby="chatSubtitle" aria-hidden="true" inert>
+    <header class="chat-drawer-header">
+      <div class="chat-brand-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.937A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .962L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.962 0z"/><path d="M20 3v4M22 5h-4M4 17v2M5 18H3"/></svg></div>
+      <div class="chat-brand"><h2 id="chatTitle">FitLife IA</h2><small id="chatSubtitle">Pronto para ajudar</small></div>
+      <div class="chat-header-actions">
+        <button type="button" class="chat-icon-btn" data-action="new-chat" aria-label="Nova conversa" title="Nova conversa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/><path d="M15 5l4 4"/></svg></button>
+        <button type="button" class="chat-icon-btn" data-action="close-chat" aria-label="Fechar FitLife IA" title="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 6-12 12M6 6l12 12"/></svg></button>
       </div>
+    </header>
+    <div class="drawer-body" id="drawerBody" role="log" aria-live="polite" aria-relevant="additions text">
+      <section class="chat-empty-state" id="chatEmptyState" aria-labelledby="chatGreeting">
+        <img class="chat-empty-mascot" src="/static/mascote_fitlife.png" alt="Mascote FitLife IA">
+        <h3 id="chatGreeting">Olá, Coach! 👋</h3>
+        <p>Como posso ajudar no cuidado e na evolução dos seus alunos?</p>
+        <div class="chat-suggestions" aria-label="Sugestões de perguntas">
+          <button type="button" class="chat-suggestion" data-action="chat-suggestion" data-prompt="Montar um treino de hipertrofia para iniciante">Montar um treino de hipertrofia para iniciante</button>
+          <button type="button" class="chat-suggestion" data-action="chat-suggestion" data-prompt="Adaptar exercícios para quem tem dor no joelho">Adaptar exercícios para quem tem dor no joelho</button>
+          <button type="button" class="chat-suggestion" data-action="chat-suggestion" data-prompt="Quais cuidados considerar no treino de uma pessoa idosa?">Cuidados no treino de uma pessoa idosa</button>
+          <button type="button" class="chat-suggestion" data-action="chat-suggestion" data-prompt="Como organizar a progressão de carga de um aluno?">Como organizar a progressão de carga?</button>
+        </div>
+      </section>
     </div>
-
     <form class="drawer-footer" id="chatForm">
-      <input type="text" id="drawerInput" class="drawer-input" placeholder="Digite sua dúvida..."
-        aria-label="Mensagem para o FitLife Copilot" autocomplete="off">
-      <button type="submit" class="drawer-send-btn">Enviar</button>
+      <div class="chat-compose-row">
+        <textarea id="drawerInput" class="drawer-input" rows="1" maxlength="4000" placeholder="Escreva sua dúvida..." aria-label="Mensagem para o FitLife IA" autocomplete="off"></textarea>
+        <button type="submit" class="drawer-send-btn" id="chatSendButton" disabled><span>Enviar</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></button>
+      </div>
+      <p class="chat-disclaimer">Apoio ao profissional. Não substitui avaliação.</p>
     </form>
   </aside>
 
@@ -903,7 +915,7 @@
   </div>
 
   <!-- ===== Scripts ===== -->
-  <script src="/static/js/app.js?v=20261018-home-indicadores" defer></script>
+  <script src="/static/js/app.js?v=20261018-chat-drawer" defer></script>
 
 </body>
 </html>

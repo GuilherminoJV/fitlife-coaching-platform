@@ -54,6 +54,8 @@ const dom = {
   chatBody: $('#drawerBody'),
   chatForm: $('#chatForm'),
   chatInput: $('#drawerInput'),
+  chatSendButton: $('#chatSendButton'),
+  chatBackdrop: $('#chatBackdrop'),
   trainingWorkspace: $('#trainingWorkspace'),
   workspaceFocusLabel: $('#workspaceFocusLabel'),
   workspaceFocusTitle: $('#workspaceFocusTitle'),
@@ -884,61 +886,142 @@ function toggleProfileMenu() {
 
 /* ========== CHAT IA ========== */
 
-function toggleChat() {
+function setChatOpen(open) {
   if (!dom.chatDrawer) return;
-  const open = dom.chatDrawer.classList.toggle('open');
-  $('.sidebar-chat-toggle')?.setAttribute('aria-expanded', String(open));
-  if (open) $('#drawerInput')?.focus();
+  const trigger = $('.sidebar-chat-toggle');
+  dom.chatDrawer.classList.toggle('open', open);
+  dom.chatDrawer.setAttribute('aria-hidden', String(!open));
+  dom.chatDrawer.inert = !open;
+  dom.chatBackdrop?.classList.toggle('open', open);
+  trigger?.setAttribute('aria-expanded', String(open));
+  document.body.classList.toggle('chat-open', open);
+  if (open) requestAnimationFrame(() => dom.chatInput?.focus());
+  else trigger?.focus({ preventScroll: true });
+}
+
+function toggleChat() {
+  setChatOpen(!dom.chatDrawer?.classList.contains('open'));
+}
+
+function closeChat() {
+  if (dom.chatDrawer?.classList.contains('open')) setChatOpen(false);
 }
 
 function appendChatMessage(role, text) {
   const msg = document.createElement('div');
   msg.className = `chat-msg ${role}`;
+  if (role === 'bot') msg.setAttribute('aria-label', 'Resposta do FitLife IA');
   msg.textContent = text;
   dom.chatBody.appendChild(msg);
   dom.chatBody.scrollTop = dom.chatBody.scrollHeight;
   return msg;
 }
 
-async function sendChatMessage(e) {
-  e.preventDefault();
-  const text = dom.chatInput.value.trim();
-  if (!text) return;
+function resizeChatInput() {
+  if (!dom.chatInput) return;
+  dom.chatInput.style.height = 'auto';
+  const lineHeight = Number.parseFloat(getComputedStyle(dom.chatInput).lineHeight) || 22;
+  dom.chatInput.style.height = `${Math.min(dom.chatInput.scrollHeight, lineHeight * 5 + 20)}px`;
+  if (dom.chatSendButton) dom.chatSendButton.disabled = !dom.chatInput.value.trim() || dom.chatDrawer?.getAttribute('aria-busy') === 'true';
+}
 
-  appendChatMessage('user', text);
-  dom.chatInput.value = '';
-  const loading = appendChatMessage('bot', 'Estou pensando na resposta…');
-  dom.chatDrawer?.classList.add('is-thinking');
-  const mascotState = $('#chatMascotState');
-  const mascotThought = $('#chatMascotThought');
-  if (mascotState) mascotState.textContent = 'Pensando…';
-  if (mascotThought) mascotThought.textContent = '…';
+function showChatTyping() {
+  const typing = document.createElement('div');
+  typing.className = 'chat-msg bot chat-typing';
+  typing.setAttribute('aria-label', 'FitLife IA está digitando');
+  typing.innerHTML = '<span class="sr-only">FitLife IA está digitando</span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>';
+  dom.chatBody.appendChild(typing);
+  dom.chatBody.scrollTop = dom.chatBody.scrollHeight;
+  return typing;
+}
+
+function showChatError(node, prompt) {
+  node.classList.add('chat-error');
+  node.removeAttribute('aria-label');
+  node.replaceChildren();
+  const message = document.createElement('p');
+  message.textContent = 'Não consegui obter uma resposta agora.';
+  const retry = document.createElement('button');
+  retry.type = 'button';
+  retry.className = 'chat-retry-btn';
+  retry.dataset.action = 'retry-chat';
+  retry.dataset.prompt = prompt;
+  retry.textContent = 'Tentar novamente';
+  node.append(message, retry);
+}
+
+async function submitChatQuestion(question, { appendUser = true, responseNode = null } = {}) {
+  const text = question.trim();
+  if (!text || dom.chatDrawer?.getAttribute('aria-busy') === 'true') return;
+  $('#chatEmptyState')?.remove();
+  if (appendUser) appendChatMessage('user', text);
+  if (dom.chatInput) { dom.chatInput.value = ''; resizeChatInput(); }
+  const response = responseNode || showChatTyping();
+  response.className = 'chat-msg bot chat-typing';
+  response.setAttribute('aria-label', 'FitLife IA está digitando');
+  response.innerHTML = '<span class="sr-only">FitLife IA está digitando</span><span aria-hidden="true"></span><span aria-hidden="true"></span><span aria-hidden="true"></span>';
   dom.chatDrawer?.setAttribute('aria-busy', 'true');
+  if (dom.chatSendButton) dom.chatSendButton.disabled = true;
+  if (dom.chatInput) dom.chatInput.disabled = true;
+  const newChat = $('[data-action="new-chat"]');
+  if (newChat) newChat.disabled = true;
+  $('#chatSubtitle').textContent = 'Preparando sua resposta…';
 
   try {
     const res = await fetch(CHAT_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pergunta: text })
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pergunta: text })
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    if (data.resposta) {
-      loading.innerHTML = typeof marked !== 'undefined' ? marked.parse(data.resposta) : data.resposta;
-    } else {
-      loading.textContent = 'Erro na resposta do servidor.';
-    }
+    if (!data.resposta) throw new Error('Resposta vazia');
+    response.className = 'chat-msg bot';
+    response.removeAttribute('aria-label');
+    response.innerHTML = typeof marked !== 'undefined' ? marked.parse(data.resposta) : escapeHtml(data.resposta).replace(/\n/g, '<br>');
   } catch (err) {
     console.error('Erro ao consultar a API:', err);
-    loading.textContent = '⚠️ Erro ao conectar ao servidor.';
+    showChatError(response, text);
   } finally {
-    dom.chatDrawer?.classList.remove('is-thinking');
-    if (mascotState) mascotState.textContent = 'Pronto para ajudar';
-    if (mascotThought) mascotThought.textContent = '✦';
     dom.chatDrawer?.removeAttribute('aria-busy');
+    if (dom.chatInput) dom.chatInput.disabled = false;
+    if (newChat) newChat.disabled = false;
+    $('#chatSubtitle').textContent = 'Pronto para ajudar';
+    resizeChatInput();
   }
-
   dom.chatBody.scrollTop = dom.chatBody.scrollHeight;
+}
+
+function sendChatMessage(e) {
+  e.preventDefault();
+  if (!dom.chatInput?.value.trim()) return;
+  submitChatQuestion(dom.chatInput.value);
+}
+
+function startNewChat() {
+  if (dom.chatDrawer?.getAttribute('aria-busy') === 'true') return;
+  dom.chatBody.innerHTML = `
+    <section class="chat-empty-state" id="chatEmptyState" aria-labelledby="chatGreeting">
+      <img class="chat-empty-mascot" src="/static/mascote_fitlife.png" alt="Mascote FitLife IA">
+      <h3 id="chatGreeting">Olá, Coach! 👋</h3>
+      <p>Como posso ajudar no cuidado e na evolução dos seus alunos?</p>
+      <div class="chat-suggestions" aria-label="Sugestões de perguntas">
+        <button type="button" class="chat-suggestion" data-action="chat-suggestion" data-prompt="Montar um treino de hipertrofia para iniciante">Montar um treino de hipertrofia para iniciante</button>
+        <button type="button" class="chat-suggestion" data-action="chat-suggestion" data-prompt="Adaptar exercícios para quem tem dor no joelho">Adaptar exercícios para quem tem dor no joelho</button>
+        <button type="button" class="chat-suggestion" data-action="chat-suggestion" data-prompt="Quais cuidados considerar no treino de uma pessoa idosa?">Cuidados no treino de uma pessoa idosa</button>
+        <button type="button" class="chat-suggestion" data-action="chat-suggestion" data-prompt="Como organizar a progressão de carga de um aluno?">Como organizar a progressão de carga?</button>
+      </div>
+    </section>`;
+  if (dom.chatInput) dom.chatInput.value = '';
+  resizeChatInput();
+  dom.chatInput?.focus();
+}
+
+function trapChatFocus(e) {
+  if (e.key !== 'Tab' || !dom.chatDrawer?.classList.contains('open')) return;
+  const focusable = $$('button:not(:disabled), textarea:not(:disabled)', dom.chatDrawer).filter(el => !el.hidden);
+  if (!focusable.length) return;
+  const first = focusable[0], last = focusable[focusable.length - 1];
+  if (e.shiftKey && (document.activeElement === first || !dom.chatDrawer.contains(document.activeElement))) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && (document.activeElement === last || !dom.chatDrawer.contains(document.activeElement))) { e.preventDefault(); first.focus(); }
 }
 
 /* ========== EVENTOS ========== */
@@ -1776,6 +1859,10 @@ async function handleWorkoutExercisesSubmit(event) {
 
 const actions = {
   'toggle-chat': toggleChat,
+  'close-chat': closeChat,
+  'new-chat': startNewChat,
+  'chat-suggestion': (_, t) => submitChatQuestion(t.dataset.prompt || ''),
+  'retry-chat': (_, t) => submitChatQuestion(t.dataset.prompt || '', { appendUser: false, responseNode: t.closest('.chat-msg') }),
   'back-to-workspace': showTrainingLanding,
   'back-to-students': () => showWorkspace(DEFAULT_WORKSPACE),
   'open-modal-presencial': openPresencialModal,
@@ -1862,7 +1949,7 @@ function handleClick(e) {
 
 function handleKeydown(e) {
   if (e.key === 'Escape') {
-    if (dom.chatDrawer?.classList.contains('open')) return toggleChat();
+    if (dom.chatDrawer?.classList.contains('open')) { e.preventDefault(); return closeChat(); }
     if ($('#workoutModal') && !$('#workoutModal').hidden) return closeWorkoutModal();
     if ($('#workoutExercisesModal') && !$('#workoutExercisesModal').hidden) return closeWorkoutExercisesModal();
     if ($('#assessmentModal') && !$('#assessmentModal').hidden) return closeAssessmentModal();
@@ -1881,6 +1968,8 @@ function handleKeydown(e) {
     }
     return closeAllMenus();
   }
+
+  trapChatFocus(e);
 
   const card = e.target.closest('.student-card');
   if (!card || (e.key !== 'Enter' && e.key !== ' ')) return;
@@ -1928,6 +2017,13 @@ function init() {
   document.addEventListener('click', handleClick);
   document.addEventListener('keydown', handleKeydown);
   dom.chatForm?.addEventListener('submit', sendChatMessage);
+  dom.chatInput?.addEventListener('input', resizeChatInput);
+  dom.chatInput?.addEventListener('keydown', event => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      if (!dom.chatSendButton?.disabled) dom.chatForm?.requestSubmit();
+    }
+  });
   dom.studentForm?.addEventListener('submit', handleStudentFormSubmit);
   dom.exerciseForm?.addEventListener('submit', handleExerciseFormSubmit);
   $('#assessmentForm')?.addEventListener('submit', handleAssessmentSubmit);
