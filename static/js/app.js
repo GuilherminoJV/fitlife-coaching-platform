@@ -59,6 +59,9 @@ const dom = {
   studentGrid: $('#studentGrid'),
   studentPager: $('#studentPager'),
   studentPagerLabel: $('#studentPagerLabel'),
+  homeStudentCount: $('[data-metric="active-students"]'),
+  homeStudentCountStatus: $('[data-metric-status="active-students"]'),
+  homeStudentsTableBody: $('#homeStudentsTableBody'),
   studentForm: $('#presencialStudentForm'),
   newStudentModal: $('#modalNovoAluno'),
   exerciseTableBody: $('#exerciseTableBody'),
@@ -166,6 +169,53 @@ function showWorkspace(name) {
 }
 
 /* ========== ALUNOS — API ========== */
+
+function renderHomeStudentsTableState(message, stateName) {
+  if (!dom.homeStudentsTableBody) return;
+  dom.homeStudentsTableBody.innerHTML = `<tr><td class="home-table-state" colspan="5" data-state="${stateName}">${escapeHtml(message)}</td></tr>`;
+}
+
+function renderHomeStudentsTable(students) {
+  if (!dom.homeStudentsTableBody) return;
+  if (!students.length) {
+    renderHomeStudentsTableState('Nenhum aluno ativo encontrado.', 'empty');
+    return;
+  }
+
+  dom.homeStudentsTableBody.innerHTML = students.map(student => `
+    <tr>
+      <th scope="row">${escapeHtml(student.nome || 'Aluno sem nome')}</th>
+      <td><span class="home-table-neutral">Ativo</span></td>
+      <td><span class="home-table-neutral">—</span></td>
+      <td><span class="home-table-neutral">—</span></td>
+      <td><span class="home-table-neutral">—</span></td>
+    </tr>
+  `).join('');
+}
+
+async function loadHomeDashboard() {
+  if (dom.homeStudentCount) dom.homeStudentCount.textContent = '…';
+  if (dom.homeStudentCountStatus) dom.homeStudentCountStatus.textContent = 'Carregando alunos ativos';
+  renderHomeStudentsTableState('Carregando alunos…', 'loading');
+
+  try {
+    const response = await fetch('/alunos?apenas_ativos=true');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const students = await response.json();
+    if (!Array.isArray(students)) throw new Error('Resposta inválida da API');
+
+    if (dom.homeStudentCount) dom.homeStudentCount.textContent = String(students.length);
+    if (dom.homeStudentCountStatus) {
+      dom.homeStudentCountStatus.textContent = students.length === 1 ? '1 aluno ativo' : `${students.length} alunos ativos`;
+    }
+    renderHomeStudentsTable(students);
+  } catch (error) {
+    console.error('Erro ao carregar dados da Home:', error);
+    if (dom.homeStudentCount) dom.homeStudentCount.textContent = '—';
+    if (dom.homeStudentCountStatus) dom.homeStudentCountStatus.textContent = 'Não foi possível carregar';
+    renderHomeStudentsTableState('Não foi possível carregar os alunos. Tente novamente mais tarde.', 'error');
+  }
+}
 
 async function loadAlunosFromAPI() {
   try {
@@ -1524,6 +1574,7 @@ async function handleWorkoutExercisesSubmit(event) {
 
 const actions = {
   'toggle-chat': toggleChat,
+  'home-open-students': () => { switchTab('treino'); showWorkspace('alunos'); },
   'back-to-workspace': showTrainingLanding,
   'back-to-students': () => showWorkspace(DEFAULT_WORKSPACE),
   'open-modal-presencial': openPresencialModal,
@@ -1655,6 +1706,7 @@ function init() {
   }));
 
   loadExercicios();
+  loadHomeDashboard();
 
   document.addEventListener('click', handleClick);
   document.addEventListener('keydown', handleKeydown);

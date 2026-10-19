@@ -194,52 +194,57 @@
             <div class="card-metric">
               <div>
                 <div class="metric-label">Alunos Ativos</div>
-                <div class="metric-value" data-metric="active-students">3</div>
-                <small class="metric-context"><span>Demonstração</span> · +1 esta semana</small>
+                <div class="metric-value" data-metric="active-students" aria-live="polite">…</div>
+                <small class="metric-context" data-metric-status="active-students" aria-live="polite">Carregando alunos ativos</small>
               </div>
               <div class="metric-icon blue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-users"></use></svg></div>
             </div>
           </div>
 
-          <div class="card">
-            <div class="card-metric">
-              <div>
-                <div class="metric-label">Planos Nutri</div>
-                <div class="metric-value" data-metric="nutrition-plans">3</div>
-                <small class="metric-context"><span>Demonstração</span> · 1 aguardando anamnese</small>
+          <section class="metrics-demo-group" aria-label="Outros indicadores demonstrativos">
+            <span class="demo-label">Dados de demonstração</span>
+            <div class="metrics-demo-grid">
+              <div class="card">
+                <div class="card-metric">
+                  <div>
+                    <div class="metric-label">Planos Nutri</div>
+                    <div class="metric-value" data-metric="nutrition-plans">3</div>
+                    <small class="metric-context">1 aguardando anamnese</small>
+                  </div>
+                  <div class="metric-icon green" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-nutrition"></use></svg></div>
+                </div>
               </div>
-              <div class="metric-icon green" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-nutrition"></use></svg></div>
-            </div>
-          </div>
 
-          <div class="card">
-            <div class="card-metric">
-              <div>
-                <div class="metric-label">Sessões Mente</div>
-                <div class="metric-value" data-metric="psychology-sessions">2</div>
-                <small class="metric-context"><span>Demonstração</span> · 2 nesta semana</small>
+              <div class="card">
+                <div class="card-metric">
+                  <div>
+                    <div class="metric-label">Sessões Mente</div>
+                    <div class="metric-value" data-metric="psychology-sessions">2</div>
+                    <small class="metric-context">2 nesta semana</small>
+                  </div>
+                  <div class="metric-icon purple" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-psychology"></use></svg></div>
+                </div>
               </div>
-              <div class="metric-icon purple" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-psychology"></use></svg></div>
-            </div>
-          </div>
 
-          <div class="card">
-            <div class="card-metric">
-              <div>
-                <div class="metric-label">Consultas IA</div>
-                <div class="metric-value" data-metric="ai-queries">12</div>
-                <small class="metric-context"><span>Demonstração</span> · consultas registradas</small>
+              <div class="card">
+                <div class="card-metric">
+                  <div>
+                    <div class="metric-label">Consultas IA</div>
+                    <div class="metric-value" data-metric="ai-queries">12</div>
+                    <small class="metric-context">consultas registradas</small>
+                  </div>
+                  <div class="metric-icon neutral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-sparkles"></use></svg></div>
+                </div>
               </div>
-              <div class="metric-icon neutral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-sparkles"></use></svg></div>
             </div>
-          </div>
+          </section>
         </div>
 
         <section class="home-attention" aria-labelledby="attention-title">
           <div class="home-section-heading">
             <div>
               <h2 id="attention-title" class="section-title">Atenção hoje</h2>
-              <p>Exemplos demonstrativos de itens para acompanhar.</p>
+              <p>Itens para acompanhar.</p>
             </div>
             <span class="demo-label">Dados de demonstração</span>
           </div>
@@ -313,28 +318,8 @@
                 <th scope="col">Status</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <th scope="row">João Silva</th>
-                <td><span class="home-table-neutral">Ativo</span></td>
-                <td><span class="home-table-neutral">Plano Enviado</span></td>
-                <td><span class="home-table-neutral">Em Acompanhamento</span></td>
-                <td><span class="home-table-neutral">Em Dia</span></td>
-              </tr>
-              <tr>
-                <th scope="row">Maria Souza</th>
-                <td><span class="home-table-neutral">Ativo</span></td>
-                <td><span class="home-table-exception home-table-exception-pending">Aguardando Anamnese</span></td>
-                <td><span class="home-table-neutral">Sem Demanda</span></td>
-                <td><span class="home-table-neutral">Em Dia</span></td>
-              </tr>
-              <tr>
-                <th scope="row">Carlos Eduardo</th>
-                <td><span class="home-table-neutral">Ativo</span></td>
-                <td><span class="home-table-neutral">Plano Enviado</span></td>
-                <td><span class="home-table-neutral">Sessão Agendada</span></td>
-                <td><span class="home-table-exception home-table-exception-pending">Pendente</span></td>
-              </tr>
+            <tbody id="homeStudentsTableBody" aria-live="polite">
+              <tr><td class="home-table-state" colspan="5">Carregando alunos…</td></tr>
             </tbody>
           </table>
         </div>
