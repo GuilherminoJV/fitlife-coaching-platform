@@ -418,6 +418,14 @@ button:focus-visible { outline: 2px solid var(--profile-primary); outline-offset
 .training-section { margin-top: 16px; }
 .workout-list { margin-top: 8px; }
 .workout-record-header > .workout-record-actions { display: flex; align-items: center; gap: 8px; }
+.workout-record-title { align-content: start; }
+.workout-record.is-archived { opacity: .7; }
+.workout-archive-badge { width: fit-content; padding: 3px 8px; color: var(--on-dark-muted); background: rgb(255 255 255 / .06); border: 1px solid var(--divider); border-radius: 999px; font-size: .67rem; font-weight: 750; letter-spacing: .03em; text-transform: uppercase; }
+.archived-workouts-section { margin-top: 12px; border: 1px solid var(--divider); border-radius: 12px; background: rgb(255 255 255 / .025); }
+.archived-workouts-section > summary { padding: 12px 14px; color: var(--on-dark-soft); cursor: pointer; font-size: .84rem; font-weight: 750; }
+.archived-workouts-section > summary::marker { color: var(--profile-primary); }
+.archived-workouts-list { display: grid; gap: 10px; padding: 0 10px 10px; }
+.workout-action-status { margin: 10px 0 0; padding: 9px 12px; color: var(--profile-primary); background: var(--profile-soft); border: 1px solid var(--profile-border); border-radius: 9px; font-size: .82rem; font-weight: 700; }
 .workout-actions-menu .record-actions-popover { min-width: 178px; }
 .workout-actions-menu .record-actions-popover hr { width: 100%; margin: 3px 0; border: 0; border-top: 1px solid var(--divider); }
 .record-actions-popover button.danger-action { color: #fca5a5; }

@@ -1453,7 +1453,11 @@ function renderWorkoutRecords(treinos) {
   const container = $('.workout-list');
   if (!container) return;
   state.treinosData = treinos;
-  container.innerHTML = treinos.length ? treinos.map(t => {
+  const ativos = treinos.filter(t => !t.encerrado_em).sort((a, b) => Number(isWorkoutActive(b)) - Number(isWorkoutActive(a)));
+  const arquivados = treinos.filter(t => Boolean(t.encerrado_em)).sort((a, b) =>
+    String(b.encerrado_em).localeCompare(String(a.encerrado_em))
+  );
+  const renderCard = (t, archived = false) => {
     const orientacoes = t.orientacoes_gerais ? `<p class="workout-record-guidance">${escapeHtml(t.orientacoes_gerais)}</p>` : '';
     const sessoes = t.sessoes || [];
     const activeId = state.activeTrainingSessions[t.id] && sessoes.some(s => String(s.id) === String(state.activeTrainingSessions[t.id]))
@@ -1475,14 +1479,19 @@ function renderWorkoutRecords(treinos) {
           ${ex.midia_url ? `<a href="${escapeHtml(ex.midia_url)}" target="_blank" rel="noopener noreferrer">Ver vídeo/demonstração</a>` : ''}
         </div>
       </article>`).join('') : '<div class="empty-state compact-empty-state">Nenhum exercício nesta sessão.</div>';
-    return `<article class="workout-record">
-      <div class="workout-record-header"><div><strong>${escapeHtml(t.nome)}</strong><small>${formatWorkoutDate(t.data_inicio)} a ${t.data_fim ? formatWorkoutDate(t.data_fim) : 'Sem prazo'}${t.encerrado_em ? ' · Encerrado' : ''}</small></div><div class="workout-record-actions">${isWorkoutActive(t) ? `<button type="button" class="table-btn" data-action="add-workout-session" data-record-id="${t.id}">+ Adicionar sessão</button>` : ''}<details class="record-actions-menu workout-actions-menu"><summary aria-label="Mais ações do treino">⋯</summary><div class="record-actions-popover">${isWorkoutActive(t) ? `<button type="button" data-action="end-workout" data-record-id="${t.id}">Encerrar treino</button><hr>` : ''}<button type="button" class="danger-action" data-action="delete-workout" data-record-id="${t.id}">Excluir treino</button></div></details></div></div>
+    return `<article class="workout-record${archived ? ' is-archived' : ''}">
+      <div class="workout-record-header"><div class="workout-record-title">${archived ? '<span class="workout-archive-badge">Arquivado</span>' : ''}<strong>${escapeHtml(t.nome)}</strong><small>${formatWorkoutDate(t.data_inicio)} a ${archived ? formatWorkoutDate(t.data_fim) : (t.data_fim ? formatWorkoutDate(t.data_fim) : 'Sem prazo')}</small></div><div class="workout-record-actions">${!archived && isWorkoutActive(t) ? `<button type="button" class="table-btn" data-action="add-workout-session" data-record-id="${t.id}">+ Adicionar sessão</button>` : ''}<details class="record-actions-menu workout-actions-menu"><summary aria-label="Mais ações do treino">⋯</summary><div class="record-actions-popover">${archived ? `<button type="button" data-action="reactivate-workout" data-record-id="${t.id}">Reativar treino</button><hr>` : (isWorkoutActive(t) ? `<button type="button" data-action="end-workout" data-record-id="${t.id}">Arquivar treino</button><hr>` : '')}<button type="button" class="danger-action" data-action="delete-workout" data-record-id="${t.id}">Excluir treino</button></div></details></div></div>
       <p class="workout-record-meta">${escapeHtml(t.objetivo)} · ${escapeHtml(t.dificuldade)}</p>
       ${orientacoes}
       <div class="workout-session-tabs" role="tablist" aria-label="Sessões do ${escapeHtml(t.nome)}">${tabs}</div>
       ${sessaoAtiva ? `<section class="workout-session-panel" role="tabpanel"><div class="workout-session-panel-heading"><h4>${escapeHtml(sessaoAtiva.nome)}</h4><span>${sessaoAtiva.exercicios.length} exercício(s)</span></div><div class="workout-session-exercises" data-session-list="${sessaoAtiva.id}">${exercicios}</div></section>` : '<div class="empty-state compact-empty-state">Adicione sessões como “Inferior” ou “Costas” para organizar o treino.</div>'}
     </article>`;
-  }).join('') : '<div class="empty-state">Nenhum treino criado para este aluno.</div>';
+  };
+  if (!treinos.length) {
+    container.innerHTML = '<div class="empty-state">Nenhum treino criado para este aluno.</div>';
+    return;
+  }
+  container.innerHTML = `${ativos.map(t => renderCard(t)).join('')}\n    ${arquivados.length ? `<details class="archived-workouts-section"><summary>Arquivados (${arquivados.length})</summary><div class="archived-workouts-list">${arquivados.map(t => renderCard(t, true)).join('')}</div></details>` : ''}`;
 }
 
 async function openWorkoutModal() {
@@ -1589,6 +1598,26 @@ async function endWorkout(workoutId) {
   }
   await loadStudentRecords(state.selectedStudentId);
   await loadHomeDashboard();
+  announceWorkoutAction('Treino arquivado');
+}
+
+async function reactivateWorkout(workoutId) {
+  const response = await fetch(`/treinos/${workoutId}/reativar`, { method: 'PATCH' });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    alert(result.detail || 'Não foi possível reativar o treino.');
+    return;
+  }
+  await loadStudentRecords(state.selectedStudentId);
+  await loadHomeDashboard();
+  announceWorkoutAction('Treino reativado');
+}
+
+function announceWorkoutAction(message) {
+  const status = $('#workoutActionStatus');
+  if (!status) return;
+  status.textContent = message;
+  status.hidden = false;
 }
 
 async function deleteWorkout(workoutId) {
@@ -1783,6 +1812,7 @@ const actions = {
   'close-workout': closeWorkoutModal,
   'add-workout-session': (_, t) => openAddWorkoutExercisesModal(t.dataset.recordId),
   'end-workout': (_, t) => endWorkout(t.dataset.recordId),
+  'reactivate-workout': (_, t) => reactivateWorkout(t.dataset.recordId),
   'delete-workout': (_, t) => deleteWorkout(t.dataset.recordId),
   'close-workout-exercises': closeWorkoutExercisesModal,
   'select-workout-session': (_, t) => selectWorkoutSession(t.dataset.workoutId, t.dataset.sessionId),

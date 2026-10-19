@@ -64,6 +64,43 @@ def test_excluir_treino_remove_sessoes_e_exercicios_em_cascata(banco_treinos):
         assert conn.execute(text("SELECT COUNT(*) FROM treino_exercicios")).scalar_one() == 0
 
 
+def test_reativar_treino_limpa_arquivo_e_volta_a_ser_ativo(banco_treinos):
+    with banco_treinos.begin() as conn:
+        conn.execute(
+            text("INSERT INTO treinos (id, data_fim, encerrado_em) VALUES (1, :fim, CURRENT_TIMESTAMP)"),
+            {"fim": HOJE},
+        )
+
+    assert database.reativar_treino(1) is True
+
+    with banco_treinos.connect() as conn:
+        treino = conn.execute(text("SELECT data_fim, encerrado_em FROM treinos WHERE id = 1")).one()
+    assert treino.data_fim is None
+    assert treino.encerrado_em is None
+
+    resumo = montar_resumo_home([{
+        "aluno_id": 7,
+        "nome": "Aluno 7",
+        "avaliacao_id": 1,
+        "proxima_reavaliacao": None,
+        "treino_id": 1,
+        "treino_nome": "Treino reativado",
+        "treino_data_inicio": date(2026, 10, 1),
+        "treino_data_fim": None,
+        "treino_encerrado": False,
+        "tem_anamnese": True,
+    }], hoje=HOJE)
+    assert resumo["treinos"]["ativos"] == [{
+        "aluno_id": 7,
+        "nome": "Aluno 7",
+        "treino_id": 1,
+        "nome_treino": "Treino reativado",
+        "data_fim": None,
+    }]
+    assert resumo["treinos"]["alunos_sem_treino_ativo"] == []
+    assert resumo["indicadores"]["alunos_pendentes"] == 0
+
+
 def test_get_home_resumo_nao_retorna_treino_encerrado_como_ativo(monkeypatch):
     capturado = {}
 

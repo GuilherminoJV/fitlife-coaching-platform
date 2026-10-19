@@ -551,7 +551,7 @@ def criar_treino(aluno_id, dados):
 
 
 def encerrar_treino(treino_id, data_encerramento):
-    """Marca o treino como encerrado sem remover seu histórico."""
+    """Arquiva o treino sem remover seu histórico."""
     with engine.begin() as conn:
         result = conn.execute(
             text("""
@@ -560,6 +560,20 @@ def encerrar_treino(treino_id, data_encerramento):
                 WHERE id = :id AND encerrado_em IS NULL
                 RETURNING id
             """), {"id": treino_id, "data_fim": data_encerramento}
+        )
+        return result.scalar_one_or_none() is not None
+
+
+def reativar_treino(treino_id):
+    """Reativa um treino arquivado e remove sua data final."""
+    with engine.begin() as conn:
+        result = conn.execute(
+            text("""
+                UPDATE treinos
+                SET encerrado_em = NULL, data_fim = NULL
+                WHERE id = :id AND encerrado_em IS NOT NULL
+                RETURNING id
+            """), {"id": treino_id}
         )
         return result.scalar_one_or_none() is not None
 

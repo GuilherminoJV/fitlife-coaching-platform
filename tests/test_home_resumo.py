@@ -134,3 +134,52 @@ def test_consulta_do_resumo_envia_data_e_janelas_como_parametros(monkeypatch):
     }
     assert "CURRENT_DATE" not in capturado["sql"].upper()
     assert "INTERVAL '1 day'" in capturado["sql"]
+
+
+def test_treino_ativo_com_data_fim_aparece_em_treinos_ativos():
+    resultado = montar_resumo_home(
+        [aluno(10, treino_data_fim=HOJE + timedelta(days=20))],
+        hoje=HOJE,
+    )
+
+    assert resultado["treinos"]["ativos"] == [{
+        "aluno_id": 10,
+        "nome": "Aluno 10",
+        "treino_id": 1,
+        "nome_treino": "Plano de treino",
+        "data_fim": "2026-11-07",
+    }]
+    assert resultado["treinos"]["alunos_sem_treino_ativo"] == []
+    assert resultado["treinos"]["vencidos"] == []
+    assert "proximos_do_fim" in resultado["treinos"]
+
+
+def test_treino_ativo_sem_data_fim_aparece_com_prazo_nulo():
+    resultado = montar_resumo_home(
+        [aluno(11, treino_data_fim=None)],
+        hoje=HOJE,
+    )
+
+    assert resultado["treinos"]["ativos"] == [{
+        "aluno_id": 11,
+        "nome": "Aluno 11",
+        "treino_id": 1,
+        "nome_treino": "Plano de treino",
+        "data_fim": None,
+    }]
+    assert resultado["indicadores"]["alunos_sem_treino_ativo"] == 0
+    assert resultado["indicadores"]["alunos_pendentes"] == 0
+
+
+def test_aluno_sem_treino_ativo_nao_aparece_em_treinos_ativos():
+    resultado = montar_resumo_home(
+        [aluno(12, treino_id=None, treino_data_fim=None)],
+        hoje=HOJE,
+    )
+
+    assert resultado["treinos"]["ativos"] == []
+    assert resultado["treinos"]["alunos_sem_treino_ativo"] == [{
+        "aluno_id": 12,
+        "nome": "Aluno 12",
+    }]
+    assert resultado["alunos_pendentes"][0]["motivos"] == ["sem_treino_ativo"]

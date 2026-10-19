@@ -50,6 +50,7 @@ from src.database import (
     criar_treino,
     criar_sessao_treino,
     encerrar_treino,
+    reativar_treino,
     deletar_treino,
     deletar_exercicio_treino,
     reordenar_exercicios_sessao
@@ -453,8 +454,15 @@ def post_sessao_treino(treino_id: int, body: TreinoSessaoCreate):
 @app.patch("/treinos/{treino_id}/encerrar")
 def patch_encerrar_treino(treino_id: int):
     if not encerrar_treino(treino_id, data_atual_home()):
-        raise HTTPException(status_code=404, detail="Treino não encontrado ou já encerrado.")
-    return {"mensagem": "Treino encerrado com sucesso."}
+        raise HTTPException(status_code=404, detail="Treino não encontrado ou já arquivado.")
+    return {"mensagem": "Treino arquivado com sucesso."}
+
+
+@app.patch("/treinos/{treino_id}/reativar")
+def patch_reativar_treino(treino_id: int):
+    if not reativar_treino(treino_id):
+        raise HTTPException(status_code=404, detail="Treino não encontrado ou não está arquivado.")
+    return {"mensagem": "Treino reativado com sucesso."}
 
 
 @app.delete("/treinos/{treino_id}")
