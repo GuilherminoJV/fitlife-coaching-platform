@@ -49,10 +49,13 @@ from src.database import (
     obter_resumo_home,
     criar_treino,
     criar_sessao_treino,
+    encerrar_treino,
+    deletar_treino,
     deletar_exercicio_treino,
     reordenar_exercicios_sessao
 )
 from src.fitlife_assistant import montar_mensagens
+from src.home_summary import data_atual_home
 
 
 # ==========================================================================
@@ -156,7 +159,7 @@ class TreinoCreate(BaseModel):
     dificuldade: Literal["Iniciante", "Intermediário", "Avançado"]
     orientacoes_gerais: str | None = Field(default=None, max_length=5000)
     data_inicio: date
-    data_fim: date
+    data_fim: date | None = None
     remover_apos_vencimento: bool = False
     ocultar_antes_inicio: bool = False
 
@@ -419,7 +422,7 @@ def get_treinos(aluno_id: int):
 def post_treino(aluno_id: int, body: TreinoCreate):
     if not buscar_aluno(aluno_id):
         raise HTTPException(status_code=404, detail="Aluno não encontrado")
-    if body.data_fim < body.data_inicio:
+    if body.data_fim is not None and body.data_fim < body.data_inicio:
         raise HTTPException(status_code=422, detail="A data de término deve ser igual ou posterior à data de início.")
     dados = body.dict()
     dados["nome"] = dados["nome"].strip()
@@ -445,6 +448,20 @@ def post_sessao_treino(treino_id: int, body: TreinoSessaoCreate):
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     return {"id": sessao_id, "mensagem": "Sessão de treino criada com sucesso."}
+
+
+@app.patch("/treinos/{treino_id}/encerrar")
+def patch_encerrar_treino(treino_id: int):
+    if not encerrar_treino(treino_id, data_atual_home()):
+        raise HTTPException(status_code=404, detail="Treino não encontrado ou já encerrado.")
+    return {"mensagem": "Treino encerrado com sucesso."}
+
+
+@app.delete("/treinos/{treino_id}")
+def delete_treino(treino_id: int):
+    if not deletar_treino(treino_id):
+        raise HTTPException(status_code=404, detail="Treino não encontrado.")
+    return {"mensagem": "Treino excluído com sucesso."}
 
 
 @app.delete("/treino-exercicios/{item_id}")

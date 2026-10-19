@@ -198,10 +198,19 @@ function renderHomeStudentsTable(students, summary, summaryError = false) {
   }
 
   const pending = homePendingStudents(summary);
+  const activeTrainings = new Map((summary?.treinos?.ativos || []).map(training => [
+    String(training.aluno_id), training
+  ]));
   dom.homeStudentsTableBody.innerHTML = students.map(student => `
     <tr>
       <th scope="row">${escapeHtml(student.nome || 'Aluno sem nome')}</th>
-      <td><span class="home-table-neutral">Ativo</span></td>
+      <td>${summaryError
+        ? '<span class="home-table-neutral">Indisponível</span>'
+        : activeTrainings.has(String(student.id))
+          ? activeTrainings.get(String(student.id)).data_fim
+            ? `<span class="home-table-neutral">${escapeHtml(formatWorkoutDate(activeTrainings.get(String(student.id)).data_fim))}</span>`
+            : '<span class="home-table-upcoming">Sem prazo</span>'
+          : '<span class="home-table-neutral">—</span>'}</td>
       <td><span class="home-table-upcoming">Em breve</span></td>
       <td>${summaryError
         ? '<span class="home-table-neutral">Indisponível</span>'
@@ -1432,6 +1441,14 @@ function formatWorkoutDate(value) {
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('pt-BR');
 }
 
+function isWorkoutActive(workout) {
+  if (workout.encerrado_em) return false;
+  const today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+  const dataInicio = String(workout.data_inicio || '').slice(0, 10);
+  const dataFim = workout.data_fim ? String(workout.data_fim).slice(0, 10) : null;
+  return dataInicio <= today && (dataFim === null || dataFim >= today);
+}
+
 function renderWorkoutRecords(treinos) {
   const container = $('.workout-list');
   if (!container) return;
@@ -1459,7 +1476,7 @@ function renderWorkoutRecords(treinos) {
         </div>
       </article>`).join('') : '<div class="empty-state compact-empty-state">Nenhum exercício nesta sessão.</div>';
     return `<article class="workout-record">
-      <div class="workout-record-header"><div><strong>${escapeHtml(t.nome)}</strong><small>${formatWorkoutDate(t.data_inicio)} a ${formatWorkoutDate(t.data_fim)}</small></div><button type="button" class="table-btn" data-action="add-workout-session" data-record-id="${t.id}">+ Adicionar sessão</button></div>
+      <div class="workout-record-header"><div><strong>${escapeHtml(t.nome)}</strong><small>${formatWorkoutDate(t.data_inicio)} a ${t.data_fim ? formatWorkoutDate(t.data_fim) : 'Sem prazo'}${t.encerrado_em ? ' · Encerrado' : ''}</small></div><div class="workout-record-actions">${isWorkoutActive(t) ? `<button type="button" class="table-btn" data-action="add-workout-session" data-record-id="${t.id}">+ Adicionar sessão</button>` : ''}<details class="record-actions-menu workout-actions-menu"><summary aria-label="Mais ações do treino">⋯</summary><div class="record-actions-popover">${isWorkoutActive(t) ? `<button type="button" data-action="end-workout" data-record-id="${t.id}">Encerrar treino</button><hr>` : ''}<button type="button" class="danger-action" data-action="delete-workout" data-record-id="${t.id}">Excluir treino</button></div></details></div></div>
       <p class="workout-record-meta">${escapeHtml(t.objetivo)} · ${escapeHtml(t.dificuldade)}</p>
       ${orientacoes}
       <div class="workout-session-tabs" role="tablist" aria-label="Sessões do ${escapeHtml(t.nome)}">${tabs}</div>
@@ -1563,6 +1580,29 @@ async function deleteWorkoutExercise(itemId) {
   await loadStudentRecords(state.selectedStudentId);
 }
 
+async function endWorkout(workoutId) {
+  const response = await fetch(`/treinos/${workoutId}/encerrar`, { method: 'PATCH' });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    alert(result.detail || 'Não foi possível encerrar o treino.');
+    return;
+  }
+  await loadStudentRecords(state.selectedStudentId);
+  await loadHomeDashboard();
+}
+
+async function deleteWorkout(workoutId) {
+  if (!confirm('Essa ação não pode ser desfeita. Deseja excluir este treino e todas as sessões e exercícios?')) return;
+  const response = await fetch(`/treinos/${workoutId}`, { method: 'DELETE' });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    alert(result.detail || 'Não foi possível excluir o treino.');
+    return;
+  }
+  await loadStudentRecords(state.selectedStudentId);
+  await loadHomeDashboard();
+}
+
 function handleWorkoutExerciseDragStart(event) {
   const item = event.target.closest('.workout-exercise-item');
   if (!item) return;
@@ -1648,7 +1688,7 @@ async function handleWorkoutSubmit(event) {
     dificuldade: formData.dificuldade,
     orientacoes_gerais: formData.orientacoes_gerais.trim() || null,
     data_inicio: formData.data_inicio,
-    data_fim: formData.data_fim,
+    data_fim: formData.data_fim || null,
     remover_apos_vencimento: formData.remover_apos_vencimento === 'true',
     ocultar_antes_inicio: formData.ocultar_antes_inicio === 'true',
   };
@@ -1742,6 +1782,8 @@ const actions = {
   'new-workout': openWorkoutModal,
   'close-workout': closeWorkoutModal,
   'add-workout-session': (_, t) => openAddWorkoutExercisesModal(t.dataset.recordId),
+  'end-workout': (_, t) => endWorkout(t.dataset.recordId),
+  'delete-workout': (_, t) => deleteWorkout(t.dataset.recordId),
   'close-workout-exercises': closeWorkoutExercisesModal,
   'select-workout-session': (_, t) => selectWorkoutSession(t.dataset.workoutId, t.dataset.sessionId),
   'toggle-workout-exercise': (_, t) => toggleWorkoutExercise(t.dataset.itemId),
@@ -1798,6 +1840,15 @@ function handleKeydown(e) {
     if (dom.exerciseModal && !dom.exerciseModal.hidden) return closeExerciseModal();
     if (dom.newExerciseModal && !dom.newExerciseModal.hidden) return closeNewExerciseModal();
     if (dom.newStudentModal && !dom.newStudentModal.hidden) return closePresencialModal();
+    const openRecordMenus = $$('.record-actions-menu[open]');
+    if (openRecordMenus.length) {
+      e.preventDefault();
+      openRecordMenus.forEach(menu => {
+        menu.open = false;
+        $('summary', menu)?.focus();
+      });
+      return;
+    }
     return closeAllMenus();
   }
 

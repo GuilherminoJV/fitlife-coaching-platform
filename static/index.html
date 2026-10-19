@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- ===== Styles ===== -->
-  <link rel="stylesheet" href="/static/css/styles.css?v=20261018-home-resumo-v2">
+  <link rel="stylesheet" href="/static/css/styles.css?v=20261018-ciclo-treino">
 
   <!-- ===== Markdown renderer (AI chat answers) ===== -->
   <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js" defer></script>
@@ -255,7 +255,7 @@
             <thead>
               <tr>
                 <th scope="col">Aluno</th>
-                <th scope="col">Personal</th>
+                <th scope="col">Treino até</th>
                 <th scope="col">Outras áreas</th>
                 <th scope="col">Status</th>
               </tr>
@@ -888,7 +888,7 @@
 
         <div class="workout-form-grid workout-settings-grid">
           <label>Começa em<input name="data_inicio" type="date" required></label>
-          <label>Termina em<input name="data_fim" type="date" required></label>
+          <label>Termina em (opcional)<input name="data_fim" type="date"></label>
           <label>Retirar a rotina da tela do aluno quando vencer?<select name="remover_apos_vencimento"><option value="true">Sim</option><option value="false">Não</option></select></label>
           <label>Ocultar a rotina antes da data de início?<select name="ocultar_antes_inicio"><option value="true">Sim</option><option value="false">Não</option></select></label>
         </div>
@@ -924,7 +924,7 @@
   </div>
 
   <!-- ===== Scripts ===== -->
-  <script src="/static/js/app.js?v=20261018-home-resumo-v2" defer></script>
+  <script src="/static/js/app.js?v=20261018-ciclo-treino" defer></script>
 
 </body>
 </html>

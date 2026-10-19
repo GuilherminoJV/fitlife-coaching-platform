@@ -59,6 +59,7 @@ def obter_resumo_home(hoje=None):
                     t.nome AS treino_nome,
                     t.data_inicio AS treino_data_inicio,
                     t.data_fim AS treino_data_fim,
+                    (t.encerrado_em IS NOT NULL) AS treino_encerrado,
                     EXISTS (
                         SELECT 1
                         FROM anamnese_respostas an
@@ -85,13 +86,19 @@ def obter_resumo_home(hoje=None):
                     LIMIT 1
                 ) av ON TRUE
                 LEFT JOIN LATERAL (
-                    SELECT x.id, x.nome, x.data_inicio, x.data_fim
+                    SELECT x.id, x.nome, x.data_inicio, x.data_fim, x.encerrado_em
                     FROM treinos x
                     WHERE x.aluno_id = a.id
                       AND x.data_inicio <= CAST(:hoje AS DATE)
                     ORDER BY
-                        (x.data_fim >= CAST(:hoje AS DATE)) DESC,
-                        CASE WHEN x.data_fim >= CAST(:hoje AS DATE) THEN x.data_fim END ASC,
+                        CASE
+                            WHEN x.encerrado_em IS NULL
+                             AND (x.data_fim IS NULL OR x.data_fim >= CAST(:hoje AS DATE))
+                            THEN 1 ELSE 0
+                        END DESC,
+                        CASE
+                            WHEN x.encerrado_em IS NULL AND x.data_fim >= CAST(:hoje AS DATE) THEN x.data_fim
+                        END ASC NULLS LAST,
                         x.data_inicio DESC,
                         x.id DESC
                     LIMIT 1
@@ -489,7 +496,7 @@ def listar_treinos(aluno_id):
             text("""
                 SELECT id, aluno_id, nome, objetivo, dificuldade, orientacoes_gerais,
                        data_inicio, data_fim, remover_apos_vencimento,
-                       ocultar_antes_inicio, criado_em
+                       ocultar_antes_inicio, criado_em, encerrado_em
                 FROM treinos
                 WHERE aluno_id = :aluno_id
                 ORDER BY data_inicio DESC, id DESC
@@ -541,6 +548,29 @@ def criar_treino(aluno_id, dados):
             """), {"aluno_id": aluno_id, **dados}
         ).scalar_one()
         return treino_id
+
+
+def encerrar_treino(treino_id, data_encerramento):
+    """Marca o treino como encerrado sem remover seu histórico."""
+    with engine.begin() as conn:
+        result = conn.execute(
+            text("""
+                UPDATE treinos
+                SET data_fim = :data_fim, encerrado_em = CURRENT_TIMESTAMP
+                WHERE id = :id AND encerrado_em IS NULL
+                RETURNING id
+            """), {"id": treino_id, "data_fim": data_encerramento}
+        )
+        return result.scalar_one_or_none() is not None
+
+
+def deletar_treino(treino_id):
+    """Remove treino; sessões e exercícios são removidos pelas FKs em cascata."""
+    with engine.begin() as conn:
+        result = conn.execute(
+            text("DELETE FROM treinos WHERE id = :id RETURNING id"), {"id": treino_id}
+        )
+        return result.scalar_one_or_none() is not None
 
 
 def criar_sessao_treino(treino_id, nome, exercicios):

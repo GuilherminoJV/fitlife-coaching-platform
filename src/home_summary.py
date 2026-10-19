@@ -47,6 +47,7 @@ def montar_resumo_home(
     alunos_sem_avaliacao: list[dict[str, Any]] = []
     treinos_vencidos: list[dict[str, Any]] = []
     treinos_proximos: list[dict[str, Any]] = []
+    treinos_ativos: list[dict[str, Any]] = []
     alunos_sem_treino_ativo: list[dict[str, Any]] = []
     alunos_sem_anamnese: list[dict[str, Any]] = []
     pendencias: dict[int, dict[str, Any]] = {}
@@ -86,10 +87,19 @@ def montar_resumo_home(
 
         treino_id = registro.get("treino_id")
         data_fim = registro.get("treino_data_fim")
-        treino_ativo = treino_id is not None and data_fim is not None and data_fim >= referencia
+        treino_encerrado = bool(registro.get("treino_encerrado", False))
+        treino_ativo = treino_id is not None and not treino_encerrado and (data_fim is None or data_fim >= referencia)
         if not treino_ativo:
             alunos_sem_treino_ativo.append(aluno)
             motivos.append("sem_treino_ativo")
+
+        if treino_ativo:
+            treinos_ativos.append({
+                **aluno,
+                "treino_id": treino_id,
+                "nome_treino": registro.get("treino_nome"),
+                "data_fim": _iso(data_fim),
+            })
 
         if treino_id is not None and data_fim is not None:
             treino = {
@@ -99,13 +109,13 @@ def montar_resumo_home(
                 "data_inicio": _iso(registro.get("treino_data_inicio")),
                 "data_fim": _iso(data_fim),
             }
-            if data_fim < referencia:
+            if data_fim < referencia and not treino_encerrado:
                 treinos_vencidos.append({
                     **treino,
                     "dias_atraso": (referencia - data_fim).days,
                 })
                 motivos.append("treino_vencido")
-            elif registro.get("treino_na_janela", data_fim <= limite_treino):
+            elif not treino_encerrado and registro.get("treino_na_janela", data_fim <= limite_treino):
                 treinos_proximos.append({
                     **treino,
                     "dias_restantes": (data_fim - referencia).days,
@@ -144,6 +154,7 @@ def montar_resumo_home(
             "alunos_sem_avaliacao": alunos_sem_avaliacao,
         },
         "treinos": {
+            "ativos": treinos_ativos,
             "vencidos": treinos_vencidos,
             "proximos_do_fim": treinos_proximos,
             "alunos_sem_treino_ativo": alunos_sem_treino_ativo,
