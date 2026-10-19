@@ -1574,7 +1574,6 @@ async function handleWorkoutExercisesSubmit(event) {
 
 const actions = {
   'toggle-chat': toggleChat,
-  'home-open-students': () => { switchTab('treino'); showWorkspace('alunos'); },
   'back-to-workspace': showTrainingLanding,
   'back-to-students': () => showWorkspace(DEFAULT_WORKSPACE),
   'open-modal-presencial': openPresencialModal,

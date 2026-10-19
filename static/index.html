@@ -189,55 +189,51 @@
           <p>Visão integrada de Treino, Nutrição e Acompanhamento Psicológico.</p>
         </div>
 
+        <p class="metrics-demo-notice">Dados de demonstração: Planos Nutri, Sessões Mente e Consultas IA.</p>
         <div class="metrics-grid">
           <div class="card">
             <div class="card-metric">
-              <div>
+              <div class="metric-heading">
+                <div class="metric-icon blue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-users"></use></svg></div>
                 <div class="metric-label">Alunos Ativos</div>
-                <div class="metric-value" data-metric="active-students" aria-live="polite">…</div>
-                <small class="metric-context" data-metric-status="active-students" aria-live="polite">Carregando alunos ativos</small>
               </div>
-              <div class="metric-icon blue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-users"></use></svg></div>
+              <div class="metric-value" data-metric="active-students" aria-live="polite">…</div>
+              <span class="sr-only" data-metric-status="active-students" aria-live="polite">Carregando alunos ativos</span>
             </div>
           </div>
 
-          <section class="metrics-demo-group" aria-label="Outros indicadores demonstrativos">
-            <span class="demo-label">Dados de demonstração</span>
-            <div class="metrics-demo-grid">
-              <div class="card">
-                <div class="card-metric">
-                  <div>
-                    <div class="metric-label">Planos Nutri</div>
-                    <div class="metric-value" data-metric="nutrition-plans">3</div>
-                    <small class="metric-context">1 aguardando anamnese</small>
-                  </div>
-                  <div class="metric-icon green" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-nutrition"></use></svg></div>
-                </div>
+          <div class="card">
+            <div class="card-metric">
+              <div class="metric-heading">
+                <div class="metric-icon green" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-nutrition"></use></svg></div>
+                <div class="metric-label">Planos Nutri</div>
               </div>
-
-              <div class="card">
-                <div class="card-metric">
-                  <div>
-                    <div class="metric-label">Sessões Mente</div>
-                    <div class="metric-value" data-metric="psychology-sessions">2</div>
-                    <small class="metric-context">2 nesta semana</small>
-                  </div>
-                  <div class="metric-icon purple" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-psychology"></use></svg></div>
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="card-metric">
-                  <div>
-                    <div class="metric-label">Consultas IA</div>
-                    <div class="metric-value" data-metric="ai-queries">12</div>
-                    <small class="metric-context">consultas registradas</small>
-                  </div>
-                  <div class="metric-icon neutral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-sparkles"></use></svg></div>
-                </div>
-              </div>
+              <div class="metric-value" data-metric="nutrition-plans">3</div>
+              <small class="metric-context">1 aguardando anamnese</small>
             </div>
-          </section>
+          </div>
+
+          <div class="card">
+            <div class="card-metric">
+              <div class="metric-heading">
+                <div class="metric-icon purple" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-psychology"></use></svg></div>
+                <div class="metric-label">Sessões Mente</div>
+              </div>
+              <div class="metric-value" data-metric="psychology-sessions">2</div>
+              <small class="metric-context">2 nesta semana</small>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-metric">
+              <div class="metric-heading">
+                <div class="metric-icon neutral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-sparkles"></use></svg></div>
+                <div class="metric-label">Consultas IA</div>
+              </div>
+              <div class="metric-value" data-metric="ai-queries">12</div>
+              <small class="metric-context">consultas registradas</small>
+            </div>
+          </div>
         </div>
 
         <section class="home-attention" aria-labelledby="attention-title">
@@ -251,59 +247,21 @@
           <div class="attention-grid">
             <article class="attention-item attention-item-urgent">
               <span class="attention-indicator" aria-hidden="true"></span>
-              <div><strong>Pendência de acompanhamento</strong><small>Carlos Eduardo · Conferir situação do aluno</small></div>
+              <div><strong>Pendência de acompanhamento</strong><small>Aluno Exemplo A · Conferir situação demonstrativa</small></div>
               <span class="attention-status">Pendente</span>
             </article>
             <article class="attention-item">
               <span class="attention-indicator" aria-hidden="true"></span>
-              <div><strong>Reavaliação próxima</strong><small>Maria Souza · Revisar avaliação física</small></div>
+              <div><strong>Reavaliação próxima</strong><small>Aluno Exemplo B · Revisar avaliação física</small></div>
               <span class="attention-status attention-status-soon">Próxima</span>
             </article>
             <article class="attention-item">
               <span class="attention-indicator" aria-hidden="true"></span>
-              <div><strong>Revisar planejamento</strong><small>João Silva · Conferir treino atual</small></div>
+              <div><strong>Revisar planejamento</strong><small>Aluno Exemplo C · Conferir treino atual</small></div>
               <span class="attention-status attention-status-soon">Revisar</span>
             </article>
           </div>
         </section>
-
-        <h2 class="section-title">Ações Rápidas da Equipe</h2>
-
-        <div class="actions-grid">
-          <button type="button" class="action-card action-card-primary" data-tab="treino">
-            <span class="action-icon blue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-training"></use></svg></span>
-            <span>
-              <strong>Prescrever Treino</strong>
-              <small>Prescrição e Biomecânica</small>
-            </span>
-          </button>
-
-          <button type="button" class="action-card" data-tab="nutricao">
-            <span class="action-icon green" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-nutrition"></use></svg></span>
-            <span>
-              <strong>Plano Alimentar</strong>
-              <small>Montar dieta e metas</small>
-              <span class="action-coming-soon">Em breve</span>
-            </span>
-          </button>
-
-          <button type="button" class="action-card" data-tab="psicologia">
-            <span class="action-icon purple" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-psychology"></use></svg></span>
-            <span>
-              <strong>Registrar Sessão</strong>
-              <small>Evolução comportamental</small>
-              <span class="action-coming-soon">Em breve</span>
-            </span>
-          </button>
-
-          <button type="button" class="action-card" data-action="home-open-students">
-            <span class="action-icon blue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#icon-users"></use></svg></span>
-            <span>
-              <strong>Acompanhar alunos</strong>
-              <small>Acessar perfis e avaliações</small>
-            </span>
-          </button>
-        </div>
 
         <h2 class="section-title">Alunos em Acompanhamento Integrado</h2>
 
