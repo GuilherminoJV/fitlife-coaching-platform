@@ -34,6 +34,7 @@ const state = {
   viewingAssessment: false,
   selectedWorkoutId: null,
   treinosData: [],
+  homeSummary: null,
   activeTrainingSessions: {},
   editingAnamnesisId: null,
   draggedWorkoutExercise: null
@@ -62,6 +63,7 @@ const dom = {
   homeStudentCount: $('[data-metric="active-students"]'),
   homeStudentCountStatus: $('[data-metric-status="active-students"]'),
   homeStudentsTableBody: $('#homeStudentsTableBody'),
+  homeAttentionContent: $('#homeAttentionContent'),
   studentForm: $('#presencialStudentForm'),
   newStudentModal: $('#modalNovoAluno'),
   exerciseTableBody: $('#exerciseTableBody'),
@@ -175,44 +177,176 @@ function renderHomeStudentsTableState(message, stateName) {
   dom.homeStudentsTableBody.innerHTML = `<tr><td class="home-table-state" colspan="5" data-state="${stateName}">${escapeHtml(message)}</td></tr>`;
 }
 
-function renderHomeStudentsTable(students) {
+const homePendingReasonLabels = {
+  reavaliacao_vencida: 'Reavaliação vencida',
+  treino_vencido: 'Treino vencido',
+  sem_treino_ativo: 'Sem treino ativo'
+};
+
+function homePendingStudents(summary) {
+  return new Map((summary?.alunos_pendentes || []).map(item => [
+    String(item.aluno_id),
+    Array.isArray(item.motivos) ? item.motivos : []
+  ]));
+}
+
+function renderHomeStudentsTable(students, summary, summaryError = false) {
   if (!dom.homeStudentsTableBody) return;
   if (!students.length) {
     renderHomeStudentsTableState('Nenhum aluno ativo encontrado.', 'empty');
     return;
   }
 
+  const pending = homePendingStudents(summary);
   dom.homeStudentsTableBody.innerHTML = students.map(student => `
     <tr>
       <th scope="row">${escapeHtml(student.nome || 'Aluno sem nome')}</th>
       <td><span class="home-table-neutral">Ativo</span></td>
       <td><span class="home-table-neutral">—</span></td>
       <td><span class="home-table-neutral">—</span></td>
-      <td><span class="home-table-neutral">—</span></td>
+      <td>${summaryError
+        ? '<span class="home-table-neutral">Indisponível</span>'
+        : pending.has(String(student.id))
+          ? `<span class="home-table-exception home-table-exception-pending">Pendente</span><small class="home-table-reason">${escapeHtml(pending.get(String(student.id)).map(reason => homePendingReasonLabels[reason] || reason).join(' · '))}</small>`
+          : '<span class="home-table-neutral">Em dia</span>'}</td>
     </tr>
   `).join('');
+}
+
+function uniqueAttentionPeople(...groups) {
+  const people = new Map();
+  groups.flat().forEach(person => {
+    if (person?.aluno_id == null) return;
+    people.set(String(person.aluno_id), person);
+  });
+  return [...people.values()];
+}
+
+function renderAttentionNames(people) {
+  const visible = people.slice(0, 3).map(person =>
+    `<button type="button" class="home-student-link" data-action="open-home-student" data-student-id="${escapeHtml(person.aluno_id)}">${escapeHtml(person.nome || 'Aluno')}</button>`
+  );
+  const extra = people.length - visible.length;
+  if (extra > 0) visible.push(`<span class="attention-more">e mais ${extra}</span>`);
+  return visible.length ? visible.join('<span class="attention-name-separator" aria-hidden="true"> · </span>') : '—';
+}
+
+function renderAttentionCard({ title, people, tone = 'neutral', detail = '' }) {
+  const classes = ['attention-item'];
+  if (tone === 'urgent') classes.push('attention-item-urgent');
+  if (tone === 'warning') classes.push('attention-item-warning');
+  const count = people.length;
+  return `
+    <article class="${classes.join(' ')}">
+      <span class="attention-indicator" aria-hidden="true"></span>
+      <div class="attention-copy">
+        <div class="attention-card-heading"><strong>${escapeHtml(title)}</strong><span class="attention-count">${count} ${count === 1 ? 'aluno' : 'alunos'}</span></div>
+        ${detail ? `<small class="attention-detail">${escapeHtml(detail)}</small>` : ''}
+        <small class="attention-people">${renderAttentionNames(people)}</small>
+      </div>
+    </article>`;
+}
+
+function renderAttentionLine({ title, people }) {
+  return `<div class="attention-minor-row"><strong>${escapeHtml(title)} <span>${people.length}</span></strong><small>${renderAttentionNames(people)}</small></div>`;
+}
+
+function renderHomeAttention(summary, error = false) {
+  const container = dom.homeAttentionContent;
+  if (!container) return;
+  container.setAttribute('aria-busy', 'false');
+  if (error || !summary || !summary.reavaliacoes || !summary.treinos) {
+    container.innerHTML = '<p class="attention-state" data-state="error">Não foi possível carregar as pendências. Tente novamente mais tarde.</p>';
+    return;
+  }
+
+  const reavaliacoes = summary.reavaliacoes;
+  const treinos = summary.treinos;
+  const vencidos = uniqueAttentionPeople(reavaliacoes.vencidas || [], treinos.vencidos || []);
+  const semTreino = uniqueAttentionPeople(treinos.alunos_sem_treino_ativo || []);
+  const reavaliacoesProximas = uniqueAttentionPeople(reavaliacoes.proximas || []);
+  const treinosProximos = uniqueAttentionPeople(treinos.proximos_do_fim || []);
+  const semData = uniqueAttentionPeople(reavaliacoes.sem_proxima_data || []);
+  const semAvaliacao = uniqueAttentionPeople(reavaliacoes.alunos_sem_avaliacao || []);
+  const semAnamnese = uniqueAttentionPeople(summary.alunos_sem_anamnese || []);
+  const detailVencidos = [
+    (reavaliacoes.vencidas || []).length ? `${reavaliacoes.vencidas.length} ${reavaliacoes.vencidas.length === 1 ? 'reavaliação' : 'reavaliações'}` : '',
+    (treinos.vencidos || []).length ? `${treinos.vencidos.length} ${treinos.vencidos.length === 1 ? 'treino' : 'treinos'}` : ''
+  ].filter(Boolean).join(' · ');
+
+  const cards = [];
+  if (vencidos.length) cards.push(renderAttentionCard({ title: 'Vencidos', people: vencidos, tone: 'urgent', detail: detailVencidos }));
+  if (semTreino.length) cards.push(renderAttentionCard({ title: 'Alunos sem treino ativo', people: semTreino, tone: 'warning' }));
+  if (reavaliacoesProximas.length) cards.push(renderAttentionCard({ title: 'Reavaliações próximas', people: reavaliacoesProximas }));
+  if (treinosProximos.length) cards.push(renderAttentionCard({ title: 'Treinos próximos do fim', people: treinosProximos }));
+
+  const linhas = [
+    semData.length ? renderAttentionLine({ title: 'Sem data de reavaliação', people: semData }) : '',
+    semAvaliacao.length ? renderAttentionLine({ title: 'Sem avaliação', people: semAvaliacao }) : '',
+    semAnamnese.length ? renderAttentionLine({ title: 'Sem anamnese', people: semAnamnese }) : ''
+  ].filter(Boolean);
+
+  if (!cards.length && !linhas.length) {
+    container.innerHTML = '<p class="attention-state attention-state-positive" data-state="empty">Nenhuma pendência hoje</p>';
+    return;
+  }
+
+  container.innerHTML = `${cards.length ? `<div class="attention-grid">${cards.join('')}</div>` : ''}${linhas.length ? `<div class="attention-minor-list">${linhas.join('')}</div>` : ''}`;
+}
+
+async function fetchHomeJson(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json();
 }
 
 async function loadHomeDashboard() {
   if (dom.homeStudentCount) dom.homeStudentCount.textContent = '…';
   if (dom.homeStudentCountStatus) dom.homeStudentCountStatus.textContent = 'Carregando alunos ativos';
+  if (dom.homeAttentionContent) {
+    dom.homeAttentionContent.setAttribute('aria-busy', 'true');
+    dom.homeAttentionContent.innerHTML = '<p class="attention-state" data-state="loading">Carregando informações…</p>';
+  }
   renderHomeStudentsTableState('Carregando alunos…', 'loading');
 
-  try {
-    const response = await fetch('/alunos?apenas_ativos=true');
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const students = await response.json();
-    if (!Array.isArray(students)) throw new Error('Resposta inválida da API');
+  const [studentsResult, summaryResult] = await Promise.allSettled([
+    fetchHomeJson('/alunos?apenas_ativos=true'),
+    fetchHomeJson('/home/resumo')
+  ]);
+  const students = studentsResult.status === 'fulfilled' ? studentsResult.value : null;
+  const summary = summaryResult.status === 'fulfilled' ? summaryResult.value : null;
 
-    if (dom.homeStudentCount) dom.homeStudentCount.textContent = String(students.length);
-    if (dom.homeStudentCountStatus) {
+  if (Array.isArray(students)) {
+    state.alunosData = students;
+    if (dom.homeStudentCount && !summary) dom.homeStudentCount.textContent = String(students.length);
+    if (dom.homeStudentCountStatus && !summary) {
       dom.homeStudentCountStatus.textContent = students.length === 1 ? '1 aluno ativo' : `${students.length} alunos ativos`;
     }
-    renderHomeStudentsTable(students);
-  } catch (error) {
-    console.error('Erro ao carregar dados da Home:', error);
-    if (dom.homeStudentCount) dom.homeStudentCount.textContent = '—';
-    if (dom.homeStudentCountStatus) dom.homeStudentCountStatus.textContent = 'Não foi possível carregar';
+  } else {
+    console.error('Erro ao carregar alunos da Home:', studentsResult.reason);
+  }
+
+  if (summary && Number.isFinite(Number(summary.indicadores?.alunos_ativos))) {
+    state.homeSummary = summary;
+    if (dom.homeStudentCount) dom.homeStudentCount.textContent = String(summary.indicadores.alunos_ativos);
+    if (dom.homeStudentCountStatus) {
+      const count = Number(summary.indicadores.alunos_ativos);
+      dom.homeStudentCountStatus.textContent = count === 1 ? '1 aluno ativo' : `${count} alunos ativos`;
+    }
+    renderHomeAttention(summary);
+  } else {
+    state.homeSummary = null;
+    console.error('Erro ao carregar resumo da Home:', summaryResult.status === 'rejected' ? summaryResult.reason : 'Resposta inválida da API');
+    renderHomeAttention(null, true);
+    if (!Array.isArray(students)) {
+      if (dom.homeStudentCount) dom.homeStudentCount.textContent = '—';
+      if (dom.homeStudentCountStatus) dom.homeStudentCountStatus.textContent = 'Não foi possível carregar';
+    }
+  }
+
+  if (Array.isArray(students)) {
+    renderHomeStudentsTable(students, summary, !summary);
+  } else {
     renderHomeStudentsTableState('Não foi possível carregar os alunos. Tente novamente mais tarde.', 'error');
   }
 }
@@ -1581,6 +1715,10 @@ const actions = {
   'copy-self-registration-link': copySelfRegistrationLink,
   'student-profile-menu': toggleProfileMenu,
   'student-card-menu': (_, t) => toggleStudentCardMenu(t.dataset.studentId, t),
+  'open-home-student': (_, t) => {
+    switchTab('treino');
+    openStudentProfile(t.dataset.studentId);
+  },
   'contact-student': (_, t) => contactStudent(t.dataset.studentId || state.selectedStudentId),
   'edit-student': (_, t) => editStudent(t.dataset.studentId || state.selectedStudentId),
   'delete-student': (_, t) => deleteStudent(t.dataset.studentId || state.selectedStudentId),
