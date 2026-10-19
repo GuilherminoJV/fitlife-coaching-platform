@@ -11,6 +11,12 @@ import os
 
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
+from src.home_summary import (
+    JANELA_REAVALIACAO_DIAS,
+    JANELA_TREINO_DIAS,
+    data_atual_home,
+    montar_resumo_home,
+)
 
 
 # ==========================================================================
@@ -32,6 +38,80 @@ DATABASE_URL = (
 )
 
 engine = create_engine(DATABASE_URL)
+
+
+def obter_resumo_home(hoje=None):
+    """Busca dados dos alunos ativos e retorna o resumo da Home.
+
+    A data e as janelas são parâmetros SQL; a consulta não usa CURRENT_DATE.
+    """
+    referencia = hoje or data_atual_home()
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text("""
+                SELECT
+                    a.id AS aluno_id,
+                    a.nome,
+                    av.id AS avaliacao_id,
+                    av.data_avaliacao,
+                    av.proxima_reavaliacao,
+                    t.id AS treino_id,
+                    t.nome AS treino_nome,
+                    t.data_inicio AS treino_data_inicio,
+                    t.data_fim AS treino_data_fim,
+                    EXISTS (
+                        SELECT 1
+                        FROM anamnese_respostas an
+                        WHERE an.aluno_id = a.id
+                    ) AS tem_anamnese,
+                    CASE
+                        WHEN av.proxima_reavaliacao >= CAST(:hoje AS DATE)
+                         AND av.proxima_reavaliacao <= CAST(:hoje AS DATE)
+                             + (:janela_reavaliacao_dias * INTERVAL '1 day')
+                        THEN TRUE ELSE FALSE
+                    END AS reavaliacao_na_janela,
+                    CASE
+                        WHEN t.data_fim >= CAST(:hoje AS DATE)
+                         AND t.data_fim <= CAST(:hoje AS DATE)
+                             + (:janela_treino_dias * INTERVAL '1 day')
+                        THEN TRUE ELSE FALSE
+                    END AS treino_na_janela
+                FROM alunos a
+                LEFT JOIN LATERAL (
+                    SELECT x.id, x.data_avaliacao, x.proxima_reavaliacao
+                    FROM avaliacoes x
+                    WHERE x.aluno_id = a.id
+                    ORDER BY x.data_avaliacao DESC, x.id DESC
+                    LIMIT 1
+                ) av ON TRUE
+                LEFT JOIN LATERAL (
+                    SELECT x.id, x.nome, x.data_inicio, x.data_fim
+                    FROM treinos x
+                    WHERE x.aluno_id = a.id
+                      AND x.data_inicio <= CAST(:hoje AS DATE)
+                    ORDER BY
+                        (x.data_fim >= CAST(:hoje AS DATE)) DESC,
+                        CASE WHEN x.data_fim >= CAST(:hoje AS DATE) THEN x.data_fim END ASC,
+                        x.data_inicio DESC,
+                        x.id DESC
+                    LIMIT 1
+                ) t ON TRUE
+                WHERE a.ativo = TRUE
+                ORDER BY a.nome, a.id
+            """),
+            {
+                "hoje": referencia,
+                "janela_reavaliacao_dias": JANELA_REAVALIACAO_DIAS,
+                "janela_treino_dias": JANELA_TREINO_DIAS,
+            },
+        ).mappings().all()
+
+    return montar_resumo_home(
+        rows,
+        hoje=referencia,
+        janela_reavaliacao_dias=JANELA_REAVALIACAO_DIAS,
+        janela_treino_dias=JANELA_TREINO_DIAS,
+    )
 
 
 # ==========================================================================

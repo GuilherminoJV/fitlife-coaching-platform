@@ -46,6 +46,7 @@ from src.database import (
     buscar_anamnese_resposta,
     deletar_anamnese,
     listar_treinos,
+    obter_resumo_home,
     criar_treino,
     criar_sessao_treino,
     deletar_exercicio_treino,
@@ -185,6 +186,11 @@ def pagina_chat():
     return FileResponse(
         "static/index.html"
     )
+
+
+@app.get("/home/resumo")
+def get_home_resumo():
+    return jsonable_encoder(obter_resumo_home())
 
 
 # ==========================================================================
