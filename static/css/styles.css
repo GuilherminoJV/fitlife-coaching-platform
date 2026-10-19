@@ -417,7 +417,13 @@ button:focus-visible { outline: 2px solid var(--profile-primary); outline-offset
   .assessment-compare-selectors { grid-template-columns: 1fr; }
 }
 .profile-actions-menu [data-action="delete-student"] { color: #fca5a5; }
-.profile-actions-menu [data-action="delete-student"]:hover { color: #fecaca; background: rgb(248 113 113 / .12); }
+.profile-actions-menu [data-action="delete-student"]:hover, .profile-actions-menu [data-action="delete-student"]:focus-visible,
+.student-card-actions [data-action="delete-student"]:hover, .student-card-actions [data-action="delete-student"]:focus-visible {
+  color: #fecaca; background: rgb(248 113 113 / .12);
+}
+.profile-actions-menu [data-action="delete-student"]:focus-visible, .student-card-actions [data-action="delete-student"]:focus-visible {
+  outline: 2px solid #f87171; outline-offset: 2px;
+}
 .training-section { margin-top: 16px; }
 .workout-list { margin-top: 8px; }
 .workout-record-header > .workout-record-actions { display: flex; align-items: center; gap: 8px; }

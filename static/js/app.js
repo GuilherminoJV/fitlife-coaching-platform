@@ -409,9 +409,9 @@ function renderStudentCards() {
         <button type="button" class="student-card-menu" data-action="student-card-menu" data-student-id="${a.id}" aria-label="Ações de ${escapeHtml(a.nome)}" aria-expanded="false">⋮</button>
         <div class="student-card-actions" data-student-card-menu hidden>
           ${!a.ativo
-            ? `<button type="button" data-action="restore-student" data-student-id="${a.id}">Restaurar aluno</button>`
+            ? `<button type="button" data-action="restore-student" data-student-id="${a.id}">Reativar aluno</button>`
             : `<button type="button" data-action="edit-student" data-student-id="${a.id}">Editar aluno</button>
-               <button type="button" data-action="delete-student" data-student-id="${a.id}">Excluir aluno</button>`}
+               <button type="button" data-action="delete-student" data-student-id="${a.id}">Desativar aluno</button>`}
         </div>
       </article>`;
   }).join('');
@@ -461,7 +461,7 @@ async function deleteStudent(id = state.selectedStudentId) {
   const aluno = state.alunosData.find(a => String(a.id) === String(id));
   if (!aluno || !aluno.ativo) return;
   closeAllMenus();
-  if (!confirm(`Excluir o aluno "${aluno.nome}"? O aluno será arquivado e poderá ser restaurado.`)) return;
+  if (!confirm(`Desativar o aluno "${aluno.nome}"? Ele ficará inativo e poderá ser reativado depois.`)) return;
 
   try {
     const res = await fetch(`/alunos/${id}`, { method: 'DELETE' });
@@ -473,7 +473,7 @@ async function deleteStudent(id = state.selectedStudentId) {
     }
     await loadAlunosFromAPI();
   } catch (err) {
-    console.error('Erro ao excluir aluno:', err);
+    console.error('Erro ao desativar aluno:', err);
   }
 }
 
@@ -483,7 +483,7 @@ async function restoreStudent(id) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     await loadAlunosFromAPI();
   } catch (err) {
-    console.error('Erro ao restaurar aluno:', err);
+    console.error('Erro ao reativar aluno:', err);
   }
 }
 
