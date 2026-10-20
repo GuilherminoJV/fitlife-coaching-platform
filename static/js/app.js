@@ -917,6 +917,36 @@ function appendChatMessage(role, text) {
   return msg;
 }
 
+function appendChatSources(message, fontes) {
+  const sourceBlock = document.createElement('div');
+  sourceBlock.className = 'chat-sources';
+  if (!Array.isArray(fontes) || fontes.length === 0) {
+    sourceBlock.classList.add('chat-no-sources');
+    sourceBlock.textContent = 'Resposta sem trechos da base.';
+    message.appendChild(sourceBlock);
+    return;
+  }
+
+  const details = document.createElement('details');
+  details.className = 'chat-sources-details';
+  const summary = document.createElement('summary');
+  summary.textContent = `Base consultada (${fontes.length})`;
+  const list = document.createElement('ul');
+  list.className = 'chat-sources-list';
+  fontes.forEach(fonte => {
+    const item = document.createElement('li');
+    const title = document.createElement('strong');
+    title.textContent = fonte.titulo || fonte.arquivo || 'Fonte FitLife';
+    const excerpt = document.createElement('p');
+    excerpt.textContent = fonte.trecho || '';
+    item.append(title, excerpt);
+    list.appendChild(item);
+  });
+  details.append(summary, list);
+  sourceBlock.appendChild(details);
+  message.appendChild(sourceBlock);
+}
+
 function resizeChatInput() {
   if (!dom.chatInput) return;
   dom.chatInput.style.height = 'auto';
@@ -935,7 +965,7 @@ function showChatTyping() {
   return typing;
 }
 
-function showChatError(node, prompt) {
+function showChatError(node, prompt, continuation = '') {
   node.classList.add('chat-error');
   node.removeAttribute('aria-label');
   node.replaceChildren();
@@ -946,11 +976,28 @@ function showChatError(node, prompt) {
   retry.className = 'chat-retry-btn';
   retry.dataset.action = 'retry-chat';
   retry.dataset.prompt = prompt;
+  if (continuation) retry.dataset.continuation = continuation;
   retry.textContent = 'Tentar novamente';
   node.append(message, retry);
 }
 
-async function submitChatQuestion(question, { appendUser = true, responseNode = null } = {}) {
+function appendChatInterruption(message, question, fullAnswer) {
+  const notice = document.createElement('div');
+  notice.className = 'chat-interruption';
+  const text = document.createElement('p');
+  text.textContent = 'Resposta interrompida. Peça para continuar.';
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'chat-continue-btn';
+  button.dataset.action = 'continue-chat';
+  button.dataset.prompt = question;
+  button.dataset.answer = fullAnswer;
+  button.textContent = 'Continuar';
+  notice.append(text, button);
+  message.appendChild(notice);
+}
+
+async function submitChatQuestion(question, { appendUser = true, responseNode = null, continuation = '' } = {}) {
   const text = question.trim();
   if (!text || dom.chatDrawer?.getAttribute('aria-busy') === 'true') return;
   $('#chatEmptyState')?.remove();
@@ -969,7 +1016,8 @@ async function submitChatQuestion(question, { appendUser = true, responseNode = 
 
   try {
     const res = await fetch(CHAT_ENDPOINT, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pergunta: text })
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pergunta: text, ...(continuation ? { continuar_de: continuation } : {}) })
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
@@ -977,9 +1025,12 @@ async function submitChatQuestion(question, { appendUser = true, responseNode = 
     response.className = 'chat-msg bot';
     response.removeAttribute('aria-label');
     response.innerHTML = typeof marked !== 'undefined' ? marked.parse(data.resposta) : escapeHtml(data.resposta).replace(/\n/g, '<br>');
+    appendChatSources(response, data.fontes);
+    const fullAnswer = continuation ? `${continuation}\n\n${data.resposta}` : data.resposta;
+    if (data.interrompida) appendChatInterruption(response, text, fullAnswer);
   } catch (err) {
     console.error('Erro ao consultar a API:', err);
-    showChatError(response, text);
+    showChatError(response, text, continuation);
   } finally {
     dom.chatDrawer?.removeAttribute('aria-busy');
     if (dom.chatInput) dom.chatInput.disabled = false;
@@ -1862,7 +1913,15 @@ const actions = {
   'close-chat': closeChat,
   'new-chat': startNewChat,
   'chat-suggestion': (_, t) => submitChatQuestion(t.dataset.prompt || ''),
-  'retry-chat': (_, t) => submitChatQuestion(t.dataset.prompt || '', { appendUser: false, responseNode: t.closest('.chat-msg') }),
+  'retry-chat': (_, t) => submitChatQuestion(t.dataset.prompt || '', {
+    appendUser: false,
+    responseNode: t.closest('.chat-msg'),
+    continuation: t.dataset.continuation || '',
+  }),
+  'continue-chat': (_, t) => submitChatQuestion(t.dataset.prompt || '', {
+    appendUser: false,
+    continuation: t.dataset.answer || '',
+  }),
   'back-to-workspace': showTrainingLanding,
   'back-to-students': () => showWorkspace(DEFAULT_WORKSPACE),
   'open-modal-presencial': openPresencialModal,

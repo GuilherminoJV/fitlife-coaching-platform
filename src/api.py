@@ -55,7 +55,13 @@ from src.database import (
     deletar_exercicio_treino,
     reordenar_exercicios_sessao
 )
-from src.fitlife_assistant import montar_mensagens
+from src.fitlife_assistant import (
+    filtrar_nos_relevantes,
+    montar_mensagens,
+    montar_mensagens_continuacao,
+    montar_resposta_publica,
+    resposta_interrompida,
+)
 from src.home_summary import data_atual_home
 
 
@@ -112,6 +118,7 @@ app.mount(
 
 class Pergunta(BaseModel):
     pergunta: str
+    continuar_de: str | None = Field(default=None, max_length=12000)
 
 class AlunoCreate(BaseModel):
     nome: str
@@ -208,22 +215,32 @@ def perguntar(body: Pergunta):
         body.pergunta
     )
 
-    resposta = cliente_groq.chat.completions.create(
-        model="openai/gpt-oss-20b",
-        messages=montar_mensagens(body.pergunta, nos),
-        temperature=0.2,
-        max_tokens=700,
+    nos_relevantes = filtrar_nos_relevantes(nos)
+    mensagens = (
+        montar_mensagens_continuacao(body.pergunta, body.continuar_de, nos_relevantes)
+        if body.continuar_de
+        else montar_mensagens(body.pergunta, nos_relevantes)
     )
+    completion = cliente_groq.chat.completions.create(
+        model="openai/gpt-oss-20b",
+        messages=mensagens,
+        temperature=0.2,
+        max_tokens=1000,
+    )
+    choice = completion.choices[0]
+    texto_resposta = choice.message.content or ""
 
     salvar_historico(
         body.pergunta,
-        resposta.choices[0].message.content
+        texto_resposta
     )
 
-    return {
-        "pergunta": body.pergunta,
-        "resposta": resposta.choices[0].message.content
-    }
+    return montar_resposta_publica(
+        body.pergunta,
+        texto_resposta,
+        nos_relevantes,
+        interrompida=resposta_interrompida(choice.finish_reason),
+    )
 
 
 # ==========================================================================
