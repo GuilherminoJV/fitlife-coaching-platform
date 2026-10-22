@@ -7,7 +7,7 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from groq import Groq
 import os
 from dotenv import load_dotenv
-from src.fitlife_assistant import montar_mensagens
+from src.fitlife_assistant import filtrar_nos_relevantes, marcar_documentos_fitlife, montar_mensagens
 
 # Carrega as variáveis do arquivo .env
 load_dotenv()
@@ -25,7 +25,7 @@ cliente_groq = Groq(api_key=GROQ_API_KEY)
 
 # --- CARREGA OS DOCUMENTOS ---
 print("Carregando base de conhecimento...")
-documents = SimpleDirectoryReader("data").load_data()
+documents = marcar_documentos_fitlife(SimpleDirectoryReader("data").load_data())
 
 # --- CRIA O ÍNDICE ---
 print("Criando índice...")
@@ -35,12 +35,12 @@ retriever = index.as_retriever(similarity_top_k=3)
 # --- FUNÇÃO DE CONSULTA ---
 def perguntar(pergunta):
     # Busca trechos relevantes
-    nos = retriever.retrieve(pergunta)
+    nos = filtrar_nos_relevantes(retriever.retrieve(pergunta), pergunta)
     # Manda pro Groq com o contexto
     resposta = cliente_groq.chat.completions.create(
         model="openai/gpt-oss-20b",
         messages=montar_mensagens(pergunta, nos),
-        temperature=0.2,
+        temperature=0.1,
         max_tokens=700,
     )
     return resposta.choices[0].message.content

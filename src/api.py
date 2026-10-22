@@ -57,6 +57,7 @@ from src.database import (
 )
 from src.fitlife_assistant import (
     filtrar_nos_relevantes,
+    marcar_documentos_fitlife,
     montar_mensagens,
     montar_mensagens_continuacao,
     montar_resposta_publica,
@@ -88,7 +89,7 @@ cliente_groq = Groq(api_key=GROQ_API_KEY)
 
 print("Carregando base de conhecimento...")
 
-documents = SimpleDirectoryReader("data").load_data()
+documents = marcar_documentos_fitlife(SimpleDirectoryReader("data").load_data())
 
 index = VectorStoreIndex.from_documents(documents)
 
@@ -215,7 +216,7 @@ def perguntar(body: Pergunta):
         body.pergunta
     )
 
-    nos_relevantes = filtrar_nos_relevantes(nos)
+    nos_relevantes = filtrar_nos_relevantes(nos, body.pergunta)
     mensagens = (
         montar_mensagens_continuacao(body.pergunta, body.continuar_de, nos_relevantes)
         if body.continuar_de
@@ -224,7 +225,7 @@ def perguntar(body: Pergunta):
     completion = cliente_groq.chat.completions.create(
         model="openai/gpt-oss-20b",
         messages=mensagens,
-        temperature=0.2,
+        temperature=0.1,
         max_tokens=1000,
     )
     choice = completion.choices[0]
