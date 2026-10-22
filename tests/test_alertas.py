@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
+from pydantic import ValidationError
 
 from src.alertas import ALERTAS, detectar_alerta
 
@@ -98,3 +99,44 @@ def test_rota_devolve_alerta_sem_chamar_busca_ou_modelo(monkeypatch, pergunta, c
     assert payload["interrompida"] is False
     busca.assert_not_called()
     modelo.assert_not_called()
+
+
+def test_historico_valida_quantidade_e_tamanho_das_mensagens(monkeypatch):
+    api = _importar_api_com_dependencias_falsas(monkeypatch)
+    mensagem = {"papel": "user", "texto": "x" * 1500}
+
+    valido = api.Pergunta(pergunta="Pergunta", historico=[mensagem] * 6)
+    assert len(valido.historico) == 6
+
+    with pytest.raises(ValidationError):
+        api.Pergunta(pergunta="Pergunta", historico=[mensagem] * 7)
+    with pytest.raises(ValidationError):
+        api.Pergunta(pergunta="Pergunta", historico=[{"papel": "user", "texto": "x" * 1501}])
+
+
+def test_rota_envia_historico_ao_modelo_e_compõe_busca_referencial(monkeypatch):
+    api = _importar_api_com_dependencias_falsas(monkeypatch)
+    busca = MagicMock(name="retrieve", return_value=[])
+    historico = [
+        {"papel": "user", "texto": "Quais exercícios para dor no joelho?"},
+        {"papel": "assistant", "texto": "A base cita exercícios combinados."},
+    ]
+    resposta = SimpleNamespace(
+        choices=[SimpleNamespace(
+            message=SimpleNamespace(content="Resposta de teste"), finish_reason="stop"
+        )]
+    )
+    modelo = MagicMock(name="model_create", return_value=resposta)
+    monkeypatch.setattr(api, "retriever", SimpleNamespace(retrieve=busca))
+    monkeypatch.setattr(api.cliente_groq.chat.completions, "create", modelo)
+    monkeypatch.setattr(api, "salvar_historico", MagicMock())
+
+    payload = api.perguntar(api.Pergunta(pergunta="E esse treino?", historico=historico))
+
+    assert payload["resposta"] == "Resposta de teste"
+    assert busca.call_args.args[0] == "Quais exercícios para dor no joelho?\nE esse treino?"
+    mensagens = modelo.call_args.kwargs["messages"]
+    assert mensagens[1:3] == [
+        {"role": "user", "content": historico[0]["texto"]},
+        {"role": "assistant", "content": historico[1]["texto"]},
+    ]

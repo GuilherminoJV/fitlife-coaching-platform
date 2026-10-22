@@ -37,7 +37,8 @@ const state = {
   homeSummary: null,
   activeTrainingSessions: {},
   editingAnamnesisId: null,
-  draggedWorkoutExercise: null
+  draggedWorkoutExercise: null,
+  chatHistory: []
 };
 
 /* ========== DOM ========== */
@@ -1017,7 +1018,11 @@ async function submitChatQuestion(question, { appendUser = true, responseNode = 
   try {
     const res = await fetch(CHAT_ENDPOINT, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pergunta: text, ...(continuation ? { continuar_de: continuation } : {}) })
+      body: JSON.stringify({
+        pergunta: text,
+        historico: continuation ? [] : state.chatHistory.slice(-6),
+        ...(continuation ? { continuar_de: continuation } : {})
+      })
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
@@ -1034,6 +1039,13 @@ async function submitChatQuestion(question, { appendUser = true, responseNode = 
       appendChatSources(response, data.fontes);
       const fullAnswer = continuation ? `${continuation}\n\n${data.resposta}` : data.resposta;
       if (data.interrompida) appendChatInterruption(response, text, fullAnswer);
+      if (continuation) {
+        const lastAssistantMessage = [...state.chatHistory].reverse().find(message => message.papel === 'assistant');
+        if (lastAssistantMessage) lastAssistantMessage.texto = fullAnswer;
+      } else {
+        state.chatHistory.push({ papel: 'user', texto: text }, { papel: 'assistant', texto: data.resposta });
+        state.chatHistory = state.chatHistory.slice(-6);
+      }
     }
   } catch (err) {
     console.error('Erro ao consultar a API:', err);
@@ -1056,6 +1068,7 @@ function sendChatMessage(e) {
 
 function startNewChat() {
   if (dom.chatDrawer?.getAttribute('aria-busy') === 'true') return;
+  state.chatHistory = [];
   dom.chatBody.innerHTML = `
     <section class="chat-empty-state" id="chatEmptyState" aria-labelledby="chatGreeting">
       <img class="chat-empty-mascot" src="/static/mascote_fitlife.png" alt="Mascote FitLife IA">

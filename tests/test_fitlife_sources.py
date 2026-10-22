@@ -9,6 +9,8 @@ from src.fitlife_assistant import (
     filtrar_nos_relevantes,
     marcar_documentos_fitlife,
     montar_mensagens_continuacao,
+    montar_consulta_busca,
+    montar_mensagens,
     montar_resposta_publica,
     pergunta_sobre_fitlife,
     resposta_interrompida,
@@ -133,4 +135,38 @@ def test_detecta_finish_reason_length_e_constroi_continuacao_sem_repetir():
     assert messages[-2] == {"role": "assistant", "content": "Resposta parcial"}
     assert messages[-1]["role"] == "user"
     assert "Não repita" in messages[-1]["content"]
+
+
+def test_historico_entra_nas_mensagens_antes_da_pergunta_atual():
+    historico = [
+        {"papel": "user", "texto": "Montar treino para iniciante"},
+        {"papel": "assistant", "texto": "Podemos começar com exercícios básicos."},
+    ]
+
+    messages = montar_mensagens("E para o joelho?", [], historico)
+
+    assert messages[1:3] == [
+        {"role": "user", "content": "Montar treino para iniciante"},
+        {"role": "assistant", "content": "Podemos começar com exercícios básicos."},
+    ]
+    assert messages[3]["role"] == "user"
+    assert "E para o joelho?" in messages[3]["content"]
+
+
+def test_consulta_busca_composta_para_pergunta_referencial_ou_curta():
+    historico = [{"papel": "user", "texto": "Quais exercícios posso adaptar para dor no joelho?"}]
+
+    assert montar_consulta_busca("E esse treino?", historico) == (
+        "Quais exercícios posso adaptar para dor no joelho?\nE esse treino?"
+    )
+
+
+def test_consulta_busca_simples_para_pergunta_completa():
+    pergunta = (
+        "Quais exercícios ajudam no fortalecimento do quadríceps após avaliação "
+        "com supervisão profissional e controle da amplitude do movimento?"
+    )
+    historico = [{"papel": "user", "texto": "Pergunta anterior sobre ombro"}]
+
+    assert montar_consulta_busca(pergunta, historico) == pergunta
 

@@ -2,6 +2,7 @@
 
 from pathlib import Path, PurePosixPath
 import re
+import unicodedata
 from typing import Any, Iterable
 
 
@@ -72,6 +73,8 @@ veio da diretriz. Se não for necessário, prefira não acrescentar esse parâme
 Responda primeiro à pergunta principal. Mantenha a resposta proporcional à dúvida;
 use passos ou tópicos quando isso facilitar a leitura. Se a pergunta estiver
 ambígua, peça apenas o esclarecimento necessário.
+Respeite o formato pedido. Se o coach pedir só nomes, só uma lista ou um número
+máximo de itens, entregue exatamente isso, sem explicações extras.
 """.strip()
 
 
@@ -232,9 +235,10 @@ def montar_mensagens_continuacao(
     pergunta: str,
     resposta_parcial: str,
     nos: Iterable[Any],
+    historico: Iterable[dict[str, str]] = (),
 ) -> list[dict[str, str]]:
     """Continue a resposta cortada usando o contexto recuperado da pergunta original."""
-    mensagens = montar_mensagens(pergunta, nos)
+    mensagens = montar_mensagens(pergunta, nos, historico)
     mensagens.extend([
         {"role": "assistant", "content": resposta_parcial},
         {
@@ -254,7 +258,11 @@ def resposta_interrompida(finish_reason: str | None) -> bool:
     return finish_reason == "length"
 
 
-def montar_mensagens(pergunta: str, nos: Iterable[Any]) -> list[dict[str, str]]:
+def montar_mensagens(
+    pergunta: str,
+    nos: Iterable[Any],
+    historico: Iterable[dict[str, str]] = (),
+) -> list[dict[str, str]]:
     """Build separated system/user messages and label retrieved source excerpts."""
     trechos = []
     for indice, no in enumerate(nos, start=1):
@@ -274,7 +282,41 @@ def montar_mensagens(pergunta: str, nos: Iterable[Any]) -> list[dict[str, str]]:
         f"Trechos recuperados:\n{contexto}\n\n"
         f"Pergunta do usuário:\n{pergunta.strip()}"
     )
-    return [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": mensagem_usuario},
-    ]
+    mensagens = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for anterior in historico:
+        papel = anterior.get("papel")
+        texto = anterior.get("texto", "").strip()
+        if papel in {"user", "assistant"} and texto:
+            mensagens.append({"role": papel, "content": texto})
+    mensagens.append({"role": "user", "content": mensagem_usuario})
+    return mensagens
+
+
+TERMOS_REFERENCIAIS = (
+    "mesma forma", "isso", "esse treino", "continue", "agora", "antes",
+)
+
+
+def montar_consulta_busca(
+    pergunta: str,
+    historico: Iterable[dict[str, str]] = (),
+) -> str:
+    """Add the coach's previous question to short/referential retrieval queries."""
+    atual = pergunta.strip()
+    normalizada = unicodedata.normalize("NFD", atual.casefold())
+    normalizada = "".join(
+        caractere for caractere in normalizada
+        if unicodedata.category(caractere) != "Mn"
+    )
+    padrao_referencial = r"\b(?:mesma forma|isso|esse treino|continue|agora|antes)\b"
+    referencial = re.search(padrao_referencial, normalizada) is not None
+    curta = len(atual.split()) < 12
+    if not curta and not referencial:
+        return atual
+
+    ultima_pergunta = next((
+        mensagem.get("texto", "").strip()
+        for mensagem in reversed(list(historico))
+        if mensagem.get("papel") == "user" and mensagem.get("texto", "").strip()
+    ), "")
+    return f"{ultima_pergunta}\n{atual}" if ultima_pergunta else atual

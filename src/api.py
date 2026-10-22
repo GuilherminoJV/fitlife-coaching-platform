@@ -61,6 +61,7 @@ from src.fitlife_assistant import (
     montar_mensagens,
     montar_mensagens_continuacao,
     montar_resposta_publica,
+    montar_consulta_busca,
     resposta_interrompida,
 )
 from src.home_summary import data_atual_home
@@ -118,9 +119,15 @@ app.mount(
 # 5. MODELOS
 # ==========================================================================
 
+class MensagemChat(BaseModel):
+    papel: Literal["user", "assistant"]
+    texto: str = Field(min_length=1, max_length=1500)
+
+
 class Pergunta(BaseModel):
     pergunta: str
     continuar_de: str | None = Field(default=None, max_length=12000)
+    historico: list[MensagemChat] = Field(default_factory=list, max_length=6)
 
 class AlunoCreate(BaseModel):
     nome: str
@@ -224,15 +231,15 @@ def perguntar(body: Pergunta):
             "categoria_alerta": categoria_alerta,
         }
 
-    nos = retriever.retrieve(
-        body.pergunta
-    )
+    historico = [mensagem.model_dump() for mensagem in body.historico]
+    consulta_busca = montar_consulta_busca(body.pergunta, historico)
+    nos = retriever.retrieve(consulta_busca)
 
-    nos_relevantes = filtrar_nos_relevantes(nos, body.pergunta)
+    nos_relevantes = filtrar_nos_relevantes(nos, consulta_busca)
     mensagens = (
-        montar_mensagens_continuacao(body.pergunta, body.continuar_de, nos_relevantes)
+        montar_mensagens_continuacao(body.pergunta, body.continuar_de, nos_relevantes, historico)
         if body.continuar_de
-        else montar_mensagens(body.pergunta, nos_relevantes)
+        else montar_mensagens(body.pergunta, nos_relevantes, historico)
     )
     completion = cliente_groq.chat.completions.create(
         model="openai/gpt-oss-20b",
