@@ -1022,12 +1022,19 @@ async function submitChatQuestion(question, { appendUser = true, responseNode = 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     if (!data.resposta) throw new Error('Resposta vazia');
-    response.className = 'chat-msg bot';
     response.removeAttribute('aria-label');
-    response.innerHTML = typeof marked !== 'undefined' ? marked.parse(data.resposta) : escapeHtml(data.resposta).replace(/\n/g, '<br>');
-    appendChatSources(response, data.fontes);
-    const fullAnswer = continuation ? `${continuation}\n\n${data.resposta}` : data.resposta;
-    if (data.interrompida) appendChatInterruption(response, text, fullAnswer);
+    if (data.alerta === true) {
+      response.className = 'chat-msg bot chat-alert';
+      response.setAttribute('role', 'alert');
+      response.textContent = data.resposta;
+    } else {
+      response.className = 'chat-msg bot';
+      response.removeAttribute('role');
+      response.innerHTML = typeof marked !== 'undefined' ? marked.parse(data.resposta) : escapeHtml(data.resposta).replace(/\n/g, '<br>');
+      appendChatSources(response, data.fontes);
+      const fullAnswer = continuation ? `${continuation}\n\n${data.resposta}` : data.resposta;
+      if (data.interrompida) appendChatInterruption(response, text, fullAnswer);
+    }
   } catch (err) {
     console.error('Erro ao consultar a API:', err);
     showChatError(response, text, continuation);

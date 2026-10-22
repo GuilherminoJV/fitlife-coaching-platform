@@ -64,6 +64,7 @@ from src.fitlife_assistant import (
     resposta_interrompida,
 )
 from src.home_summary import data_atual_home
+from src.alertas import detectar_alerta
 
 
 # ==========================================================================
@@ -211,6 +212,17 @@ def get_home_resumo():
 
 @app.post("/perguntar")
 def perguntar(body: Pergunta):
+
+    categoria_alerta, texto_alerta = detectar_alerta(body.pergunta)
+    if categoria_alerta:
+        return {
+            "pergunta": body.pergunta,
+            "resposta": texto_alerta,
+            "fontes": [],
+            "interrompida": False,
+            "alerta": True,
+            "categoria_alerta": categoria_alerta,
+        }
 
     nos = retriever.retrieve(
         body.pergunta
